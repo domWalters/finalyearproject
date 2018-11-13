@@ -9,7 +9,3 @@ use player::Player;
 fn main() {
 
 }
-
-// Simulation Game (1 Strat)
-//  Iterate through all past data, a quarter at a time.
-//  For each quarter:
