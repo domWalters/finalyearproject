@@ -1,3 +1,7 @@
+extern crate rand;
+
+use rand::Rng;
+
 pub struct Game {
     players: Vec<Player>,
     current_quarter: u64,
@@ -5,14 +9,7 @@ pub struct Game {
 
 impl Game {
 
-    pub fn reset(&mut self) {
-        self.current_quarter = 0;
-        for i in 0..self.players.len() {
-            players[i].reset();
-        }
-    }
-
-    pub fn next_quarter() {
+    fn next_quarter(&mut self) {
         // Load the new quarter
         let quarter = Quarter::load_blank();    // temp
         // Grab new stocks
@@ -23,13 +20,40 @@ impl Game {
         self.current_quarter += 1;
     }
 
-    pub fn final_quarter() {
+    fn final_quarter(&mut self) {
         // Load the final quarter
         let quarter = Quarter::load_blank();    // temp
         // Increment payoff by stock values
         for i in 0..self.players.len() {
             quarter.calc_payoff(self.players[i]);
         }
+    }
+
+    pub fn perform_generation(&mut self, quarter_max: u64) {
+        // Compute payoffs
+        while self.current_quarter < quarter_max {
+            next_quarter();
+        }
+        final_quarter();
+        // Select for new generation
+        let mut new_population = Vec::new();
+        for i in 0..self.players.len() {
+            new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).mutate());
+        }
+        self.players = new_population;
+        // End
+    }
+
+    fn tourney_select(&self, k: usize) -> &Player {
+        let mut rng = rand::thread_rng();
+        let candidate = self.players[rng.gen_range(0, self.players.len())];
+        for i in 1..k {
+            let next_candidate = self.players[rng.gen_range(0, self.players.len())];
+            if next_candidate.payoff > candidate.payoff {
+                candidate = next_candidate;
+            }
+        }
+        candidate
     }
 
 }
