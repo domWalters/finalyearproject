@@ -9,6 +9,13 @@ pub struct DataSlice {
 
 impl DataSlice {
 
+    pub fn new_blank() -> DataSlice {
+        DataSlice {
+            slice_vector: Vec::new(),
+            name: "".to_string(),
+        }
+    }
+
     pub fn new_uniform_random((l_limits, r_limits): (Vec<f64>, Vec<f64>)) -> DataSlice {
         let mut output = Vec::new();
         let mut rng = rand::thread_rng();
@@ -17,10 +24,9 @@ impl DataSlice {
         }
         DataSlice {
             slice_vector: output,
-            name: format!("{}", 6),
+            name: "".to_string(),
         }
     }
-
     /// Perform a uniform crossover of two DataSlices.
     ///
     /// # Arguments
@@ -40,6 +46,17 @@ impl DataSlice {
             name: format!("Child of {} and {}.", self.name, slice.name),
         }
     }
+
+    pub fn mutate(&self, c: f64) -> DataSlice {
+        for _i in 0..0 {
+            // For now, don't do anything.
+            // This will need to normal randomise for each variable.
+            // Each element will need a different amount of randomness.
+        }
+        self.copy()
+    }
+
+
     /// Create a new DataSlice struct that is functionally identical to the current one, but
     /// doesn't share memory location.
     pub fn copy(&self) -> DataSlice {
