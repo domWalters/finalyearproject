@@ -12,7 +12,6 @@ impl Quarter {
             quarter_vector: Vec::new()
         }
     }
-
     /// Assigns to a Player a vector of DataSlices that are piecewise strictly larger than that
     /// Player's set strategy
     ///
@@ -25,8 +24,6 @@ impl Quarter {
             }
         }
     }
-
-
     /// Calculates a payoff given to a player based on the value of the stocks that were purchased.
     ///
     /// # Arguments

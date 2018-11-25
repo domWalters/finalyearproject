@@ -1,9 +1,25 @@
+extern crate rand;
+
+use rand::Rng;
+
 pub struct DataSlice {
     pub slice_vector: Vec<f64>,
     pub name: String,
 }
 
 impl DataSlice {
+
+    pub fn new_uniform_random((l_limits, r_limits): (Vec<f64>, Vec<f64>)) -> DataSlice {
+        let mut output = Vec::new();
+        let mut rng = rand::thread_rng();
+        for i in 0..l_limits.len() {
+            output.push(rng.gen_range(l_limits[i], r_limits[i]));
+        }
+        DataSlice {
+            slice_vector: output,
+            name: format!("{}", 6),
+        }
+    }
 
     /// Perform a uniform crossover of two DataSlices.
     ///
@@ -24,7 +40,6 @@ impl DataSlice {
             name: format!("Child of {} and {}.", self.name, slice.name),
         }
     }
-
     /// Create a new DataSlice struct that is functionally identical to the current one, but
     /// doesn't share memory location.
     pub fn copy(&self) -> DataSlice {
@@ -37,12 +52,10 @@ impl DataSlice {
             name: format!("{}", self.name),
         }
     }
-
     /// Returns the length of the DataSlice
     pub fn len(&self) -> usize {
         self.slice_vector.len()
     }
-
     /// Gets a specified indexed element of the DataSlice.
     ///
     /// # Arguments
@@ -50,7 +63,6 @@ impl DataSlice {
     pub fn get(&self, index: usize) -> f64 {
         self.slice_vector[index]
     }
-
     /// Returns a boolean representing whether the argument DataSlice is piecewise strictly
     /// larger than the current DataSlice.
     ///

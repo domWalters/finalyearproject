@@ -1,3 +1,5 @@
+extern crate rand;
+
 pub mod data_slice;
 pub mod quarter;
 pub mod player;
