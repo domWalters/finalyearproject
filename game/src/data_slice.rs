@@ -1,10 +1,18 @@
 extern crate rand;
 
+use std::fmt;
 use rand::Rng;
 
+#[derive(Debug)]
 pub struct DataSlice {
     pub slice_vector: Vec<f64>,
     pub name: String,
+}
+
+impl fmt::Display for DataSlice {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "DataSlice[slice_vector: {:?}, name: {}]", self.slice_vector, self.name)
+    }
 }
 
 impl DataSlice {
@@ -16,7 +24,7 @@ impl DataSlice {
         }
     }
 
-    pub fn new_uniform_random((l_limits, r_limits): (Vec<f64>, Vec<f64>)) -> DataSlice {
+    pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>)) -> DataSlice {
         let mut output = Vec::new();
         let mut rng = rand::thread_rng();
         for i in 0..l_limits.len() {
@@ -36,14 +44,14 @@ impl DataSlice {
     /// The resultant DataSlice is new, and therefore isn't in the memory location of either of
     /// the two that constructed it. This allows the reuse of the DataSlices that construct this
     /// crossover.
-    pub fn dumb_crossover(&self, slice: DataSlice) -> DataSlice {
+    pub fn dumb_crossover(&self, slice: &DataSlice) -> DataSlice {
         let mut output = Vec::new();
         for i in 0..slice.len() {
             output.push((self.get(i) + slice.get(i)) / 2.0);
         }
         DataSlice {
             slice_vector: output,
-            name: format!("Child of {} and {}.", self.name, slice.name),
+            name: "".to_string(), //format!("Child of {} and {}.", self.name, slice.name),
         }
     }
 

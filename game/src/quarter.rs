@@ -17,7 +17,7 @@ impl Quarter {
     ///
     /// # Arguments
     /// * `player` - A Player struct.
-    pub fn select_for_player(&self, mut player: Player) {
+    pub fn select_for_player(&self, player: &mut Player) {
         for i in 0..self.quarter_vector.len() {
             if self.quarter_vector[i].greater(&player.strategy) {
                 player.stocks_purchased.push(self.quarter_vector[i].copy());
@@ -30,7 +30,7 @@ impl Quarter {
     /// * `player` - A Player struct that provides a list of purchased stocks and is used to store
     /// the payoff value that is calculated.
     /// * `index` - The index in the stock DataSlice to use for the payoff calculation.
-    pub fn calc_payoffs(&self, mut player: Player, index: usize) {
+    pub fn calc_payoffs(&self, player: &mut Player, index: usize) {
         for j in 0..player.stocks_purchased.len() {
             let stock = &player.stocks_purchased[j];
             match self.find_by_name(stock) {
