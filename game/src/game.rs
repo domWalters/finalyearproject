@@ -21,6 +21,24 @@ impl fmt::Display for Game {
 
 impl Game {
 
+    pub fn new_game(num_of_players: usize, size_of_data: usize) -> Game {
+        let mut l_limits = Vec::new();
+        let mut r_limits = Vec::new();
+        for i in 0..size_of_data {
+            l_limits.push(i as f64);
+            r_limits.push((i + 100) as f64);
+        }
+        let mut players = Vec::new();
+        for _i in 0..num_of_players {
+            players.push(Player::new_uniform_random((&l_limits, &r_limits)));
+        }
+        Game {
+            players: players,
+            current_quarter: 0,
+            index_of_value: 0,
+        }
+    }
+
     fn next_quarter(&mut self) {
         // Load the new quarter
         let quarter = Quarter::load_blank();    // temp
