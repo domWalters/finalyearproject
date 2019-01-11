@@ -1,8 +1,17 @@
+use std::fmt;
+
 use DataSlice;
 use Player;
 
+#[derive(Debug)]
 pub struct Quarter {
     pub quarter_vector: Vec<DataSlice>,
+}
+
+impl fmt::Display for Quarter {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Quarter[quarter_vector: {:?}]", self.quarter_vector)
+    }
 }
 
 impl Quarter {
