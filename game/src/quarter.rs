@@ -15,7 +15,7 @@ impl fmt::Display for Quarter {
 }
 
 impl Quarter {
-
+    // Creates a blank Quarter with a length of zero.
     pub fn load_blank() -> Quarter {
         Quarter {
             quarter_vector: Vec::new()

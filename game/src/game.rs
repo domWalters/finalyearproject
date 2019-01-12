@@ -20,7 +20,16 @@ impl fmt::Display for Game {
 }
 
 impl Game {
-
+    /// Create a new Game object, initialised randomly. Internal game parameters set to default
+    /// values.
+    ///
+    /// # Arguments
+    /// * `num_of_players` - The number of players to create for the game.
+    /// * `size_of_data` - The length of DataSlice to use.
+    ///
+    /// # Remarks
+    /// Not currently implemented properly, just generates a very standard random Game. WIll need
+    /// redoing after test data is procured.
     pub fn new_game(num_of_players: usize, size_of_data: usize) -> Game {
         let mut l_limits = Vec::new();
         let mut r_limits = Vec::new();
@@ -38,42 +47,54 @@ impl Game {
             index_of_value: 0,
         }
     }
-
+    /// Runs through the next quarter of test data.
     fn next_quarter(&mut self) {
-        // Load the new quarter
         let quarter = Quarter::load_blank();    // temp
-        // Grab new stocks
         for i in 0..self.players.len() {
             quarter.select_for_player(&mut self.players[i]);
         }
-        // Go to next quarter
         self.current_quarter += 1;
     }
-
+    /// Runs through the last quarter of test data.
     fn final_quarter(&mut self) {
-        // Load the final quarter
         let quarter = Quarter::load_blank();    // temp
-        // Increment payoff by stock values
         for i in 0..self.players.len() {
             quarter.calc_payoffs(&mut self.players[i], self.index_of_value);
         }
     }
-
+    /// Run through all of the test data, and generate a new population.
+    ///
+    /// # Arguments
+    /// * `quarter_max` - The maximum number of quarters to run through.
+    /// * `k` - Constant used for tournament selection (default: DEFAULT_TOURNEY_CONST = 3).
+    /// * `mut_const` - Constant used for mutation (default: DEFAULT_MUTATION_CONST = 1).
     pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64) {
-        // Compute payoffs
         while self.current_quarter < quarter_max {
             self.next_quarter();
         }
         self.final_quarter();
-        // Select for new generation
         let mut new_population = Vec::new();
         for _i in 0..self.players.len() {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).mutate(mut_const));
         }
         self.players = new_population;
-        // End
     }
-
+    /// Run through all of the test data, and generate a new population. Uses
+    /// DEFAULT_TOURNEY_CONST and DEFAULT_MUTATION_CONST for the associated functions.
+    ///
+    /// # Arguments
+    /// * `quarter_max` - The maximum number of quarters to run through.
+    pub fn perform_generation_default(&mut self, quarter_max: usize) {
+        self.perform_generation(quarter_max, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST)
+    }
+    /// Perform a tournament selection of size k within the current list of Players. The fitness
+    /// function is the current payoff value of each player.
+    ///
+    /// # Arguments
+    /// * `k` - Constant used for tournament selection (default: DEFAULT_TOURNEY_CONST = 3).
+    ///
+    /// # Remarks
+    /// This will fail at runtime if called with k = 0.
     fn tourney_select(&self, k: usize) -> &Player {
         let mut rng = rand::thread_rng();
         let mut candidate = &self.players[rng.gen_range(0, self.players.len())];
