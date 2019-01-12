@@ -6,6 +6,9 @@ use std::fmt;
 use Player;
 use Quarter;
 
+static DEFAULT_TOURNEY_CONST: usize = 3;
+static DEFAULT_MUTATION_CONST: f64 = 1.0;
+
 #[derive(Debug)]
 pub struct Game {
     players: Vec<Player>,
@@ -98,13 +101,17 @@ impl Game {
     fn tourney_select(&self, k: usize) -> &Player {
         let mut rng = rand::thread_rng();
         let mut candidate = &self.players[rng.gen_range(0, self.players.len())];
-        for _i in 1..k {
-            let next_candidate = &self.players[rng.gen_range(0, self.players.len())];
-            if next_candidate.payoff > candidate.payoff {
-                candidate = next_candidate;
+        if k == 0 {
+            panic!("Tournament Selection with k = 0 occurred. Unrecoverable error.");
+        } else {
+            for _i in 1..k {
+                let next_candidate = &self.players[rng.gen_range(0, self.players.len())];
+                if next_candidate.payoff > candidate.payoff {
+                    candidate = next_candidate;
+                }
             }
+            candidate
         }
-        candidate
     }
 
 }
