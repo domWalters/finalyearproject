@@ -1,4 +1,5 @@
 extern crate rand;
+extern crate csv;
 
 pub mod data_slice;
 pub mod quarter;

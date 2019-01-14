@@ -113,5 +113,4 @@ impl Game {
             candidate
         }
     }
-
 }

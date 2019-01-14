@@ -80,5 +80,4 @@ impl Player {
             stocks_purchased: Vec::new(),
         }
     }
-
 }

@@ -62,5 +62,4 @@ impl Quarter {
         }
         return None
     }
-
 }
