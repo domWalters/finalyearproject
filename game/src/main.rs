@@ -32,23 +32,7 @@ fn main() {
 }
 
 fn example() -> Result<(), Box<Error>> {
-    let mut balance = load_file("AIRI_fudamentals_balance.csv".to_string());
-    let mut calculations = load_file("AIRI_fudamentals_calculations.csv".to_string());
-    let mut caseflow = load_file("AIRI_fudamentals_caseflow.csv".to_string());
-    let mut price = load_file("AIRI_price.csv".to_string());
+    unite_stock_csvs("AIRI".to_string());
 
-    unite_csv(price, calculations, caseflow, balance);
-
-
-    /*
-    {
-        let headers = price.headers()?;
-        println!("{:?}", headers);
-    }
-    for result in price.records() {
-        let record = result?;
-        println!("{:?}", record);
-    }
-    */
     Ok(())
 }
