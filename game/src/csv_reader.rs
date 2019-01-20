@@ -230,4 +230,21 @@ pub mod csv_reader {
         }
     }
 
+    pub fn create_all_unites() {
+        // Configure Path, open stock_names
+        let mut path = current_dir().unwrap();
+        path.pop(); path.push("test-data/stock_names.csv");
+        let mut stock_names = Reader::from_path(&path).unwrap();
+
+        // Pull out header, for each entry run a unite.
+        if let Ok(stock_names_record) = stock_names.headers() {
+            let stock_names_record_iter = stock_names_record.iter();
+            for field in stock_names_record_iter {
+                println!("Uniting {:?}...", field);
+                unite_stock_csvs(field.to_string());
+            }
+        }
+
+    }
+
 }
