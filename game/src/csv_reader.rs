@@ -2,10 +2,7 @@ pub mod csv_reader {
 
     use std::{
         iter::FromIterator,
-        fs::File,
-        error::Error,
-        env::*,
-        path::PathBuf };
+        env::* };
     use csv::{Writer, Reader, StringRecord};
 
     fn drop_and_extend(new_record: &mut StringRecord, old_record: &StringRecord, drop_count: usize) {
@@ -17,7 +14,7 @@ pub mod csv_reader {
     }
 
     pub fn unite_stock_csvs(stock_string: String) {
-        let mut stock_name = stock_string.clone();
+        let stock_name = stock_string.clone();
 
         // Configure Path
         let mut path = current_dir().unwrap();
@@ -42,16 +39,16 @@ pub mod csv_reader {
         let mut caseflow = Reader::from_path(&path).unwrap();
         path.pop();
 
-        let mut price = stock_name.clone();
-        price.push_str(&"_price.csv".to_string());
-        path.push(price);
+        let mut pri = stock_name.clone();
+        pri.push_str(&"_price.csv".to_string());
+        path.push(pri);
         let mut price = Reader::from_path(&path).unwrap();
         path.pop();
 
         // Open writer
         let mut uni = stock_name.clone();
         uni.push_str(&"_unite.csv".to_string());
-        path.push(uni);
+        path.pop(); path.push("UnitedData"); path.push(uni);
         let mut unite = Writer::from_path(&path).unwrap();
         path.pop();
 
@@ -71,7 +68,14 @@ pub mod csv_reader {
             new_headers.extend(calcs_headers_iter);
             new_headers.extend(bal_headers_iter);
 
-            unite.write_record(&new_headers);
+            if let Err(_) = unite.write_record(&new_headers) {
+                println!("WRITE ERROR WITH HEADERS.");
+                std::process::exit(1);
+            } else {
+                if let Err(_) = unite.flush() {
+                    println!("FLUSH ERROR.");
+                }
+            }
         }
 
         let mut case_records_iter = caseflow.records().peekable();
@@ -85,95 +89,136 @@ pub mod csv_reader {
         let mut next_bal_record = bal_records_iter.next();
 
         let mut first_run = true;
-        let mut mismatch_tracker = vec![false, false, false];
+        let mut written_once = false;
+        let mut last_year = 0;
+        let mut last_quarter = 0;
+        let mut mismatch_tracker = vec![(false, false), (false, false), (false, false)];
+        // {(price mismatch?, price > case?),(calcs mismatch?, calcs > case?),(bal mismatch?, bal > case?)}
 
         // Iterate through rows in caseflow
         while let Some(_) = case_records_iter.peek() {
-            if !mismatch_tracker.iter().fold(false, |expr, val| (expr | val) ) & !first_run {
+            if !mismatch_tracker.iter().fold(false, |expr, (val_l, _)| (expr | val_l) ) & !first_run {
                 next_case_record = case_records_iter.next();
                 next_price_record = price_records_iter.next();
                 next_calcs_record = calcs_records_iter.next();
                 next_bal_record = bal_records_iter.next();
             } else {
-                if mismatch_tracker[0] {
-                    next_price_record = price_records_iter.next();
+                if mismatch_tracker[0].0 {
+                    if mismatch_tracker[0].1 {
+                        next_price_record = price_records_iter.next();
+                    } else {
+                        next_case_record = case_records_iter.next();
+                    }
                 }
-                if mismatch_tracker[1] {
-                    next_calcs_record = calcs_records_iter.next();
+                if mismatch_tracker[1].0 {
+                    if mismatch_tracker[1].1 {
+                        next_calcs_record = calcs_records_iter.next();
+                    } else {
+                        next_case_record = case_records_iter.next();
+                    }
                 }
-                if mismatch_tracker[2] {
-                    next_bal_record = bal_records_iter.next();
+                if mismatch_tracker[2].0 {
+                    if mismatch_tracker[2].1 {
+                        next_bal_record = bal_records_iter.next();
+                    } else {
+                        next_case_record = case_records_iter.next();
+                    }
                 }
             }
-            mismatch_tracker = vec![false, false, false];
             first_run = false;
+            mismatch_tracker = vec![(false, false), (false, false), (false, false)];
 
             if let (Some(next_price_record_unwrap), Some(next_calcs_record_unwrap), Some(next_bal_record_unwrap)) =
                                                                 (&next_price_record, &next_calcs_record, &next_bal_record) {
                 if let Some(Ok(ref mut new_record)) = next_case_record {
                     let year = new_record.get(0).unwrap().to_string();
                     let quarter = new_record.get(1).unwrap().to_string();
-                    // price
-                    if let Ok(next_price_record_unwrap_unwrap) = next_price_record_unwrap {
+                    let year_number = year.parse::<usize>().unwrap();
+                    let quarter_number = quarter[1..=1].parse::<usize>().unwrap();
+
+                    if let (Ok(next_price_record_unwrap_unwrap), Ok(next_calcs_record_unwrap_unwrap), Ok(next_bal_record_unwrap_unwrap)) = (next_price_record_unwrap, next_calcs_record_unwrap, next_bal_record_unwrap) {
+                        // price
                         let price_year = &next_price_record_unwrap_unwrap.get(0).unwrap()[0..=3];
                         let price_month = &next_price_record_unwrap_unwrap.get(0).unwrap()[5..=6];
                         if price_year == year {
-                            if ((price_month == "03") & (quarter == "Q1")) |
-                                    ((price_month == "06") & (quarter == "Q2")) |
-                                    ((price_month == "09") & (quarter == "Q3")) |
-                                    ((price_month == "12") & (quarter == "Q4")) {
-                                drop_and_extend(new_record, next_price_record_unwrap_unwrap, 1);
-                            } else {
-                                mismatch_tracker[0] = true;
+                            if !(((price_month == "03") & (quarter == "Q1")) | ((price_month == "06") & (quarter == "Q2")) | ((price_month == "09") & (quarter == "Q3")) | ((price_month == "12") & (quarter == "Q4"))) {
+                                let price_quarter_number = price_month.parse::<usize>().unwrap() / 3;
+                                mismatch_tracker[0] = (true, price_quarter_number >= quarter_number);
                                 println!("Mismatch in price quarter. Price (Y, M): {:?}, New (Y, M): {:?}.", (price_year, price_month), (year, quarter));
                                 continue;
                             }
                         } else {
-                            mismatch_tracker[0] = true;
+                            let price_year_number = price_year.parse::<usize>().unwrap();
+                            mismatch_tracker[0] = (true, price_year_number > year_number);
                             println!("Mismatch in price quarter. Price (Y, M): {:?}, New (Y, M): {:?}.", (price_year, price_month), (year, quarter));
                             continue;
                         }
-                    } else {
-                        println!("Price Iterator Read Error");
-                        continue;
-                    }
-                    // calcs
-                    if let Ok(next_calcs_record_unwrap_unwrap) = next_calcs_record_unwrap {
+                        // calcs
                         let calcs_year = next_calcs_record_unwrap_unwrap.get(0).unwrap();
-                        let calcs_month = next_calcs_record_unwrap_unwrap.get(1).unwrap();
-                        if (calcs_year == year) & (calcs_month == quarter) {
-                            drop_and_extend(new_record, next_calcs_record_unwrap_unwrap, 2);
-                        } else {
-                            mismatch_tracker[1] = true;
-                            println!("Mismatch in calculations quarter. Calculation (Y, M): {:?}, New (Y, M): {:?}.", (calcs_year, calcs_month), (year, quarter));
-                            continue;
-                        }
-                    } else {
-                        println!("Calculations Iterator Read Error");
-                        continue;
-                    }
-                    // bal
-                    if let Ok(next_bal_record_unwrap_unwrap) = next_bal_record_unwrap {
-                        let bal_field = next_bal_record_unwrap_unwrap.get(0).unwrap();
-                        if bal_field.len() == 4 {
-                            if &bal_field[0..=3] == year {
-                                drop_and_extend(new_record, next_bal_record_unwrap_unwrap, 1);
+                        let calcs_quarter = next_calcs_record_unwrap_unwrap.get(1).unwrap();
+                        if calcs_year == year {
+                            if calcs_quarter != quarter {
+                                let calcs_quarter_number = calcs_quarter[1..=1].parse::<usize>().unwrap();
+                                mismatch_tracker[1] = (true, calcs_quarter_number > quarter_number);
+                                println!("Mismatch in calculations quarter. Calculation (Y, M): {:?}, New (Y, M): {:?}.", (calcs_year, calcs_quarter), (year, quarter));
+                                continue;
                             }
                         } else {
-                            if (&bal_field[1..=4] == year) & (&bal_field[8..=9] == quarter) {
-                                drop_and_extend(new_record, next_bal_record_unwrap_unwrap, 1);
+                            let calcs_year_number = calcs_year.parse::<usize>().unwrap();
+                            mismatch_tracker[1] = (true, calcs_year_number > year_number);
+                            println!("Mismatch in calculations quarter. Calculation (Y, M): {:?}, New (Y, M): {:?}.", (calcs_year, calcs_quarter), (year, quarter));
+                            continue;
+                        }
+                        // bal
+                        let bal_field = next_bal_record_unwrap_unwrap.get(0).unwrap();
+                        if bal_field.len() == 4 {
+                            if &bal_field[0..=3] != year {
+                                let bal_year_number = bal_field[0..=3].parse::<usize>().unwrap();
+                                mismatch_tracker[2] = (true, bal_year_number > year_number);
+                                println!("Mismatch in balance quarter. Balance (Y, M): {:?}, New (Y, M): {:?}.", bal_field, (year, quarter));
+                                continue;
+                            }
+                        } else {
+                            if &bal_field[1..=4] == year {
+                                if &bal_field[8..=9] != quarter {
+                                    let bal_quarter_number = bal_field[9..=9].parse::<usize>().unwrap();
+                                    mismatch_tracker[2] = (true, bal_quarter_number > quarter_number);
+                                    println!("Mismatch in balance quarter. Balance (Y, M): {:?}, New (Y, M): {:?}.", bal_field, (year, quarter));
+                                    continue;
+                                }
                             } else {
-                                mismatch_tracker[2] = true;
+                                let bal_year_number = bal_field[1..=4].parse::<usize>().unwrap();
+                                mismatch_tracker[2] = (true, bal_year_number > year_number);
                                 println!("Mismatch in balance quarter. Balance (Y, M): {:?}, New (Y, M): {:?}.", bal_field, (year, quarter));
                                 continue;
                             }
                         }
+                        // If you've reached here, there was no mismatch.
+                        drop_and_extend(new_record, next_price_record_unwrap_unwrap, 1);
+                        drop_and_extend(new_record, next_calcs_record_unwrap_unwrap, 2);
+                        drop_and_extend(new_record, next_bal_record_unwrap_unwrap, 1);
                     } else {
-                        println!("Balance Iterator Read Error");
+                        println!("Iterator Read Error");
                         continue;
                     }
-                    // Write
-                    unite.write_record(new_record.iter());
+                    // Write and remember the yr and quarter
+                    let this_year = &new_record.get(0).unwrap().parse::<i64>().unwrap();
+                    let this_quarter = &new_record.get(1).unwrap()[1..=1].parse::<i64>().unwrap();
+                    if !written_once | ((last_year == *this_year) & (*this_quarter == last_quarter - 1)) | ((last_quarter == 1) & (*this_quarter == 4) & (*this_year == last_year - 1)) {
+                        written_once = true;
+                        last_year = *this_year;
+                        last_quarter = *this_quarter;
+                        if let Err(_) = unite.write_record(new_record.iter()) {
+                            println!("WRITE ERROR.");
+                        } else {
+                            if let Err(_) = unite.flush() {
+                                println!("FLUSH ERROR.");
+                            }
+                        }
+                    } else {
+                        println!("Continuity lost when attempting to write {:?} after {:?}.", (this_year, this_quarter), (last_year, last_quarter));
+                        break;
+                    }
                 } else {
                     println!("Case iterator read error.");
                     break;

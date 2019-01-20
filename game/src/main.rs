@@ -8,8 +8,6 @@ pub mod game;
 
 pub mod csv_reader;
 
-use std::error::Error;
-
 use data_slice::DataSlice;
 use quarter::Quarter;
 use player::Player;
@@ -25,14 +23,6 @@ fn main() {
     }
     //println!("{}", game);
 
-    if let Err(err) = example() {
-        println!("error running example: {}", err);
-        std::process::exit(1);
-    }
-}
-
-fn example() -> Result<(), Box<Error>> {
     unite_stock_csvs("AIRI".to_string());
-
-    Ok(())
+    create_all_unites();
 }
