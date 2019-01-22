@@ -128,8 +128,7 @@ pub mod csv_reader {
             first_run = false;
             mismatch_tracker = vec![(false, false), (false, false), (false, false)];
 
-            if let (Some(next_price_record_unwrap), Some(next_calcs_record_unwrap), Some(next_bal_record_unwrap)) =
-                                                                (&next_price_record, &next_calcs_record, &next_bal_record) {
+            if let (Some(next_price_record_unwrap), Some(next_calcs_record_unwrap), Some(next_bal_record_unwrap)) = (&next_price_record, &next_calcs_record, &next_bal_record) {
                 if let Some(Ok(ref mut new_record)) = next_case_record {
                     let year = new_record.get(0).unwrap().to_string();
                     let quarter = new_record.get(1).unwrap().to_string();
@@ -244,7 +243,113 @@ pub mod csv_reader {
                 unite_stock_csvs(field.to_string());
             }
         }
-
     }
 
+    pub fn trim_and_sort() {
+        // Path to unite folder
+        let mut unite_folder = current_dir().unwrap();
+        unite_folder.pop(); unite_folder.push("test-data/UnitedData");
+        // Path to stock_names
+        let mut path = current_dir().unwrap();
+        path.pop(); path.push("test-data/stock_names.csv");
+        // Populate vector of readers
+        let mut stock_names = Reader::from_path(&path).unwrap();
+        let mut file_readers = Vec::new();
+        if let Ok(stock_names_record) = stock_names.headers() {
+            let stock_names_record_iter = stock_names_record.iter();
+            for name in stock_names_record_iter {
+                let mut temp_str = name.to_string();
+                temp_str.push_str("_unite.csv");
+                unite_folder.push(temp_str);
+                file_readers.push(Reader::from_path(&unite_folder).unwrap());
+                unite_folder.pop();
+            }
+        }
+        // Iterate over the comparitive header and make a vector of boolean acceptance of the headers
+        let mut headers_to_keep = Vec::new();
+        // Remove the first reader, it will be the comparitive source
+        let mut file_readers_iter = file_readers.iter_mut();
+        let header_reader = file_readers_iter.next();
+        let mut file_readers = Vec::from_iter(file_readers_iter);
+
+        let headers = header_reader.unwrap().headers().unwrap();
+        'a : for field_to_find in headers {                                    // loop over prospective header
+            'b : for mut reader in &mut file_readers {                              // loop over readers
+                'c : for potential_field in reader.headers().unwrap().iter() {      // loop of elements of reader
+                    if potential_field == field_to_find {
+                        continue 'b;
+                    } else {
+                        continue 'c;
+                    }
+                }
+                // Being here means field_to_find wasn't found in the current reader
+                headers_to_keep.push(false);
+                continue 'a;
+            }
+            // Being here means every reader contained field_to_find
+            headers_to_keep.push(true);
+        }
+        // Create the new header and sort it
+        let new_header = headers.iter().zip(headers_to_keep.iter()).filter_map(|(header, keep)| {
+            if *keep {
+                Some(header)
+            } else {
+                None
+            }
+        });
+        let mut new_header_vec = Vec::from_iter(new_header);
+        new_header_vec.sort();
+        // Path to trim_unite folder
+        let mut trim_unite_folder = current_dir().unwrap();
+        trim_unite_folder.pop(); trim_unite_folder.push("test-data/TrimmedUnitedData");
+        // Create the new files
+        // Define the readers and writers
+        if let Ok(stock_names_record) = stock_names.headers() {
+            let stock_names_record_iter = stock_names_record.iter();
+            // For each stock
+            for name in stock_names_record_iter {
+                // Open a writer
+                let mut temp_str = name.to_string();
+                temp_str.push_str("_unite_trim.csv");
+                trim_unite_folder.push(temp_str);
+                let mut writer = Writer::from_path(&trim_unite_folder).unwrap();
+                trim_unite_folder.pop();
+                // Open a reader
+                let mut temp_str = name.to_string();
+                temp_str.push_str("_unite.csv");
+                unite_folder.push(temp_str);
+                let mut reader = Reader::from_path(&unite_folder).unwrap();
+                unite_folder.pop();
+                // Get the header
+                let mut indices = vec![None; Vec::from_iter(reader.headers().unwrap().iter()).len()];
+                {
+                    let old_header = Vec::from_iter(reader.headers().unwrap().iter());
+                    // Build the indice list
+                    'i : for i in 0..old_header.len() {
+                        'j : for j in 0..new_header_vec.len() {
+                            if old_header[i] == new_header_vec[j] {
+                                indices[i] = Some(j);
+                                continue 'i;
+                            }
+                        }
+                        indices[i] = None;
+                    }
+                }
+                // Push the new header
+                writer.write_record(&new_header_vec);
+                // Iterate over old rows
+                for old_row_wrapped in reader.records() {
+                    if let Ok(old_row) = old_row_wrapped {
+                        let mut new_record = vec![""; new_header_vec.len()];
+                        for i in 0..old_row.len() {
+                            if let Some(index) = indices[i] {
+                                new_record[index] = old_row.get(i).unwrap();
+                            }
+                        }
+                        writer.write_record(new_record);
+                    }
+                }
+            }
+        }
+    }
 }

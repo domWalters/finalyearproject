@@ -23,6 +23,6 @@ fn main() {
     }
     //println!("{}", game);
 
-    unite_stock_csvs("AIRI".to_string());
     create_all_unites();
+    trim_and_sort();
 }
