@@ -6,20 +6,28 @@ use Player;
 #[derive(Debug)]
 pub struct Quarter {
     pub quarter_vector: Vec<DataSlice>,
+    pub year: i64,
+    pub quarter: i64
 }
 
 impl fmt::Display for Quarter {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Quarter[quarter_vector: {:?}]", self.quarter_vector)
+        write!(f, "Quarter[quarter_vector: {:?}, year: {:?}, quarter: {:?}]", self.quarter_vector, self.year, self.quarter)
     }
 }
 
 impl Quarter {
     // Creates a blank Quarter with a length of zero.
-    pub fn load_blank() -> Quarter {
+    pub fn load_blank(year: i64, quarter: i64) -> Quarter {
         Quarter {
-            quarter_vector: Vec::new()
+            quarter_vector: Vec::new(),
+            year: year,
+            quarter: quarter
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.quarter_vector.len()
     }
     /// Assigns to a Player a vector of DataSlices that are piecewise strictly larger than that
     /// Player's set strategy

@@ -273,9 +273,9 @@ pub mod csv_reader {
         let mut file_readers = Vec::from_iter(file_readers_iter);
 
         let headers = header_reader.unwrap().headers().unwrap();
-        'a : for field_to_find in headers {                                    // loop over prospective header
-            'b : for mut reader in &mut file_readers {                              // loop over readers
-                'c : for potential_field in reader.headers().unwrap().iter() {      // loop of elements of reader
+        'a : for field_to_find in headers {                                     // loop over prospective header
+            'b : for mut reader in &mut file_readers {                          // loop over readers
+                'c : for potential_field in reader.headers().unwrap().iter() {  // loop of elements of reader
                     if potential_field == field_to_find {
                         continue 'b;
                     } else {

@@ -50,7 +50,7 @@ impl Game {
     }
     /// Runs through the next quarter of test data.
     fn next_quarter(&mut self) {
-        let quarter = Quarter::load_blank();    // temp
+        let quarter = Quarter::load_blank(1970, 1);    // temp
         for i in 0..self.players.len() {
             quarter.select_for_player(&mut self.players[i]);
         }
@@ -58,7 +58,7 @@ impl Game {
     }
     /// Runs through the last quarter of test data.
     fn final_quarter(&mut self) {
-        let quarter = Quarter::load_blank();    // temp
+        let quarter = Quarter::load_blank(1970, 1);    // temp
         for i in 0..self.players.len() {
             quarter.calc_payoffs(&mut self.players[i], self.index_of_value);
         }
