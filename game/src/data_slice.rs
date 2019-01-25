@@ -35,7 +35,11 @@ impl DataSlice {
         let mut output = Vec::new();
         let mut rng = rand::thread_rng();
         for i in 0..l_limits.len() {
-            output.push(rng.gen_range(l_limits[i], r_limits[i]));
+            if l_limits[i] == r_limits[i] {
+                output.push(l_limits[i]);
+            } else {
+                output.push(rng.gen_range(l_limits[i], r_limits[i]));
+            }
         }
         DataSlice {
             slice_vector: output,

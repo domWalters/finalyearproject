@@ -22,7 +22,7 @@ impl Player {
         Player {
             strategy: DataSlice::new_blank(),
             payoff: 0.0,                     // dangerous
-            stocks_purchased: Vec::new(),
+            stocks_purchased: Vec::new()
         }
     }
     /// Creates a Player with a uniform random strategy within a set list of boundaries.
@@ -37,7 +37,7 @@ impl Player {
         Player {
             strategy: DataSlice::new_uniform_random((l_limits, r_limits)),
             payoff: 0.0,                     // dangerous
-            stocks_purchased: Vec::new(),
+            stocks_purchased: Vec::new()
         }
     }
     /// Resets the player, to have payoff 0.0 and an empty stocks_purchased vector.
@@ -61,7 +61,7 @@ impl Player {
         Player {
             strategy: self.strategy.dumb_crossover(&player.strategy),
             payoff: 0.0,
-            stocks_purchased: Vec::new(),
+            stocks_purchased: Vec::new()
         }
     }
     /// Perform a mutation on the Player.
@@ -77,7 +77,7 @@ impl Player {
         Player {
             strategy: self.strategy.mutate(c),
             payoff: 0.0,
-            stocks_purchased: Vec::new(),
+            stocks_purchased: Vec::new()
         }
     }
 }
