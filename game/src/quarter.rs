@@ -36,7 +36,7 @@ impl Quarter {
     /// * `player` - A Player struct.
     pub fn select_for_player(&self, player: &mut Player) {
         for i in 0..self.quarter_vector.len() {
-            if self.quarter_vector[i].greater(&player.strategy) {
+            if self.quarter_vector[i].greater_by_ratio(&player.strategy, 0.1) {
                 player.stocks_purchased.push(self.quarter_vector[i].copy());
             }
         }

@@ -118,6 +118,24 @@ impl DataSlice {
         true
     }
 
+    pub fn greater_by_ratio(&self, slice: &DataSlice, ratio: f64) -> bool {
+        let mut true_track = 0;
+        let mut false_track = 0;
+        for i in 0..self.len() {
+            if self.get(i) > slice.get(i) {
+                true_track += 1;
+            } else {
+                false_track += 1;
+            }
+            if (true_track as f64) / (self.len() as f64) > ratio {
+                return true;
+            } else if (false_track as f64) / (self.len() as f64) > 1.0 - ratio {
+                return false;
+            }
+        }
+        (true_track as f64) / (self.len() as f64) > ratio
+    }
+
     pub fn stock_name(&self) -> &str {
         self.name.split('-').next().unwrap()
     }
