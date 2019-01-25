@@ -3,6 +3,7 @@ use std::fmt;
 
 use Player;
 use Quarter;
+use Quarters;
 
 static DEFAULT_TOURNEY_CONST: usize = 3;
 static DEFAULT_MUTATION_CONST: f64 = 1.0;
@@ -10,13 +11,14 @@ static DEFAULT_MUTATION_CONST: f64 = 1.0;
 #[derive(Debug)]
 pub struct Game {
     players: Vec<Player>,
-    current_quarter: usize,
+    quarters: Quarters,
+    current_quarter_index: usize,
     index_of_value: usize
 }
 
 impl fmt::Display for Game {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Game[players: {:?}, current_quarter: {}, index_of_value: {:?}]", self.players, self.current_quarter, self.index_of_value)
+        write!(f, "Game[players: {:?}, quarters: {:?}, current_quarter_index: {}, index_of_value: {:?}]", self.players, self.quarters, self.current_quarter_index, self.index_of_value)
     }
 }
 
@@ -31,34 +33,62 @@ impl Game {
     /// # Remarks
     /// Not currently implemented properly, just generates a very standard random Game. WIll need
     /// redoing after test data is procured.
-    pub fn new_game(num_of_players: usize, size_of_data: usize) -> Game {
-        let mut l_limits = Vec::new();
-        let mut r_limits = Vec::new();
-        for i in 0..size_of_data {
-            l_limits.push(i as f64);
-            r_limits.push((i + 100) as f64);
-        }
+    pub fn new_game(quarters: Quarters, num_of_players: usize) -> Game {
+        let (l_limits, u_limits) = Game::calculate_cheap_limits(&quarters);
         let mut players = Vec::new();
         for _i in 0..num_of_players {
-            players.push(Player::new_uniform_random((&l_limits, &r_limits)));
+            players.push(Player::new_uniform_random((&l_limits, &u_limits)));
         }
         Game {
             players: players,
-            current_quarter: 0,
+            quarters: quarters,
+            current_quarter_index: 0,
             index_of_value: 0,
         }
     }
+    fn calculate_cheap_limits(quarters: &Quarters) -> (Vec<f64>, Vec<f64>) {
+        let first_quarter = quarters.get(0).unwrap();
+        let mut lower_limits = vec![std::f64::MAX; first_quarter.get(0).unwrap().len()];
+        //println!("{:?}", lower_limits);
+        let mut upper_limits = vec![std::f64::MIN; first_quarter.get(0).unwrap().len()];
+        //println!("{:?}", upper_limits);
+        let mut lower_violation = vec![false; first_quarter.get(0).unwrap().len()];
+        let mut upper_violation = vec![false; first_quarter.get(0).unwrap().len()];
+        for i in 0..quarters.len() {
+            let current_quarter = quarters.get(i).unwrap();
+            for j in 0..current_quarter.len() {
+                let entry = current_quarter.get(j).unwrap();
+                for k in 0..entry.len() {
+                    if entry.get(k) < lower_limits[k] {
+                        if !lower_violation[k] & (lower_limits[k] > upper_limits[k]) & (lower_limits[k] != std::f64::MAX) & (upper_limits[k] != std::f64::MIN) {
+                            lower_violation[k] = true;
+                            println!("Lower violation occured when replacing {:?} with {:?} in Quarter {:?}, Entry {:?}, Field {:?}.", (lower_limits[k], upper_limits[k]), (entry.get(k), ""), (current_quarter.year, current_quarter.quarter), entry.name, k);
+                        }
+                        lower_limits[k] = entry.get(k);
+                    }
+                    if entry.get(k) > upper_limits[k] {
+                        if !upper_violation[k] & (lower_limits[k] > upper_limits[k]) & (lower_limits[k] != std::f64::MAX) & (upper_limits[k] != std::f64::MIN) {
+                            upper_violation[k] = true;
+                            println!("Upper violation occured when replacing {:?} with {:?} in Quarter {:?}, Entry {:?}, Field {:?}.", (lower_limits[k], upper_limits[k]), ("", entry.get(k)), (current_quarter.year, current_quarter.quarter), entry.name, k);
+                        }
+                        upper_limits[k] = entry.get(k);
+                    }
+                }
+            }
+        }
+        (lower_limits, upper_limits)
+    }
     /// Runs through the next quarter of test data.
     fn next_quarter(&mut self) {
-        let quarter = Quarter::load_blank(1970, 1);    // temp
+        let quarter = self.quarters.get(self.current_quarter_index).unwrap();
         for i in 0..self.players.len() {
             quarter.select_for_player(&mut self.players[i]);
         }
-        self.current_quarter += 1;
+        self.current_quarter_index += 1;
     }
     /// Runs through the last quarter of test data.
     fn final_quarter(&mut self) {
-        let quarter = Quarter::load_blank(1970, 1);    // temp
+        let quarter = self.quarters.get(self.current_quarter_index).unwrap();
         for i in 0..self.players.len() {
             quarter.calc_payoffs(&mut self.players[i], self.index_of_value);
         }
@@ -70,23 +100,34 @@ impl Game {
     /// * `k` - Constant used for tournament selection (default: DEFAULT_TOURNEY_CONST = 3).
     /// * `mut_const` - Constant used for mutation (default: DEFAULT_MUTATION_CONST = 1).
     pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64) {
-        while self.current_quarter < quarter_max {
+        while self.current_quarter_index < quarter_max - 1 {
             self.next_quarter();
         }
         self.final_quarter();
+        println!("{:?}", self.average_payoff());
+        //println!("{:?}", self.players);
         let mut new_population = Vec::new();
         for _i in 0..self.players.len() {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).mutate(mut_const));
         }
         self.players = new_population;
     }
+
+    pub fn average_payoff(&self) -> f64 {
+        let mut aggregate_payoff = 0.0;
+        for i in 0..self.players.len() {
+            aggregate_payoff += self.players[i].payoff;
+        }
+        aggregate_payoff / (self.players.len() as f64)
+    }
     /// Run through all of the test data, and generate a new population. Uses
     /// DEFAULT_TOURNEY_CONST and DEFAULT_MUTATION_CONST for the associated functions.
     ///
     /// # Arguments
     /// * `quarter_max` - The maximum number of quarters to run through.
-    pub fn perform_generation_default(&mut self, quarter_max: usize) {
-        self.perform_generation(quarter_max, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST)
+    pub fn perform_generation_default(&mut self) {
+        let quarters_len = self.quarters.len();
+        self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST)
     }
     /// Perform a tournament selection of size k within the current list of Players. The fitness
     /// function is the current payoff value of each player.
