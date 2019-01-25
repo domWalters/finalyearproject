@@ -29,6 +29,10 @@ impl Quarter {
     pub fn len(&self) -> usize {
         self.quarter_vector.len()
     }
+
+    pub fn get(&self, index: usize) -> Option<&DataSlice> {
+        self.quarter_vector.get(index)
+    }
     /// Assigns to a Player a vector of DataSlices that are piecewise strictly larger than that
     /// Player's set strategy
     ///

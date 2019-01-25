@@ -116,7 +116,7 @@ impl Quarters {
         let mut starting_year = 1970;
         let mut starting_quarter = 1;
         for quarter in pre_output {
-            if quarter.len() >= (4 * largest_length) / 5 {
+            if quarter.len() == largest_length { // >= (4 * largest_length) / 5 {
                 if !first_quarter_selected {
                     first_quarter_selected = true;
                     starting_year = quarter.year;
@@ -132,6 +132,14 @@ impl Quarters {
             starting_year: starting_year,
             starting_quarter: starting_quarter
         }
+    }
+
+    pub fn get(&self, index: usize) -> Option<&Quarter> {
+        self.quarters_vector.get(index)
+    }
+
+    pub fn len(&self) -> usize {
+        self.quarters_vector.len()
     }
 
 }
