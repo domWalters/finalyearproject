@@ -87,7 +87,7 @@ impl Quarters {
                     // Create the DataSlice of the Record
                     let mut record = DataSlice {
                         slice_vector: Vec::new(),
-                        name: format!("{}{}{}", name, row_year, row_quarter)
+                        name: format!("{}-{}-{}", name, row_year, row_quarter)
                     };
                     for i in 0..row.len() {
                         if !((i == year_index) | (i == quarter_index)) {

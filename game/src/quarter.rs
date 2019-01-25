@@ -48,26 +48,31 @@ impl Quarter {
     /// the payoff value that is calculated.
     /// * `index` - The index in the stock DataSlice to use for the payoff calculation.
     pub fn calc_payoffs(&self, player: &mut Player, index: usize) {
+        //println!("Calc payoff for {:?}...", (self.year, self.quarter));
+        //println!("{:?}", self.quarter_vector.iter().map(| d | &d.name).collect::<Vec<&String>>());
         for j in 0..player.stocks_purchased.len() {
             let stock = &player.stocks_purchased[j];
-            match self.find_by_name(stock) {
+            match self.find_by_stock_name(stock) {
                 Some(current_value) => {
-                    player.payoff += current_value.get(index) - stock.get(index)
+                    //println!("Change payoff by {:?}", current_value.get(index) - stock.get(index));
+                    player.payoff += current_value.get(index) - stock.get(index);
                 },
-                None => println!("SERIOUS FUCKING ERROR"),  // stock you bought doesn't exist anymore
+                None => return,
             }
         }
     }
-    /// Finds a DataSlice (if it exists) that has the same "name" as the input DataSlice.
+    /// Finds a DataSlice (if it exists) that has the same "stock_name()" as the input DataSlice.
     ///
     /// # Arguments
     /// * `entry` - A DataSlice to find in the Quarter.
-    fn find_by_name<'a>(&self, entry: &'a DataSlice) -> Option<&'a DataSlice> {
+    fn find_by_stock_name<'a>(&'a self, entry: &DataSlice) -> Option<&'a DataSlice> {
+        let entry_name = entry.stock_name();
         for i in 0..self.quarter_vector.len() {
-            if self.quarter_vector[i].name == entry.name {
-                return Some(entry)
+            if self.quarter_vector[i].stock_name() == entry_name {
+                return Some(&self.quarter_vector[i])
             }
         }
+        println!("ERROR: Stock no longer exists - {:?}", entry_name);
         return None
     }
 }

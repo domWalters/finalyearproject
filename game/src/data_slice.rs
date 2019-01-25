@@ -117,4 +117,8 @@ impl DataSlice {
         }
         true
     }
+
+    pub fn stock_name(&self) -> &str {
+        self.name.split('-').next().unwrap()
+    }
 }
