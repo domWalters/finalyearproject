@@ -44,11 +44,11 @@ impl DataSlice {
     pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>)) -> DataSlice {
         let mut output = Vec::new();
         let mut rng = rand::thread_rng();
-        for i in 0..l_limits.len() {
-            if l_limits[i] == r_limits[i] {
-                output.push(l_limits[i]);
+        for (l, r) in l_limits.iter().zip(r_limits) {
+            if l == r {
+                output.push(*l);
             } else {
-                output.push(rng.gen_range(l_limits[i], r_limits[i]));
+                output.push(rng.gen_range(*l, *r));
             }
         }
         DataSlice {
@@ -66,13 +66,13 @@ impl DataSlice {
     /// the two that constructed it. This allows the reuse of the DataSlices that construct this
     /// crossover.
     pub fn dumb_crossover(&self, slice: &DataSlice) -> DataSlice {
-        let mut output = Vec::new();
-        for i in 0..slice.len() {
-            output.push((self.get(i) + slice.get(i)) / 2.0);
-        }
         DataSlice {
-            slice_vector: output,
-            name: "".to_string(), //format!("Child of {} and {}.", self.name, slice.name),
+            slice_vector: self.clone()
+                              .into_iter()
+                              .zip(slice.slice_vector.iter())
+                              .map(|(l, r)| (l + r) / 2.0)
+                              .collect(),
+            name: "".to_string()
         }
     }
     /// Perform a mutation on the DataSlice.
@@ -89,29 +89,22 @@ impl DataSlice {
             // This will need to normal randomise for each variable.
             // Each element will need a different amount of randomness.
         }
-        self.copy()
+        self.clone()
     }
 
     pub fn lazy_mutate(&self, c: f64) -> DataSlice {    // does the mutate roll per element not per vector
-        let mut new_dataslice = self.copy();
         let mut rng = rand::thread_rng();
-        for i in 0..new_dataslice.len() {
-            if rng.gen_range(0.0, 1.0) < c / (new_dataslice.len() as f64) {
-                new_dataslice.slice_vector[i] = new_dataslice.slice_vector[i] * 1.1 * rng.gen_range(10.0 / 11.0, 1.0);   // perform an up to 10% mutate
-            }
-        }
-        new_dataslice
-    }
-    /// Create a new DataSlice struct that is functionally identical to the current one, but
-    /// doesn't share memory location.
-    pub fn copy(&self) -> DataSlice {
-        let mut output = Vec::new();
-        for i in 0..self.len() {
-            output.push(self.get(i));
-        }
         DataSlice {
-            slice_vector: output,
-            name: format!("{}", self.name),
+            slice_vector: self.clone().into_iter()
+                              .map(|e| {
+                                  if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
+                                      e * 1.1 * rng.gen_range(10.0 / 11.0, 1.0)   // perform an up to 10% mutate
+                                  } else {
+                                      e
+                                  }
+                              })
+                              .collect(),
+            name: "".to_string()
         }
     }
     /// Returns the length of the DataSlice

@@ -48,9 +48,9 @@ impl Quarter {
     /// # Arguments
     /// * `player` - A Player struct.
     pub fn select_for_player(&self, player: &mut Player) {
-        for i in 0..self.quarter_vector.len() {
-            if self.quarter_vector[i].greater_by_ratio(&player.strategy, 0.5) {
-                player.stocks_purchased.push(self.quarter_vector[i].copy());
+        for stock in &self.quarter_vector {
+            if stock.greater_by_ratio(&player.strategy, 0.5) {
+                player.stocks_purchased.push(stock.clone());
             }
         }
     }
@@ -61,9 +61,8 @@ impl Quarter {
     /// the payoff value that is calculated.
     /// * `index` - The index in the stock DataSlice to use for the payoff calculation.
     pub fn calc_payoffs(&self, player: &mut Player, index: usize) {
-        for j in 0..player.stocks_purchased.len() {
-            let stock = &player.stocks_purchased[j];
-            match self.find_by_stock_name(stock) {
+        for stock in &player.stocks_purchased {
+            match self.find_by_stock_name(&stock) {
                 Some(current_value) => {
                     player.payoff += current_value.get(index) - stock.get(index);
                 },
@@ -76,13 +75,12 @@ impl Quarter {
     /// # Arguments
     /// * `entry` - A DataSlice to find in the Quarter.
     fn find_by_stock_name<'a>(&'a self, entry: &DataSlice) -> Option<&'a DataSlice> {
-        let entry_name = entry.stock_name();
-        for i in 0..self.quarter_vector.len() {
-            if self.quarter_vector[i].stock_name() == entry_name {
-                return Some(&self.quarter_vector[i])
+        for stock in &self.quarter_vector {
+            if stock.stock_name() == entry.stock_name() {
+                return Some(&stock)
             }
         }
-        println!("ERROR: Stock no longer exists - {:?}", entry_name);
+        println!("ERROR: Stock no longer exists - {:?}", entry.stock_name());
         return None
     }
 }

@@ -50,10 +50,8 @@ impl Game {
         let first_quarter = quarters.get(0).unwrap();
         let mut lower_limits = vec![std::f64::MAX; first_quarter.get(0).unwrap().len()];
         let mut upper_limits = vec![std::f64::MIN; first_quarter.get(0).unwrap().len()];
-        for i in 0..quarters.len() {
-            let current_quarter = quarters.get(i).unwrap();
-            for j in 0..current_quarter.len() {
-                let entry = current_quarter.get(j).unwrap();
+        for current_quarter in &quarters.quarters_vector {
+            for entry in &current_quarter.quarter_vector {
                 for k in 0..entry.len() {
                     if entry.get(k) < lower_limits[k] {
                         lower_limits[k] = entry.get(k);
@@ -69,16 +67,16 @@ impl Game {
     /// Runs through the next quarter of test data.
     fn next_quarter(&mut self) {
         let quarter = self.quarters.get(self.current_quarter_index).unwrap();
-        for i in 0..self.players.len() {
-            quarter.select_for_player(&mut self.players[i]);
+        for mut player in self.players.iter_mut() {
+            quarter.select_for_player(&mut player);
         }
         self.current_quarter_index += 1;
     }
     /// Runs through the last quarter of test data.
     fn final_quarter(&mut self) {
         let quarter = self.quarters.get(self.current_quarter_index).unwrap();
-        for i in 0..self.players.len() {
-            quarter.calc_payoffs(&mut self.players[i], self.index_of_value);
+        for mut player in self.players.iter_mut() {
+            quarter.calc_payoffs(&mut player, self.index_of_value);
         }
         self.current_quarter_index = 0;
     }
@@ -94,14 +92,14 @@ impl Game {
         }
         self.final_quarter();
         let mut players_with_payoff = 0;
-        for i in 0..self.players.len() {
-            if self.players[i].payoff != 0.0 {
+        for player in &self.players {
+            if player.payoff != 0.0 {
                 players_with_payoff += 1;
             }
         }
         println!("Player count: {:?}, Average Payoff: {:?}", players_with_payoff, self.average_payoff());
         let mut new_population = Vec::new();
-        for _i in 0..self.players.len() {
+        for player in &self.players {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
         }
         self.players = new_population;
@@ -113,8 +111,8 @@ impl Game {
 
     pub fn payoff_sum(&self) -> f64 {
         let mut aggregate_payoff = 0.0;
-        for i in 0..self.players.len() {
-            aggregate_payoff += self.players[i].payoff;
+        for player in &self.players {
+            aggregate_payoff += player.payoff;
         }
         aggregate_payoff
     }
