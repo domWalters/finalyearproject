@@ -21,11 +21,10 @@ fn main() {
     create_all_unites();
     trim_and_sort();
     let quarters = Quarters::new_quarters_from_default_file();
-    //println!("{:?}", quarters);
 
     let mut game = Game::new_game(quarters, 100);
     for _i in 0..100 {
         game.perform_generation_default();
     }
-    //println!("{:?}", game);
+    game.perform_analytical_final_run();
 }

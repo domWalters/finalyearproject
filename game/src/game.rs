@@ -97,12 +97,40 @@ impl Game {
                 players_with_payoff += 1;
             }
         }
-        println!("Player count: {:?}, Average Payoff: {:?}", players_with_payoff, self.average_payoff());
+        self.analyse_field_purchases();
+        //println!("Player count: {:?}, Average Payoff: {:?}", players_with_payoff, self.average_payoff());
         let mut new_population = Vec::new();
         for player in &self.players {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
         }
         self.players = new_population;
+    }
+
+    pub fn perform_analytical_final_run(&mut self) {
+        while self.current_quarter_index < self.quarters.len() - 1 {
+            self.next_quarter();
+        }
+        self.final_quarter();
+        self.analyse_field_purchases();
+    }
+
+    pub fn analyse_field_purchases(&self) {
+        let mut aggregate_field_counter = vec![0; self.players[0].strategy.len()];
+        for player in &self.players {
+            let mut player_field_counter = vec![0; player.strategy.len()];
+            for stock in &player.stocks_purchased {
+                for k in 0..player.strategy.len() {
+                    if stock.get(k) > player.strategy.get(k) {
+                        player_field_counter[k] += 1;
+                    }
+                }
+            }
+            aggregate_field_counter =  aggregate_field_counter.iter()
+                                                              .zip(player_field_counter.iter())
+                                                              .map(|(a, p)| a + p)
+                                                              .collect();
+        }
+        println!("{:?}", aggregate_field_counter);
     }
 
     pub fn average_payoff(&self) -> f64 {
