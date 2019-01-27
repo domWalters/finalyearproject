@@ -133,7 +133,7 @@ impl DataSlice {
         let mut true_track = 0;
         let mut false_track = 0;
         for i in 0..self.len() {
-            if self.get(i) > slice.get(i) {
+            if self.get(i) >= slice.get(i) {
                 true_track += 1;
             } else {
                 false_track += 1;

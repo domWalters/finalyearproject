@@ -107,12 +107,17 @@ impl Game {
     }
 
     pub fn average_payoff(&self) -> f64 {
+        self.payoff_sum() / (self.players.len() as f64)
+    }
+
+    pub fn payoff_sum(&self) -> f64 {
         let mut aggregate_payoff = 0.0;
         for i in 0..self.players.len() {
             aggregate_payoff += self.players[i].payoff;
         }
-        aggregate_payoff / (self.players.len() as f64)
+        aggregate_payoff
     }
+
     /// Run through all of the test data, and generate a new population. Uses
     /// DEFAULT_TOURNEY_CONST and DEFAULT_MUTATION_CONST for the associated functions.
     ///
