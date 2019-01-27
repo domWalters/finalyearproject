@@ -2,6 +2,7 @@ use std::fmt;
 use rand::Rng;
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct DataSlice {
     pub slice_vector: Vec<f64>,
     pub name: String,
@@ -10,6 +11,15 @@ pub struct DataSlice {
 impl fmt::Display for DataSlice {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "DataSlice[slice_vector: {:?}, name: {}]", self.slice_vector, self.name)
+    }
+}
+
+impl IntoIterator for DataSlice {
+    type Item = f64;
+    type IntoIter = ::std::vec::IntoIter<f64>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.slice_vector.into_iter()
     }
 }
 

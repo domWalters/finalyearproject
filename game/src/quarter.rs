@@ -16,6 +16,15 @@ impl fmt::Display for Quarter {
     }
 }
 
+impl IntoIterator for Quarter {
+    type Item = DataSlice;
+    type IntoIter = ::std::vec::IntoIter<DataSlice>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.quarter_vector.into_iter()
+    }
+}
+
 impl Quarter {
     // Creates a blank Quarter with a length of zero.
     pub fn load_blank(year: i64, quarter: i64) -> Quarter {
