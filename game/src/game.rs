@@ -80,6 +80,7 @@ impl Game {
         for i in 0..self.players.len() {
             quarter.calc_payoffs(&mut self.players[i], self.index_of_value);
         }
+        self.current_quarter_index = 0;
     }
     /// Run through all of the test data, and generate a new population.
     ///
