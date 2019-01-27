@@ -6,7 +6,7 @@ use Quarter;
 use Quarters;
 
 static DEFAULT_TOURNEY_CONST: usize = 3;
-static DEFAULT_MUTATION_CONST: f64 = 1.0;
+static DEFAULT_MUTATION_CONST: f64 = 0.7;
 
 #[derive(Debug)]
 pub struct Game {
