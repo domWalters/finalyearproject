@@ -52,13 +52,10 @@ impl Quarter {
     /// the payoff value that is calculated.
     /// * `index` - The index in the stock DataSlice to use for the payoff calculation.
     pub fn calc_payoffs(&self, player: &mut Player, index: usize) {
-        //println!("Calc payoff for {:?}...", (self.year, self.quarter));
-        //println!("{:?}", self.quarter_vector.iter().map(| d | &d.name).collect::<Vec<&String>>());
         for j in 0..player.stocks_purchased.len() {
             let stock = &player.stocks_purchased[j];
             match self.find_by_stock_name(stock) {
                 Some(current_value) => {
-                    //println!("Change payoff by {:?}", current_value.get(index) - stock.get(index));
                     player.payoff += current_value.get(index) - stock.get(index);
                 },
                 None => return,

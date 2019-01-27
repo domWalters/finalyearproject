@@ -92,8 +92,13 @@ impl Game {
             self.next_quarter();
         }
         self.final_quarter();
-        println!("{:?}", self.average_payoff());
-        //println!("{:?}", self.players);
+        let mut players_with_payoff = 0;
+        for i in 0..self.players.len() {
+            if self.players[i].payoff != 0.0 {
+                players_with_payoff += 1;
+            }
+        }
+        println!("Player count: {:?}, Average Payoff: {:?}", players_with_payoff, self.average_payoff());
         let mut new_population = Vec::new();
         for _i in 0..self.players.len() {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
