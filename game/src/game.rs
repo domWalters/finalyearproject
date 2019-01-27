@@ -49,28 +49,16 @@ impl Game {
     fn calculate_cheap_limits(quarters: &Quarters) -> (Vec<f64>, Vec<f64>) {
         let first_quarter = quarters.get(0).unwrap();
         let mut lower_limits = vec![std::f64::MAX; first_quarter.get(0).unwrap().len()];
-        //println!("{:?}", lower_limits);
         let mut upper_limits = vec![std::f64::MIN; first_quarter.get(0).unwrap().len()];
-        //println!("{:?}", upper_limits);
-        let mut lower_violation = vec![false; first_quarter.get(0).unwrap().len()];
-        let mut upper_violation = vec![false; first_quarter.get(0).unwrap().len()];
         for i in 0..quarters.len() {
             let current_quarter = quarters.get(i).unwrap();
             for j in 0..current_quarter.len() {
                 let entry = current_quarter.get(j).unwrap();
                 for k in 0..entry.len() {
                     if entry.get(k) < lower_limits[k] {
-                        if !lower_violation[k] & (lower_limits[k] > upper_limits[k]) & (lower_limits[k] != std::f64::MAX) & (upper_limits[k] != std::f64::MIN) {
-                            lower_violation[k] = true;
-                            println!("Lower violation occured when replacing {:?} with {:?} in Quarter {:?}, Entry {:?}, Field {:?}.", (lower_limits[k], upper_limits[k]), (entry.get(k), ""), (current_quarter.year, current_quarter.quarter), entry.name, k);
-                        }
                         lower_limits[k] = entry.get(k);
                     }
                     if entry.get(k) > upper_limits[k] {
-                        if !upper_violation[k] & (lower_limits[k] > upper_limits[k]) & (lower_limits[k] != std::f64::MAX) & (upper_limits[k] != std::f64::MIN) {
-                            upper_violation[k] = true;
-                            println!("Upper violation occured when replacing {:?} with {:?} in Quarter {:?}, Entry {:?}, Field {:?}.", (lower_limits[k], upper_limits[k]), ("", entry.get(k)), (current_quarter.year, current_quarter.quarter), entry.name, k);
-                        }
                         upper_limits[k] = entry.get(k);
                     }
                 }
