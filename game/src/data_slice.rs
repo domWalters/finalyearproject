@@ -81,6 +81,17 @@ impl DataSlice {
         }
         self.copy()
     }
+
+    pub fn lazy_mutate(&self, c: f64) -> DataSlice {    // does the mutate roll per element not per vector
+        let mut new_dataslice = self.copy();
+        let mut rng = rand::thread_rng();
+        for i in 0..new_dataslice.len() {
+            if rng.gen_range(0.0, 1.0) < c / (new_dataslice.len() as f64) {
+                new_dataslice.slice_vector[i] = new_dataslice.slice_vector[i] * 1.1 * rng.gen_range(10.0 / 11.0, 1.0);   // perform an up to 10% mutate
+            }
+        }
+        new_dataslice
+    }
     /// Create a new DataSlice struct that is functionally identical to the current one, but
     /// doesn't share memory location.
     pub fn copy(&self) -> DataSlice {

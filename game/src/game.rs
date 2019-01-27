@@ -31,8 +31,8 @@ impl Game {
     /// * `size_of_data` - The length of DataSlice to use.
     ///
     /// # Remarks
-    /// Not currently implemented properly, just generates a very standard random Game. WIll need
-    /// redoing after test data is procured.
+    /// Not currently implemented properly, just generates a standard random Game with players
+    /// initialised between the test data element limits. Will likely need to be more sophisticated.
     pub fn new_game(quarters: Quarters, num_of_players: usize) -> Game {
         let (l_limits, u_limits) = Game::calculate_cheap_limits(&quarters);
         let mut players = Vec::new();
@@ -96,7 +96,7 @@ impl Game {
         //println!("{:?}", self.players);
         let mut new_population = Vec::new();
         for _i in 0..self.players.len() {
-            new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).mutate(mut_const));
+            new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
         }
         self.players = new_population;
     }

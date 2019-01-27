@@ -80,4 +80,12 @@ impl Player {
             stocks_purchased: Vec::new()
         }
     }
+
+    pub fn lazy_mutate(&self, c: f64) -> Player {
+        Player {
+            strategy: self.strategy.lazy_mutate(c),
+            payoff: 0.0,
+            stocks_purchased: Vec::new()
+        }
+    }
 }
