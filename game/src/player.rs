@@ -1,12 +1,13 @@
 use std::fmt;
 
+use DataRecord;
 use DataSlice;
 
 #[derive(Debug)]
 pub struct Player {
     pub strategy: DataSlice,
     pub payoff: f64,
-    pub stocks_purchased: Vec<DataSlice>,
+    pub stocks_purchased: Vec<DataRecord>,
 }
 
 impl fmt::Display for Player {

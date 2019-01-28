@@ -1,11 +1,11 @@
 use std::fmt;
 
-use DataSlice;
+use DataRecord;
 use Player;
 
 #[derive(Debug)]
 pub struct Quarter {
-    pub quarter_vector: Vec<DataSlice>,
+    pub quarter_vector: Vec<DataRecord>,
     pub year: i64,
     pub quarter: i64
 }
@@ -17,8 +17,8 @@ impl fmt::Display for Quarter {
 }
 
 impl IntoIterator for Quarter {
-    type Item = DataSlice;
-    type IntoIter = ::std::vec::IntoIter<DataSlice>;
+    type Item = DataRecord;
+    type IntoIter = ::std::vec::IntoIter<DataRecord>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.quarter_vector.into_iter()
@@ -39,10 +39,10 @@ impl Quarter {
         self.quarter_vector.len()
     }
 
-    pub fn get(&self, index: usize) -> Option<&DataSlice> {
+    pub fn get(&self, index: usize) -> Option<&DataRecord> {
         self.quarter_vector.get(index)
     }
-    /// Assigns to a Player a vector of DataSlices that are piecewise strictly larger than that
+    /// Assigns to a Player a vector of DataRecords that are piecewise strictly larger than that
     /// Player's set strategy
     ///
     /// # Arguments
@@ -59,7 +59,7 @@ impl Quarter {
     /// # Arguments
     /// * `player` - A Player struct that provides a list of purchased stocks and is used to store
     /// the payoff value that is calculated.
-    /// * `index` - The index in the stock DataSlice to use for the payoff calculation.
+    /// * `index` - The index in the stock DataRecord to use for the payoff calculation.
     pub fn calc_payoffs(&self, player: &mut Player, index: usize) {
         for stock in &player.stocks_purchased {
             match self.find_by_stock_name(&stock) {
@@ -70,17 +70,17 @@ impl Quarter {
             }
         }
     }
-    /// Finds a DataSlice (if it exists) that has the same "stock_name()" as the input DataSlice.
+    /// Finds a DataRecord (if it exists) that has the same ".stock_id.name" as the input DataRecord.
     ///
     /// # Arguments
-    /// * `entry` - A DataSlice to find in the Quarter.
-    fn find_by_stock_name<'a>(&'a self, entry: &DataSlice) -> Option<&'a DataSlice> {
+    /// * `entry` - A DataRecord to find in the Quarter.
+    fn find_by_stock_name<'a>(&'a self, entry: &DataRecord) -> Option<&'a DataRecord> {
         for stock in &self.quarter_vector {
-            if stock.stock_name() == entry.stock_name() {
+            if stock.stock_id.name == entry.stock_id.name {
                 return Some(&stock)
             }
         }
-        println!("ERROR: Stock no longer exists - {:?}", entry.stock_name());
+        println!("ERROR: Stock no longer exists - {:?}", entry.stock_id.name);
         return None
     }
 }

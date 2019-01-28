@@ -1,11 +1,11 @@
 use std::{
     fmt,
     env::* };
-use csv::{Reader};
-use std::num::ParseFloatError;
+use csv::Reader;
 
 use Quarter;
-use DataSlice;
+use DataRecord;
+use StockID;
 
 #[derive(Debug)]
 pub struct Quarters {
@@ -75,30 +75,32 @@ impl Quarters {
             for row_wrapped in reader.records() {
                 if let Ok(row) = row_wrapped {
                     // Get the row year, quarter
-                    let row_year = row.get(year_index).unwrap().to_string();
-                    let row_quarter = row.get(quarter_index).unwrap().to_string();
-                    let row_year_number = row_year.parse::<i64>().unwrap();
-                    let row_quarter_number = row_quarter[1..=1].parse::<i64>().unwrap();
+                    let row_year_number = row.get(year_index).unwrap().to_string().parse::<i64>().unwrap();
+                    let row_quarter_number = row.get(quarter_index).unwrap().to_string()[1..=1].parse::<i64>().unwrap();
                     // Get the quarter to put this row in
                     let mut filtered_quarters = pre_output.iter_mut().filter(|quarter| {
                         (quarter.year == row_year_number) & (quarter.quarter == row_quarter_number)
                     });
                     let mut quarter_to_use = filtered_quarters.next().unwrap();
-                    // Create the DataSlice of the Record
-                    let mut record = DataSlice {
-                        slice_vector: Vec::new(),
-                        name: format!("{}-{}-{}", name, row_year, row_quarter)
+                    // Create the DataRecord representation of the Record
+                    let mut data_record = DataRecord {
+                        record: Vec::new(),
+                        stock_id: StockID {
+                            name: name.clone(),
+                            year: row_year_number,
+                            quarter: row_quarter_number
+                        }
                     };
                     for i in 0..row.len() {
                         if !((i == year_index) | (i == quarter_index)) {
                             let parsed_field = row.get(i).unwrap().parse::<f64>();
                             match parsed_field {
-                                Ok(field) => record.slice_vector.push(field),
-                                Err(err) => record.slice_vector.push(0.0),
+                                Ok(field) => data_record.record.push(field),
+                                Err(_err) => data_record.record.push(0.0),
                             }
                         }
                     }
-                    quarter_to_use.quarter_vector.push(record);
+                    quarter_to_use.quarter_vector.push(data_record);
                 }
             }
         }

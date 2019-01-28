@@ -2,7 +2,6 @@ use rand::Rng;
 use std::fmt;
 
 use Player;
-use Quarter;
 use Quarters;
 
 static DEFAULT_TOURNEY_CONST: usize = 3;
@@ -17,7 +16,7 @@ pub struct Game {
 }
 
 impl fmt::Display for Game {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {  // Overly verbose
         write!(f, "Game[players: {:?}, quarters: {:?}, current_quarter_index: {}, index_of_value: {:?}]", self.players, self.quarters, self.current_quarter_index, self.index_of_value)
     }
 }
@@ -100,7 +99,7 @@ impl Game {
         self.analyse_field_purchases();
         //println!("Player count: {:?}, Average Payoff: {:?}", players_with_payoff, self.average_payoff());
         let mut new_population = Vec::new();
-        for player in &self.players {
+        for _player in &self.players {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
         }
         self.players = new_population;
