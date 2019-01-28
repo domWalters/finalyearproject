@@ -64,7 +64,7 @@ impl Player {
             stocks_purchased: Vec::new()
         }
     }
-    /// Perform a mutation on the Player.
+    /// Perform a lazy mutation on the Player.
     ///
     /// # Arguments
     /// * `c` - The mutation constant to use for the mutation.
@@ -73,14 +73,6 @@ impl Player {
     /// This resultant Player is new, and therefore isn't in the memory location of the Player
     /// used to create it. This allows the reuse of the Player that constructs this mutation.
     /// The payoff and stocks_purchased entries are reset.
-    pub fn mutate(&self, c: f64) -> Player {
-        Player {
-            strategy: self.strategy.mutate(c),
-            payoff: 0.0,
-            stocks_purchased: Vec::new()
-        }
-    }
-
     pub fn lazy_mutate(&self, c: f64) -> Player {
         Player {
             strategy: self.strategy.lazy_mutate(c),

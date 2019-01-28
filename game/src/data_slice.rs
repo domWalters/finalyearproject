@@ -75,7 +75,7 @@ impl DataSlice {
             name: "".to_string()
         }
     }
-    /// Perform a mutation on the DataSlice.
+    /// Perform a lazy mutation on the DataSlice.
     ///
     /// # Arguments
     /// * `c` - The mutation constant to use for the mutation.
@@ -83,15 +83,6 @@ impl DataSlice {
     /// # Remarks
     /// This resultant DataSlice is new, and therefore isn't in the memory location of the DataSlice
     /// used to create it. This allows the reuse of the DataSlice that constructs this mutation.
-    pub fn mutate(&self, c: f64) -> DataSlice {
-        for _i in 0..0 {
-            // For now, don't do anything.
-            // This will need to normal randomise for each variable.
-            // Each element will need a different amount of randomness.
-        }
-        self.clone()
-    }
-
     pub fn lazy_mutate(&self, c: f64) -> DataSlice {    // does the mutate roll per element not per vector
         let mut rng = rand::thread_rng();
         DataSlice {
