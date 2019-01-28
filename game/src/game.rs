@@ -27,7 +27,7 @@ impl Game {
     ///
     /// # Arguments
     /// * `num_of_players` - The number of players to create for the game.
-    /// * `size_of_data` - The length of DataSlice to use.
+    /// * `size_of_data` - The length of Screener/DataRecord to use.
     ///
     /// # Remarks
     /// Not currently implemented properly, just generates a standard random Game with players

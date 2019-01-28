@@ -1,11 +1,11 @@
 use std::fmt;
 
 use DataRecord;
-use DataSlice;
+use Screener;
 
 #[derive(Debug)]
 pub struct Player {
-    pub strategy: DataSlice,
+    pub strategy: Screener,
     pub payoff: f64,
     pub stocks_purchased: Vec<DataRecord>,
 }
@@ -21,7 +21,7 @@ impl Player {
     /// stocks_purchased.
     pub fn new_blank() -> Player {
         Player {
-            strategy: DataSlice::new_blank(),
+            strategy: Screener::new_blank(),
             payoff: 0.0,                     // dangerous
             stocks_purchased: Vec::new()
         }
@@ -29,14 +29,14 @@ impl Player {
     /// Creates a Player with a uniform random strategy within a set list of boundaries.
     ///
     /// # Arguments
-    /// * `l_limits` - The lower limits for each element of the strategy DataSlice.
-    /// * `r_limits` - The upper limits for each element of the strategy DataSlice.
+    /// * `l_limits` - The lower limits for each element of the strategy Screener.
+    /// * `r_limits` - The upper limits for each element of the strategy Screener.
     ///
     /// # Remarks
-    /// See DataSlice::new_uniform_random() documentation.
+    /// See Screener::new_uniform_random() documentation.
     pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>)) -> Player {
         Player {
-            strategy: DataSlice::new_uniform_random((l_limits, r_limits)),
+            strategy: Screener::new_uniform_random((l_limits, r_limits)),
             payoff: 0.0,                     // dangerous
             stocks_purchased: Vec::new()
         }

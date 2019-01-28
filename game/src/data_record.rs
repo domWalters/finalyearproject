@@ -1,6 +1,6 @@
 use std::fmt;
 
-use DataSlice;
+use Screener;
 
 #[derive(Debug)]
 #[derive(Clone)]
@@ -51,11 +51,11 @@ impl DataRecord {
         self.record[index]
     }
     ///
-    pub fn greater_by_ratio(&self, slice: &DataSlice, ratio: f64) -> bool {
+    pub fn greater_by_ratio(&self, screen: &Screener, ratio: f64) -> bool {
         let mut true_track = 0;
         let mut false_track = 0;
         for i in 0..self.len() {
-            if self.get(i) >= slice.get(i) {
+            if self.get(i) >= screen.get(i) {
                 true_track += 1;
             } else {
                 false_track += 1;
