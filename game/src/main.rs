@@ -1,6 +1,7 @@
 extern crate rand;
 extern crate csv;
 
+pub mod data_record;
 pub mod data_slice;
 pub mod quarter;
 pub mod quarters;
@@ -9,6 +10,7 @@ pub mod game;
 
 pub mod csv_reader;
 
+use data_record::{DataRecord, StockID};
 use data_slice::DataSlice;
 use quarter::Quarter;
 use quarters::Quarters;
