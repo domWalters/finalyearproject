@@ -54,7 +54,7 @@ pub mod csv_reader {
 
         // Construct new header
         {
-            let mut case_headers_iter = caseflow.headers().unwrap().iter();
+            let case_headers_iter = caseflow.headers().unwrap().iter();
             let mut price_headers_iter = price.headers().unwrap().iter();
             price_headers_iter.next();
             let mut calcs_headers_iter = calculations.headers().unwrap().iter();
@@ -336,7 +336,10 @@ pub mod csv_reader {
                     }
                 }
                 // Push the new header
-                writer.write_record(&new_header_vec);
+                if let Err(err) = writer.write_record(&new_header_vec) {
+                    println!("{:?}", err);
+                    panic!("Error when writing csv header.");
+                }
                 // Iterate over old rows
                 for old_row_wrapped in reader.records() {
                     if let Ok(old_row) = old_row_wrapped {
@@ -346,7 +349,10 @@ pub mod csv_reader {
                                 new_record[index] = old_row.get(i).unwrap();
                             }
                         }
-                        writer.write_record(new_record);
+                        if let Err(err) = writer.write_record(new_record) {
+                            println!("{:?}", err);
+                            panic!("Error when writing csv record.");
+                        }
                     }
                 }
             }
