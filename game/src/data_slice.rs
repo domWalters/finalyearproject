@@ -4,13 +4,12 @@ use rand::Rng;
 #[derive(Debug)]
 #[derive(Clone)]
 pub struct DataSlice {
-    pub slice_vector: Vec<f64>,
-    pub name: String,
+    pub slice_vector: Vec<f64>
 }
 
 impl fmt::Display for DataSlice {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "DataSlice[slice_vector: {:?}, name: {}]", self.slice_vector, self.name)
+        write!(f, "DataSlice[slice_vector: {:?}]", self.slice_vector)
     }
 }
 
@@ -27,8 +26,7 @@ impl DataSlice {
     /// Creates a blank DataSlice with the name "" and a length of zero.
     pub fn new_blank() -> DataSlice {
         DataSlice {
-            slice_vector: Vec::new(),
-            name: "".to_string(),
+            slice_vector: Vec::new()
         }
     }
     /// Creates a uniform random DataSlice within a set list of boundaries.
@@ -52,8 +50,7 @@ impl DataSlice {
             }
         }
         DataSlice {
-            slice_vector: output,
-            name: "".to_string(),
+            slice_vector: output
         }
     }
     /// Perform a uniform crossover of two DataSlices.
@@ -71,8 +68,7 @@ impl DataSlice {
                               .into_iter()
                               .zip(slice.slice_vector.iter())
                               .map(|(l, r)| (l + r) / 2.0)
-                              .collect(),
-            name: "".to_string()
+                              .collect()
         }
     }
     /// Perform a lazy mutation on the DataSlice.
@@ -94,8 +90,7 @@ impl DataSlice {
                                       e
                                   }
                               })
-                              .collect(),
-            name: "".to_string()
+                              .collect()
         }
     }
     /// Returns the length of the DataSlice
@@ -139,9 +134,5 @@ impl DataSlice {
             }
         }
         (true_track as f64) / (self.len() as f64) > ratio
-    }
-
-    pub fn stock_name(&self) -> &str {
-        self.name.split('-').next().unwrap()
     }
 }
