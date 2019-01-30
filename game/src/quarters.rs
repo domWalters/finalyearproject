@@ -42,8 +42,7 @@ impl Quarters {
         let mut trim_unite_folder = current_dir().unwrap();
         trim_unite_folder.pop(); trim_unite_folder.push("test-data/TrimmedUnitedData");
         // Files list
-        let files: Vec<_> = read_dir(trim_unite_folder).unwrap().map(|r| r.unwrap()).collect(); // NOT SORTED
-        let files_iter = files.iter();
+        let files_iter = read_dir(trim_unite_folder).unwrap().map(|r| r.unwrap()); // NOT SORTED
         // Populate vector of readers
         let mut file_readers = Vec::new();
         for file in files_iter {
@@ -104,8 +103,7 @@ impl Quarters {
         }
         // Issue from above: Files may still start and end at different times.
         // Solution: Assemble quarters even if they don't hold enough. Then ditch them by using length after the fact.
-        println!("Finding largest quarter..."); // might be able to fold or something here?
-
+        println!("Finding largest quarter...");
         let largest_length = pre_output.iter().fold(0, |acc, quarter| {
             let len = quarter.len();
             if len > acc {

@@ -13,15 +13,6 @@ impl fmt::Display for Screener {
     }
 }
 
-impl IntoIterator for Screener {
-    type Item = f64;
-    type IntoIter = ::std::vec::IntoIter<f64>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.screen.into_iter()
-    }
-}
-
 impl Screener {
     /// Creates a uniform random Screener within a set list of boundaries.
     ///
@@ -58,8 +49,8 @@ impl Screener {
     /// crossover.
     pub fn dumb_crossover(&self, slice: &Screener) -> Screener {
         Screener {
-            screen: self.clone()
-                        .into_iter()
+            screen: self.screen
+                        .iter()
                         .zip(slice.screen.iter())
                         .map(|(l, r)| (l + r) / 2.0)
                         .collect()
@@ -77,18 +68,18 @@ impl Screener {
         let mut rng = rand::thread_rng();
         let percent_mag = 10.0;                     // up to +/- 10% mutation
         Screener {
-            screen: self.clone().into_iter()
-                              .map(|e| {
-                                  if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
-                                      e * rng.gen_range(1.0 - (percent_mag / 100.0), 1.0 + (percent_mag / 100.0)) // perform an up to +/-percent_mag% mutation
-                                  } else {
-                                      e
-                                  }
-                              })
-                              .collect()
+            screen: self.screen
+                        .iter()
+                        .map(|&e| {
+                            if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
+                                e * rng.gen_range(1.0 - (percent_mag / 100.0), 1.0 + (percent_mag / 100.0)) // perform an up to +/-percent_mag% mutation
+                            } else {
+                                e
+                            }
+                        })
+                        .collect()
         }
     }
-
     /// Returns the length of the Screener
     pub fn len(&self) -> usize {
         self.screen.len()

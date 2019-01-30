@@ -29,15 +29,6 @@ impl fmt::Display for DataRecord {
     }
 }
 
-impl IntoIterator for DataRecord {
-    type Item = f64;
-    type IntoIter = ::std::vec::IntoIter<f64>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.record.into_iter()
-    }
-}
-
 impl DataRecord {
     /// Returns the length of the DataRecord
     pub fn len(&self) -> usize {
