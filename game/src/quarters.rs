@@ -130,6 +130,23 @@ impl Quarters {
         }
     }
 
+    pub fn natural_gain(&self, index_of_value: usize) -> f64 {
+        // Get quarters
+        let starting_quarter = self.quarters_vector.first().unwrap();
+        let final_quarter = self.quarters_vector.last().unwrap();
+        // For each element of the first, find it in the second.
+        let mut value_multiplier = Vec::new();
+        for record_in_starting in &starting_quarter.quarter_vector {
+            if let Some(record_in_final) = final_quarter.find_by_stock_name(&record_in_starting) {
+                value_multiplier.push(record_in_final.get(index_of_value) / record_in_starting.get(index_of_value));
+            } else {
+                println!("Whoopsie doopsie.");
+                // Stock no longer existed...
+            }
+        }
+        value_multiplier.iter().fold(0.0, |acc, f| acc + f ) / (value_multiplier.len() as f64)
+    }
+
     pub fn get(&self, index: usize) -> Option<&Quarter> {
         self.quarters_vector.get(index)
     }
