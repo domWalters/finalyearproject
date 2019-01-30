@@ -51,6 +51,11 @@ impl DataRecord {
         self.record[index]
     }
     ///
+    pub fn push(&mut self, new_element: f64) {
+        self.record.push(new_element);
+    }
+
+    ///
     pub fn greater_by_ratio(&self, screen: &Screener, ratio: f64) -> bool {
         let mut true_track = 0;
         let mut false_track = 0;

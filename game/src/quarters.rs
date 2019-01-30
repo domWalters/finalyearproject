@@ -93,46 +93,42 @@ impl Quarters {
                         if !((i == year_index) | (i == quarter_index)) {
                             let parsed_field = row.get(i).unwrap().parse::<f64>();
                             match parsed_field {
-                                Ok(field) => data_record.record.push(field),
-                                Err(_err) => data_record.record.push(0.0),
+                                Ok(field) => data_record.push(field),
+                                Err(_err) => data_record.push(0.0),
                             }
                         }
                     }
-                    quarter_to_use.quarter_vector.push(data_record);
+                    quarter_to_use.push(data_record);
                 }
             }
         }
         // Issue from above: Files may still start and end at different times.
         // Solution: Assemble quarters even if they don't hold enough. Then ditch them by using length after the fact.
         println!("Finding largest quarter..."); // might be able to fold or something here?
-        let mut largest_length = 0;
-        for quarter in &pre_output {
-            let new_length = quarter.len();
-            if new_length > largest_length {
-                println!("New largest quarter {:?} with value {}", (quarter.year, quarter.quarter), new_length);
-                largest_length = new_length;
-            }
-        }
-        let mut output = Vec::new();    // can I utilise filter here?
-        let mut first_quarter_selected = false;
-        let mut starting_year = 1970;
-        let mut starting_quarter = 1;
-        for quarter in pre_output {
-            if quarter.len() >= (4 * largest_length) / 5 {
-                if !first_quarter_selected {
-                    first_quarter_selected = true;
-                    starting_year = quarter.year;
-                    starting_quarter = quarter.quarter;
-                }
-                output.push(quarter);
+
+        let largest_length = pre_output.iter().fold(0, |acc, quarter| {
+            let len = quarter.len();
+            if len > acc {
+                println!("New largest quarter {:?} with value {}", (quarter.year, quarter.quarter), len);
+                len
             } else {
+                acc
+            }
+        });
+
+        let output: Vec<Quarter> = pre_output.into_iter().filter(|quarter| {
+            let keep = quarter.len() >= (4 * largest_length) / 5;
+            if !keep {
                 println!("Throwing away {:?} with length of {:?}, which is below 80% of {:?} ({:?}).", (quarter.year, quarter.quarter), quarter.len(), largest_length, (4 * largest_length) / 5);
             }
-        }
+            keep
+        }).collect();
+        let first_quarter_year = output[0].year;
+        let first_quarter_quarter = output[0].quarter;
         Quarters {
             quarters_vector: output,
-            starting_year: starting_year,
-            starting_quarter: starting_quarter
+            starting_year: first_quarter_year,
+            starting_quarter: first_quarter_quarter
         }
     }
 

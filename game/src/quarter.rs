@@ -42,6 +42,10 @@ impl Quarter {
     pub fn get(&self, index: usize) -> Option<&DataRecord> {
         self.quarter_vector.get(index)
     }
+
+    pub fn push(&mut self, new_record: DataRecord) {
+        self.quarter_vector.push(new_record);
+    }
     /// Assigns to a Player a vector of DataRecords that are piecewise strictly larger than that
     /// Player's set strategy
     ///
