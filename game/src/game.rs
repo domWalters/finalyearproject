@@ -64,10 +64,10 @@ impl Game {
         (lower_limits, upper_limits)
     }
     /// Runs through the next quarter of test data.
-    fn next_quarter(&mut self) {
+    fn next_quarter(&mut self, ratio: f64) {
         let quarter = self.quarters.get(self.current_quarter_index).unwrap();
         for mut player in self.players.iter_mut() {
-            quarter.select_for_player(&mut player);
+            quarter.select_for_player(&mut player, ratio);
         }
         self.current_quarter_index += 1;
     }
@@ -85,9 +85,9 @@ impl Game {
     /// * `quarter_max` - The maximum number of quarters to run through.
     /// * `k` - Constant used for tournament selection (default: DEFAULT_TOURNEY_CONST = 3).
     /// * `mut_const` - Constant used for mutation (default: DEFAULT_MUTATION_CONST = 1).
-    pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64) {
+    pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64, ratio: f64) {
         while self.current_quarter_index < quarter_max - 1 {
-            self.next_quarter();
+            self.next_quarter(ratio);
         }
         self.final_quarter();
         let mut players_with_payoff = 0;
@@ -105,9 +105,9 @@ impl Game {
         self.players = new_population;
     }
 
-    pub fn perform_analytical_final_run(&mut self) {
+    pub fn perform_analytical_final_run(&mut self, ratio: f64) {
         while self.current_quarter_index < self.quarters.len() - 1 {
-            self.next_quarter();
+            self.next_quarter(ratio);
         }
         self.final_quarter();
         self.analyse_field_purchases();
@@ -151,7 +151,7 @@ impl Game {
     /// * `quarter_max` - The maximum number of quarters to run through.
     pub fn perform_generation_default(&mut self) {
         let quarters_len = self.quarters.len();
-        self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST)
+        self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, 0.5);
     }
     /// Perform a tournament selection of size k within the current list of Players. The fitness
     /// function is the current payoff value of each player.

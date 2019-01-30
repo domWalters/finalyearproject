@@ -1,6 +1,6 @@
 use std::fmt;
 
-use Screener;
+use Player;
 
 #[derive(Debug)]
 #[derive(Clone)]
@@ -47,21 +47,35 @@ impl DataRecord {
     }
 
     ///
-    pub fn greater_by_ratio(&self, screen: &Screener, ratio: f64) -> bool {
+    pub fn greater_by_ratio(&self, player: &Player, ratio: f64) -> bool {
         let mut true_track = 0;
         let mut false_track = 0;
-        for i in 0..self.len() {
-            if self.get(i) >= screen.get(i) {
-                true_track += 1;
-            } else {
-                false_track += 1;
-            }
-            if (true_track as f64) / (self.len() as f64) > ratio {
-                return true;
-            } else if (false_track as f64) / (self.len() as f64) > 1.0 - ratio {
-                return false;
+        let fields_used_count = player.fields_used.iter()
+                                                  .fold(0, |acc, &next| {
+                                                      if next {
+                                                          acc + 1
+                                                      } else {
+                                                          acc
+                                                      }
+                                                  });
+        let ratio_true_limit = ratio * (fields_used_count as f64);
+        let ratio_false_limit = (1.0 - ratio) * (fields_used_count as f64);
+        let zip = self.record.iter().zip(player.strategy.screen.iter()).zip(player.fields_used.iter());
+        for ((&stock_element, &screen_element), &field_used) in zip {
+            if field_used {
+                if stock_element >= screen_element {
+                    true_track += 1;
+                    if true_track as f64 > ratio_true_limit {
+                        return true;
+                    }
+                } else {
+                    false_track += 1;
+                    if false_track as f64 > ratio_false_limit {
+                        return false;
+                    }
+                }
             }
         }
-        (true_track as f64) / (self.len() as f64) > ratio
+        true_track as f64 > ratio_true_limit
     }
 }
