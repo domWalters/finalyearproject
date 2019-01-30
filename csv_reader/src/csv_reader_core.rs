@@ -227,22 +227,6 @@ pub fn unite_stock_csvs(stock_string: String) {
 
 pub fn create_all_unites() {
     // Configure Path, open stock_names
-    let mut path = current_dir().unwrap();
-    path.pop(); path.push("test-data/stock_names.csv");
-    let mut stock_names = Reader::from_path(&path).unwrap();
-
-    // Pull out header, for each entry run a unite.
-    if let Ok(stock_names_record) = stock_names.headers() {
-        let stock_names_record_iter = stock_names_record.iter();
-        for field in stock_names_record_iter {
-            println!("Uniting {:?}...", field);
-            unite_stock_csvs(field.to_string());
-        }
-    }
-}
-
-pub fn create_all_unites_2() {
-    // Configure Path, open stock_names
     let mut four = current_dir().unwrap();
     four.pop(); four.push("test-data/FourFileDataRev");
 
@@ -250,13 +234,13 @@ pub fn create_all_unites_2() {
     files.sort_by_key(|dir| dir.file_name());
     let mut files_iter = files.iter().peekable();
     while let Some(_) = files_iter.peek() {
-        let mut first = files_iter.next().unwrap();
-        let mut second = files_iter.next().unwrap();
-        let mut third = files_iter.next().unwrap();
-        let mut fourth = files_iter.next().unwrap();
+        let first = files_iter.next().unwrap();
+        let _second = files_iter.next().unwrap();
+        let _third = files_iter.next().unwrap();
+        let _fourth = files_iter.next().unwrap();
 
-        let mut first_file_name = first.file_name().into_string().unwrap();
-        let mut first_stock_name = first_file_name.split('_').next().unwrap();
+        let first_file_name = first.file_name().into_string().unwrap();
+        let first_stock_name = first_file_name.split('_').next().unwrap();
 
         println!("Uniting {:?}...", first_stock_name);
         unite_stock_csvs(first_stock_name.to_string());
@@ -272,7 +256,7 @@ pub fn complex_reverse() {
 
     let mut files: Vec<_> = read_dir(four).unwrap().map(|r| r.unwrap()).collect();
     files.sort_by_key(|dir| dir.file_name());
-    let mut files_iter = files.iter();
+    let files_iter = files.iter();
 
     for file in files_iter {
         let mut reader = Reader::from_path(file.path()).unwrap();
@@ -288,15 +272,14 @@ pub fn complex_reverse() {
                 println!("FLUSH ERROR.");
             }
         }
-        println!("{:?}", file.file_name().into_string().unwrap());
         if file.file_name().into_string().unwrap().contains("case") | file.file_name().into_string().unwrap().contains("calc") {
-            let mut records_iter = reader.records();
+            let records_iter = reader.records();
             let mut actual_iter_vec = Vec::new();
             for record in records_iter {
                 let record_unwrap = record.unwrap();
                 actual_iter_vec.push(record_unwrap);
             }
-            let mut records_rev = actual_iter_vec.iter().rev();
+            let records_rev = actual_iter_vec.iter().rev();
             for record in records_rev {
                 if let Err(_) = writer.write_record(record) {
                     println!("WRITE ERROR WITH RECORD.");
@@ -310,7 +293,7 @@ pub fn complex_reverse() {
         } else if file.file_name().into_string().unwrap().contains("balance") {
             // Balance is an atrotious file.
             // In ascending order but puts all Q4s before the sets of (Q1, Q2, Q3).
-            let mut records_iter = reader.records();
+            let records_iter = reader.records();
             let mut actual_iter_vec = Vec::new();
             for record in records_iter {
                 let record_unwrap = record.unwrap();
@@ -328,7 +311,7 @@ pub fn complex_reverse() {
                 }
                 field
             });
-            let mut records_rev_iter = actual_iter_vec.iter().rev();
+            let records_rev_iter = actual_iter_vec.iter().rev();
             for record in records_rev_iter {
                 if let Err(_) = writer.write_record(record) {
                     println!("WRITE ERROR WITH RECORD.");
@@ -341,7 +324,9 @@ pub fn complex_reverse() {
             }
         } else {
             four_rev.push(file.file_name());
-            copy(file.path(), &four_rev);
+            if let Err(err) = copy(file.path(), &four_rev) {
+                println!("{:?}", err);
+            }
             four_rev.pop();
         }
     }
@@ -363,28 +348,34 @@ pub fn assemble_four_file_data() {
     let mut third = files_iter.next().unwrap();
     let mut fourth = files_iter.next().unwrap();
 
-    let mut first_file_name = first.file_name().into_string().unwrap();
-    let mut second_file_name = second.file_name().into_string().unwrap();
-    let mut third_file_name = third.file_name().into_string().unwrap();
-    let mut fourth_file_name = fourth.file_name().into_string().unwrap();
+    let first_file_name = first.file_name().into_string().unwrap();
+    let second_file_name = second.file_name().into_string().unwrap();
+    let third_file_name = third.file_name().into_string().unwrap();
+    let fourth_file_name = fourth.file_name().into_string().unwrap();
 
-    let mut first_stock_name = first_file_name.split('_').next().unwrap();
-    let mut second_stock_name = second_file_name.split('_').next().unwrap();
-    let mut third_stock_name = third_file_name.split('_').next().unwrap();
-    let mut fourth_stock_name = fourth_file_name.split('_').next().unwrap();
-
-    println!("{:?}", (first_stock_name, second_stock_name, third_stock_name, fourth_stock_name));
+    let first_stock_name = first_file_name.split('_').next().unwrap();
+    let second_stock_name = second_file_name.split('_').next().unwrap();
+    let third_stock_name = third_file_name.split('_').next().unwrap();
+    let fourth_stock_name = fourth_file_name.split('_').next().unwrap();
 
     if (first_stock_name == second_stock_name) & (first_stock_name == third_stock_name) & (first_stock_name == fourth_stock_name) {
         // We have 4 file paths, copy them.
         four.push(first.file_name());
-        copy(first.path(), &four);
+        if let Err(err) = copy(first.path(), &four) {
+            println!("{:?}", err);
+        }
         four.pop(); four.push(second.file_name());
-        copy(second.path(), &four);
+        if let Err(err) = copy(second.path(), &four) {
+            println!("{:?}", err);
+        }
         four.pop(); four.push(third.file_name());
-        copy(third.path(), &four);
+        if let Err(err) = copy(third.path(), &four) {
+            println!("{:?}", err);
+        }
         four.pop(); four.push(fourth.file_name());
-        copy(fourth.path(), &four);
+        if let Err(err) = copy(fourth.path(), &four) {
+            println!("{:?}", err);
+        }
         four.pop();
     }
     for next_file in files_iter {
@@ -393,28 +384,34 @@ pub fn assemble_four_file_data() {
         third = fourth;
         fourth = next_file;
 
-        let mut first_file_name = first.file_name().into_string().unwrap();
-        let mut second_file_name = second.file_name().into_string().unwrap();
-        let mut third_file_name = third.file_name().into_string().unwrap();
-        let mut fourth_file_name = fourth.file_name().into_string().unwrap();
+        let first_file_name = first.file_name().into_string().unwrap();
+        let second_file_name = second.file_name().into_string().unwrap();
+        let third_file_name = third.file_name().into_string().unwrap();
+        let fourth_file_name = fourth.file_name().into_string().unwrap();
 
-        let mut first_stock_name = first_file_name.split('_').next().unwrap();
-        let mut second_stock_name = second_file_name.split('_').next().unwrap();
-        let mut third_stock_name = third_file_name.split('_').next().unwrap();
-        let mut fourth_stock_name = fourth_file_name.split('_').next().unwrap();
-
-        println!("{:?}", (first_stock_name, second_stock_name, third_stock_name, fourth_stock_name));
+        let first_stock_name = first_file_name.split('_').next().unwrap();
+        let second_stock_name = second_file_name.split('_').next().unwrap();
+        let third_stock_name = third_file_name.split('_').next().unwrap();
+        let fourth_stock_name = fourth_file_name.split('_').next().unwrap();
 
         if (first_stock_name == second_stock_name) & (first_stock_name == third_stock_name) & (first_stock_name == fourth_stock_name) {
             // We have 4 file paths, copy them.
             four.push(first.file_name());
-            copy(first.path(), &four);
+            if let Err(err) = copy(first.path(), &four) {
+                println!("{:?}", err);
+            }
             four.pop(); four.push(second.file_name());
-            copy(second.path(), &four);
+            if let Err(err) = copy(second.path(), &four) {
+                println!("{:?}", err);
+            }
             four.pop(); four.push(third.file_name());
-            copy(third.path(), &four);
+            if let Err(err) = copy(third.path(), &four) {
+                println!("{:?}", err);
+            }
             four.pop(); four.push(fourth.file_name());
-            copy(fourth.path(), &four);
+            if let Err(err) = copy(fourth.path(), &four) {
+                println!("{:?}", err);
+            }
             four.pop();
         }
     }
@@ -425,8 +422,8 @@ pub fn trim_and_sort() {
     let mut unite_folder = current_dir().unwrap();
     unite_folder.pop(); unite_folder.push("test-data/UnitedData");
     // Files list
-    let mut files: Vec<_> = read_dir(unite_folder).unwrap().map(|r| r.unwrap()).collect();
-    let mut files_iter = files.iter();
+    let files: Vec<_> = read_dir(unite_folder).unwrap().map(|r| r.unwrap()).collect();
+    let files_iter = files.iter();
     // Populate vector of readers
     let mut file_readers = Vec::new();
     for file in files_iter {
@@ -441,7 +438,7 @@ pub fn trim_and_sort() {
 
     let headers = header_reader.unwrap().headers().unwrap();
     'a : for field_to_find in headers {                                     // loop over prospective header
-        'b : for mut reader in &mut file_readers {                          // loop over readers
+        'b : for reader in &mut file_readers {                          // loop over readers
             'c : for potential_field in reader.headers().unwrap().iter() {  // loop of elements of reader
                 if potential_field == field_to_find {
                     continue 'b;
@@ -470,7 +467,7 @@ pub fn trim_and_sort() {
     let mut trim_unite_folder = current_dir().unwrap();
     trim_unite_folder.pop(); trim_unite_folder.push("test-data/TrimmedUnitedData");
     // Define the readers and writers
-    let mut files_iter = files.iter();
+    let files_iter = files.iter();
     for file in files_iter {
         // Open a writer
         let mut temp_str = file.file_name().into_string().unwrap().split('_').next().unwrap().to_string();
