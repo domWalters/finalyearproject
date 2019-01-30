@@ -60,11 +60,14 @@ impl Quarter {
     /// * `player` - A Player struct that provides a list of purchased stocks and is used to store
     /// the payoff value that is calculated.
     /// * `index` - The index in the stock DataRecord to use for the payoff calculation.
+    ///
+    /// # Remarks
+    /// This payoff is relative, so as not to benefit stocks with large values more than lower value stocks.
     pub fn calc_payoffs(&self, player: &mut Player, index: usize) {
         for stock in &player.stocks_purchased {
             match self.find_by_stock_name(&stock) {
                 Some(current_value) => {
-                    player.payoff += current_value.get(index) - stock.get(index);
+                    player.payoff += current_value.get(index) / (stock.get(index) * (player.stocks_purchased.len() as f64));
                 },
                 None => return,
             }

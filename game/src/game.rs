@@ -97,7 +97,7 @@ impl Game {
             }
         }
         self.analyse_field_purchases();
-        //println!("Player count: {:?}, Average Payoff: {:?}", players_with_payoff, self.average_payoff());
+        println!("Player count: {:?}, Average % Profit: {:?}", players_with_payoff, self.average_payoff());
         let mut new_population = Vec::new();
         for _player in &self.players {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
@@ -133,13 +133,13 @@ impl Game {
     }
 
     pub fn average_payoff(&self) -> f64 {
-        self.payoff_sum() / (self.players.len() as f64)
+        (100.0 * self.payoff_sum()) / (self.players.len() as f64)
     }
 
     pub fn payoff_sum(&self) -> f64 {
         let mut aggregate_payoff = 0.0;
         for player in &self.players {
-            aggregate_payoff += player.payoff;
+            aggregate_payoff += (player.payoff - 1.0);
         }
         aggregate_payoff
     }
