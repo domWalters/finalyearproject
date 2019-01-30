@@ -1,4 +1,5 @@
 use std::fmt;
+use rand::Rng;
 
 use DataRecord;
 use Screener;
@@ -8,6 +9,7 @@ pub struct Player {
     pub strategy: Screener,
     pub payoff: f64,
     pub stocks_purchased: Vec<DataRecord>,
+    pub fields_used: Vec<bool>
 }
 
 impl fmt::Display for Player {
@@ -29,7 +31,8 @@ impl Player {
         Player {
             strategy: Screener::new_uniform_random((l_limits, r_limits)),
             payoff: 0.0,                     // dangerous
-            stocks_purchased: Vec::new()
+            stocks_purchased: Vec::new(),
+            fields_used: vec![true; l_limits.len()]
         }
     }
     /// Resets the player, to have payoff 0.0 and an empty stocks_purchased vector.
@@ -39,6 +42,7 @@ impl Player {
     pub fn reset(&mut self) {
         self.payoff = 0.0;
         self.stocks_purchased = Vec::new();
+        self.fields_used = vec![true; self.strategy.len()];
     }
     /// Perform a uniform crossover of two Players.
     ///
@@ -53,7 +57,17 @@ impl Player {
         Player {
             strategy: self.strategy.dumb_crossover(&player.strategy),
             payoff: 0.0,
-            stocks_purchased: Vec::new()
+            stocks_purchased: Vec::new(),
+            fields_used: self.fields_used.iter()
+                                         .zip(player.fields_used.iter())
+                                         .map(|(l, r)| {
+                                             let mut rng = rand::thread_rng();
+                                             if rng.gen_bool(0.5) {
+                                                 *l
+                                             } else {
+                                                 *r
+                                             }
+                                         }).collect()
         }
     }
     /// Perform a lazy mutation on the Player.
@@ -69,7 +83,8 @@ impl Player {
         Player {
             strategy: self.strategy.lazy_mutate(c),
             payoff: 0.0,
-            stocks_purchased: Vec::new()
+            stocks_purchased: Vec::new(),
+            fields_used: self.fields_used.clone()
         }
     }
 }
