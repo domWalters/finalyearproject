@@ -134,6 +134,17 @@ impl Game {
         println!("{:?}", aggregate_field_counter);
     }
 
+    pub fn recalc_fields_used(&mut self) {
+        let population_field_counter = analyse_field_purchases();
+        for player_field_counter in (population_field_counter) {
+            for field in player_field_counter {
+                if field == 0 {
+                    
+                }
+            }
+        }
+    }
+
     pub fn average_payoff(&self) -> f64 {
         (100.0 * self.payoff_sum()) / (self.players.len() as f64)
     }
