@@ -85,7 +85,7 @@ impl Screener {
             screen: self.clone().into_iter()
                               .map(|e| {
                                   if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
-                                      e * 1.1 * rng.gen_range(10.0 / 11.0, 1.0)   // perform an up to 10% mutate
+                                      e * Screener::mutation_magnitude(10.0)
                                   } else {
                                       e
                                   }
@@ -93,6 +93,14 @@ impl Screener {
                               .collect()
         }
     }
+
+    fn mutation_magnitude(percent_mag: f64) -> f64 {    // perform an up to +/-percent_mag% mutation
+        let mut rng = rand::thread_rng();
+        let pos_mult = 1.0 + (percent_mag / 100.0);
+        let neg_mult = 1.0 - (percent_mag / 100.0);
+        rng.gen_range(neg_mult, pos_mult)
+    }
+
     /// Returns the length of the Screener
     pub fn len(&self) -> usize {
         self.screen.len()
