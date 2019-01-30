@@ -20,7 +20,9 @@ use game::Game;
 use csv_reader::csv_reader::*;
 
 fn main() {
-    create_all_unites();
+    assemble_four_file_data();
+    complex_reverse();
+    create_all_unites_2();
     trim_and_sort();
     let quarters = Quarters::new_quarters_from_default_file();
 

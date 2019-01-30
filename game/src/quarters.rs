@@ -99,10 +99,12 @@ impl Quarters {
         }
         // Issue from above: Files may still start and end at different times.
         // Solution: Assemble quarters even if they don't hold enough. Then ditch them by using length after the fact.
+        println!("Finding largest quarter..."); // might be able to fold or something here?
         let mut largest_length = 0;
-        for i in 1..pre_output.len() {
-            let new_length = pre_output.get(i).unwrap().len();
+        for quarter in &pre_output {
+            let new_length = quarter.len();
             if new_length > largest_length {
+                println!("New largest quarter {:?} with value {}", (quarter.year, quarter.quarter), new_length);
                 largest_length = new_length;
             }
         }
@@ -111,7 +113,7 @@ impl Quarters {
         let mut starting_year = 1970;
         let mut starting_quarter = 1;
         for quarter in pre_output {
-            if quarter.len() == largest_length { // >= (4 * largest_length) / 5 {
+            if quarter.len() >= (4 * largest_length) / 5 {
                 if !first_quarter_selected {
                     first_quarter_selected = true;
                     starting_year = quarter.year;
