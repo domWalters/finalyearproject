@@ -47,7 +47,12 @@ impl Quarters {
         // Populate vector of readers
         let mut file_readers = Vec::new();
         for file in files_iter {
-            file_readers.push((Reader::from_path(file.path()).unwrap(), file.file_name().into_string().unwrap().split('_').next().unwrap().to_string()));
+            let file_name = file.file_name().into_string().unwrap();
+            if file_name.contains("README") {
+                continue;
+            } else {
+                file_readers.push((Reader::from_path(file.path()).unwrap(), file_name.split('_').next().unwrap().to_string()));
+            }
         }
         // Go through every file and assemble quarters
         for (mut reader, name) in file_readers {
