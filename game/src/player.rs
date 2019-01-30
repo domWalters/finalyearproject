@@ -17,15 +17,6 @@ impl fmt::Display for Player {
 }
 
 impl Player {
-    /// Creates a blank Player with a blank strategy, a payoff of 0.0, and an empty vector of
-    /// stocks_purchased.
-    pub fn new_blank() -> Player {
-        Player {
-            strategy: Screener::new_blank(),
-            payoff: 0.0,                     // dangerous
-            stocks_purchased: Vec::new()
-        }
-    }
     /// Creates a Player with a uniform random strategy within a set list of boundaries.
     ///
     /// # Arguments

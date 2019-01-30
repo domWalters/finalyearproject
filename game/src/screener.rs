@@ -23,12 +23,6 @@ impl IntoIterator for Screener {
 }
 
 impl Screener {
-    /// Creates a blank Screener with the name "" and a length of zero.
-    pub fn new_blank() -> Screener {
-        Screener {
-            screen: Vec::new()
-        }
-    }
     /// Creates a uniform random Screener within a set list of boundaries.
     ///
     /// # Arguments
@@ -65,10 +59,10 @@ impl Screener {
     pub fn dumb_crossover(&self, slice: &Screener) -> Screener {
         Screener {
             screen: self.clone()
-                              .into_iter()
-                              .zip(slice.screen.iter())
-                              .map(|(l, r)| (l + r) / 2.0)
-                              .collect()
+                        .into_iter()
+                        .zip(slice.screen.iter())
+                        .map(|(l, r)| (l + r) / 2.0)
+                        .collect()
         }
     }
     /// Perform a lazy mutation on the Screener.
@@ -81,24 +75,18 @@ impl Screener {
     /// used to create it. This allows the reuse of the Screener that constructs this mutation.
     pub fn lazy_mutate(&self, c: f64) -> Screener {    // does the mutate roll per element not per vector
         let mut rng = rand::thread_rng();
+        let percent_mag = 10.0;                     // up to +/- 10% mutation
         Screener {
             screen: self.clone().into_iter()
                               .map(|e| {
                                   if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
-                                      e * Screener::mutation_magnitude(10.0)
+                                      e * rng.gen_range(1.0 - (percent_mag / 100.0), 1.0 + (percent_mag / 100.0)) // perform an up to +/-percent_mag% mutation
                                   } else {
                                       e
                                   }
                               })
                               .collect()
         }
-    }
-
-    fn mutation_magnitude(percent_mag: f64) -> f64 {    // perform an up to +/-percent_mag% mutation
-        let mut rng = rand::thread_rng();
-        let pos_mult = 1.0 + (percent_mag / 100.0);
-        let neg_mult = 1.0 - (percent_mag / 100.0);
-        rng.gen_range(neg_mult, pos_mult)
     }
 
     /// Returns the length of the Screener
@@ -111,36 +99,5 @@ impl Screener {
     /// * `index` - The index requested.
     pub fn get(&self, index: usize) -> f64 {
         self.screen[index]
-    }
-    /// Returns a boolean representing whether the argument Screener is piecewise strictly
-    /// larger than the current Screener.
-    ///
-    /// # Arguments
-    /// * `slice` - The Screener to compare against.
-    pub fn greater(&self, slice: &Screener) -> bool {
-        for i in 0..self.len() {
-            if slice.get(i) > self.get(i) {
-                return false
-            }
-        }
-        true
-    }
-
-    pub fn greater_by_ratio(&self, slice: &Screener, ratio: f64) -> bool {
-        let mut true_track = 0;
-        let mut false_track = 0;
-        for i in 0..self.len() {
-            if self.get(i) >= slice.get(i) {
-                true_track += 1;
-            } else {
-                false_track += 1;
-            }
-            if (true_track as f64) / (self.len() as f64) > ratio {
-                return true;
-            } else if (false_track as f64) / (self.len() as f64) > 1.0 - ratio {
-                return false;
-            }
-        }
-        (true_track as f64) / (self.len() as f64) > ratio
     }
 }

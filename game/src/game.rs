@@ -139,7 +139,7 @@ impl Game {
     pub fn payoff_sum(&self) -> f64 {
         let mut aggregate_payoff = 0.0;
         for player in &self.players {
-            aggregate_payoff += (player.payoff - 1.0);
+            aggregate_payoff += player.payoff - 1.0;
         }
         aggregate_payoff
     }

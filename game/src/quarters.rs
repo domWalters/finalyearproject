@@ -42,8 +42,8 @@ impl Quarters {
         let mut trim_unite_folder = current_dir().unwrap();
         trim_unite_folder.pop(); trim_unite_folder.push("test-data/TrimmedUnitedData");
         // Files list
-        let mut files: Vec<_> = read_dir(trim_unite_folder).unwrap().map(|r| r.unwrap()).collect(); // NOT SORTED
-        let mut files_iter = files.iter();
+        let files: Vec<_> = read_dir(trim_unite_folder).unwrap().map(|r| r.unwrap()).collect(); // NOT SORTED
+        let files_iter = files.iter();
         // Populate vector of readers
         let mut file_readers = Vec::new();
         for file in files_iter {
