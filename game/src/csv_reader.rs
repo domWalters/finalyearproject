@@ -1,8 +1,6 @@
 pub mod csv_reader {
 
-    use std::{
-        iter::FromIterator,
-        env::* };
+    use std::{iter::FromIterator, env::*, fs::*};
     use csv::{Writer, Reader, StringRecord};
 
     fn drop_and_extend(new_record: &mut StringRecord, old_record: &StringRecord, drop_count: usize) {
@@ -18,7 +16,7 @@ pub mod csv_reader {
 
         // Configure Path
         let mut path = current_dir().unwrap();
-        path.pop(); path.push("test-data/Data");
+        path.pop(); path.push("test-data/FourFileDataRev");
 
         // Open all 4 file readers
         let mut bal = stock_name.clone();
@@ -179,8 +177,8 @@ pub mod csv_reader {
                             }
                         } else {
                             if &bal_field[1..=4] == year {
-                                if &bal_field[8..=9] != quarter {
-                                    let bal_quarter_number = bal_field[9..=9].parse::<usize>().unwrap();
+                                if &bal_field[7..=8] != quarter {
+                                    let bal_quarter_number = bal_field[8..=8].parse::<usize>().unwrap();
                                     mismatch_tracker[2] = (true, bal_quarter_number > quarter_number);
                                     println!("Mismatch in balance quarter. Balance (Y, M): {:?}, New (Y, M): {:?}.", bal_field, (year, quarter));
                                     continue;
@@ -428,21 +426,13 @@ pub mod csv_reader {
         // Path to unite folder
         let mut unite_folder = current_dir().unwrap();
         unite_folder.pop(); unite_folder.push("test-data/UnitedData");
-        // Path to stock_names
-        let mut path = current_dir().unwrap();
-        path.pop(); path.push("test-data/stock_names.csv");
+        // Files list
+        let mut files: Vec<_> = read_dir(unite_folder).unwrap().map(|r| r.unwrap()).collect();
+        let mut files_iter = files.iter();
         // Populate vector of readers
-        let mut stock_names = Reader::from_path(&path).unwrap();
         let mut file_readers = Vec::new();
-        if let Ok(stock_names_record) = stock_names.headers() {
-            let stock_names_record_iter = stock_names_record.iter();
-            for name in stock_names_record_iter {
-                let mut temp_str = name.to_string();
-                temp_str.push_str("_unite.csv");
-                unite_folder.push(temp_str);
-                file_readers.push(Reader::from_path(&unite_folder).unwrap());
-                unite_folder.pop();
-            }
+        for file in files_iter {
+            file_readers.push(Reader::from_path(file.path()).unwrap());
         }
         // Iterate over the comparitive header and make a vector of boolean acceptance of the headers
         let mut headers_to_keep = Vec::new();
@@ -481,57 +471,49 @@ pub mod csv_reader {
         // Path to trim_unite folder
         let mut trim_unite_folder = current_dir().unwrap();
         trim_unite_folder.pop(); trim_unite_folder.push("test-data/TrimmedUnitedData");
-        // Create the new files
         // Define the readers and writers
-        if let Ok(stock_names_record) = stock_names.headers() {
-            let stock_names_record_iter = stock_names_record.iter();
-            // For each stock
-            for name in stock_names_record_iter {
-                // Open a writer
-                let mut temp_str = name.to_string();
-                temp_str.push_str("_unite_trim.csv");
-                trim_unite_folder.push(temp_str);
-                let mut writer = Writer::from_path(&trim_unite_folder).unwrap();
-                trim_unite_folder.pop();
-                // Open a reader
-                let mut temp_str = name.to_string();
-                temp_str.push_str("_unite.csv");
-                unite_folder.push(temp_str);
-                let mut reader = Reader::from_path(&unite_folder).unwrap();
-                unite_folder.pop();
-                // Get the header
-                let mut indices = vec![None; Vec::from_iter(reader.headers().unwrap().iter()).len()];
-                {
-                    let old_header = Vec::from_iter(reader.headers().unwrap().iter());
-                    // Build the indice list
-                    'i : for i in 0..old_header.len() {
-                        'j : for j in 0..new_header_vec.len() {
-                            if old_header[i] == new_header_vec[j] {
-                                indices[i] = Some(j);
-                                continue 'i;
-                            }
+        let mut files_iter = files.iter();
+        for file in files_iter {
+            // Open a writer
+            let mut temp_str = file.file_name().into_string().unwrap().split('_').next().unwrap().to_string();
+            temp_str.push_str("_unite_trim.csv");
+            trim_unite_folder.push(temp_str);
+            let mut writer = Writer::from_path(&trim_unite_folder).unwrap();
+            trim_unite_folder.pop();
+            // Open a reader
+            let mut reader = Reader::from_path(file.path()).unwrap();
+            // Get the header
+            let mut indices = vec![None; Vec::from_iter(reader.headers().unwrap().iter()).len()];
+            {
+                let old_header = Vec::from_iter(reader.headers().unwrap().iter());
+                // Build the indice list
+                'i : for i in 0..old_header.len() {
+                    'j : for j in 0..new_header_vec.len() {
+                        if old_header[i] == new_header_vec[j] {
+                            indices[i] = Some(j);
+                            continue 'i;
                         }
-                        indices[i] = None;
                     }
+                    indices[i] = None;
                 }
-                // Push the new header
-                if let Err(err) = writer.write_record(&new_header_vec) {
-                    println!("{:?}", err);
-                    panic!("Error when writing csv header.");
-                }
-                // Iterate over old rows
-                for old_row_wrapped in reader.records() {
-                    if let Ok(old_row) = old_row_wrapped {
-                        let mut new_record = vec![""; new_header_vec.len()];
-                        for i in 0..old_row.len() {
-                            if let Some(index) = indices[i] {
-                                new_record[index] = old_row.get(i).unwrap();
-                            }
+            }
+            // Push the new header
+            if let Err(err) = writer.write_record(&new_header_vec) {
+                println!("{:?}", err);
+                panic!("Error when writing csv header.");
+            }
+            // Iterate over old rows
+            for old_row_wrapped in reader.records() {
+                if let Ok(old_row) = old_row_wrapped {
+                    let mut new_record = vec![""; new_header_vec.len()];
+                    for i in 0..old_row.len() {
+                        if let Some(index) = indices[i] {
+                            new_record[index] = old_row.get(i).unwrap();
                         }
-                        if let Err(err) = writer.write_record(new_record) {
-                            println!("{:?}", err);
-                            panic!("Error when writing csv record.");
-                        }
+                    }
+                    if let Err(err) = writer.write_record(new_record) {
+                        println!("{:?}", err);
+                        panic!("Error when writing csv record.");
                     }
                 }
             }

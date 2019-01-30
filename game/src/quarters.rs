@@ -1,5 +1,6 @@
 use std::{
     fmt,
+    fs::*,
     env::* };
 use csv::Reader;
 
@@ -37,24 +38,16 @@ impl Quarters {
                 quarter += 1;
             }
         }
-        // Path to stock_names
-        let mut path = current_dir().unwrap();
-        path.pop(); path.push("test-data/stock_names.csv");
-        let mut stock_names = Reader::from_path(&path).unwrap();
         // Path to trimmed folder
         let mut trim_unite_folder = current_dir().unwrap();
         trim_unite_folder.pop(); trim_unite_folder.push("test-data/TrimmedUnitedData");
-        // Populate reader vector
+        // Files list
+        let mut files: Vec<_> = read_dir(trim_unite_folder).unwrap().map(|r| r.unwrap()).collect(); // NOT SORTED
+        let mut files_iter = files.iter();
+        // Populate vector of readers
         let mut file_readers = Vec::new();
-        if let Ok(stock_names_record) = stock_names.headers() {
-            let stock_names_record_iter = stock_names_record.iter();
-            for name in stock_names_record_iter {
-                let mut temp_str = name.to_string();
-                temp_str.push_str("_unite_trim.csv");
-                trim_unite_folder.push(temp_str);
-                file_readers.push((Reader::from_path(&trim_unite_folder).unwrap(), name.to_string()));
-                trim_unite_folder.pop();
-            }
+        for file in files_iter {
+            file_readers.push((Reader::from_path(file.path()).unwrap(), file.file_name().into_string().unwrap().split('_').next().unwrap().to_string()));
         }
         // Go through every file and assemble quarters
         for (mut reader, name) in file_readers {
