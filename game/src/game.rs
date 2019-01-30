@@ -4,8 +4,8 @@ use std::fmt;
 use Player;
 use Quarters;
 
-static DEFAULT_TOURNEY_CONST: usize = 3;
-static DEFAULT_MUTATION_CONST: f64 = 0.7;
+pub static DEFAULT_TOURNEY_CONST: usize = 3;
+pub static DEFAULT_MUTATION_CONST: f64 = 0.7;
 
 #[derive(Debug)]
 pub struct Game {
@@ -113,10 +113,12 @@ impl Game {
         self.analyse_field_purchases();
     }
 
-    pub fn analyse_field_purchases(&self) {
+    pub fn analyse_field_purchases(&self) -> Vec<Vec<i64>> {
         let mut aggregate_field_counter = vec![0; self.players[0].strategy.len()];
+        let mut population_field_counter = Vec::new();
         for player in &self.players {
             let mut player_field_counter = vec![0; player.strategy.len()];
+            population_field_counter.push(player_field_counter);
             for stock in &player.stocks_purchased {
                 for k in 0..player.strategy.len() {
                     if stock.get(k) > player.strategy.get(k) {
