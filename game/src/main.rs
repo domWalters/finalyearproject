@@ -31,6 +31,9 @@ fn main() {
             game.perform_generation(quarters_len, game::DEFAULT_TOURNEY_CONST, game::DEFAULT_MUTATION_CONST, ratio);
         }
         game.perform_analytical_final_run(ratio);
+        game.recalc_fields_used();
+        game.soft_reset();
+        println!("Run {:?} complete!", i);
     }
 
 }

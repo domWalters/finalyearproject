@@ -89,6 +89,7 @@ impl Game {
         while self.current_quarter_index < quarter_max - 1 {
             self.next_quarter(ratio);
         }
+        //println!("{:?}", self.players[0].stocks_purchased.iter().map(|stock| stock.stock_id.clone()).collect::<Vec<_>>());
         self.final_quarter();
         let mut players_with_payoff = 0;
         for player in &self.players {
@@ -163,6 +164,12 @@ impl Game {
             aggregate_payoff += player.payoff - 1.0;
         }
         aggregate_payoff
+    }
+
+    pub fn soft_reset(&mut self) {
+        for mut player in &mut self.players {
+            player.soft_reset();
+        }
     }
 
     /// Run through all of the test data, and generate a new population. Uses

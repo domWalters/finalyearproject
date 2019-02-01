@@ -44,6 +44,11 @@ impl Player {
         self.stocks_purchased = Vec::new();
         self.fields_used = vec![true; self.strategy.len()];
     }
+
+    pub fn soft_reset(&mut self) {
+        self.payoff = 0.0;
+        self.stocks_purchased = Vec::new();
+    }
     /// Perform a uniform crossover of two Players.
     ///
     /// # Arguments
