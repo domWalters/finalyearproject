@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mkdir -p ZipFiles
+mkdir -p zip-files
 mkdir -p test-data/PythonData
 mkdir -p test-data/FourFileData
 mkdir -p test-data/FourFileDataRev
