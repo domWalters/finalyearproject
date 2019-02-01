@@ -143,13 +143,13 @@ impl Game {
     }
 
     pub fn recalc_fields_used(&mut self) {
-        let population_field_counter = analyse_field_purchases();
-        for player_field_counter in (population_field_counter) {
-            for field in player_field_counter {
-                if field == 0 {
-                    
-                }
+        let population_field_counter = self.analyse_field_purchases();
+        for (player_field_counter, player) in population_field_counter.iter().zip(self.players.iter_mut()) {
+            let mut new_fields_used = Vec::new();
+            for &field_count in player_field_counter {
+                new_fields_used.push(field_count != 0);
             }
+            player.fields_used = new_fields_used;
         }
     }
 
