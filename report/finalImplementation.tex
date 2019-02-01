@@ -1,0 +1,41 @@
+\section{Final Implementation}
+\subsection{Current Functionality}
+During implementation I made changes to my initial design to accommodate further functionality and to fix issues that I found during testing. I now have 6 core objects, up from 4:
+\begin{itemize}
+    \item \bf Screener \rm - A vector of arbitrary length containing floats. This is the core data structure that will be used to hold the proposed screening strategies that get passed through the algorithm.
+    \item \bf Player \rm - A struct containing:
+    \begin{itemize}
+        \item[$\ast$] A Screener to be used as the screening strategy throughout the game.
+        \item[$\ast$] A float representing the screening strategy's payoff.
+        \item[$\ast$] A vector of DataRecords representing the stocks that were bought over the course of the game.
+        \item[$\ast$] A vector of booleans, dictating whether the corresponding field of the strategy is currently being used.
+    \end{itemize}
+    This object represents a strategy as it passes through a run of the game. At the end, it has an associated list of stocks that it chose to purchase, as well as a payoff created by buying these stocks. This is then used during the generation of the next population. It can also choose to ignore fields that it thinks aren't relevant.
+    \item \bf DataRecord \rm - A vector of arbitrary length containing floats, along with a name for this vector. This is the core data structure that is used to hold the training data. Each one is a snapshot of a large number of fundamental statistics for a specific business at the end of a specific quarter.
+    \item \bf Quarter \rm - A vector of arbitrary length containing DataRecords. This object contains a section of the historical training data, specifically every DataRecord for a given quarter of a given year. It contains a selection of functions that allow Players to buy stocks, and calculate their payoffs.
+    \item \bf Quarters \rm - A vector of arbitrary length containing Quarters. This object contains every quarter that the algorithm is allowed to optimise over.
+    \item \bf Game \rm - A struct containing:
+    \begin{itemize}
+        \item[$\ast$] A vector of arbitrary length containing all of the current players.
+        \item[$\ast$] A Quarters object.
+        \item[$\ast$] A variety of variables that track the current game state.
+    \end{itemize}
+        This object represents the game itself, and the associated population of players. It has functions that perform iterations of the game, generate the next population, reset the game, and redefine the boolean vectors for each player.
+\end{itemize}
+
+The biggest changes are:
+\begin{itemize}
+    \item \bf Separation of data types for the training data and the prospective screening strategies. \rm This was done because prospective screens didn't need names (something the training data does need), and a large variety of functions that were usable on DataSlices were only valid for either training data or potential screens. By compartmentalising into two types, any ambiguity as to what these functions did was removed.
+    \item \bf Addition of the Quarters object. \rm This was an oversight of the initial design. The Game object needs access to all of the quarters at all times so it required an object to perform the initial reading in of the quarters, and then to hold them for the duration of the algorithm.
+    \item \bf Addition of a vector of booleans to Player. \rm This was a result of the changes I made due to the consequences of my initial design discussed in \ref{testingConsequences}. With this vector a specific field in the Screener for the Player can be toggled off. This allows the algorithm to decide that a field is irrelevant, and stop considering it.
+\end{itemize}
+
+Any further changes from here on out are likely to be iteratively adding functionality, and not core redesigns of these objects.
+
+\subsection{Potential Further Functionality}
+I have several suggestions to improve the current algorithm:
+
+\begin{itemize}
+    \item \bf Use distributions over the training data during initialisation, crossover, and mutation. \rm Right now initialisation simply generates uniformly random points from the lower limit of the training data for that field, to the upper limit for that field. This isn't very realistic. Similarly, crossover does a very dumb linear average of the two fields and mutation simply makes a +/-10\% change to the field. All of these could be improved by sampling a probability distribution over the training data.
+    \item \bf When Players update their boolean vectors with the fields they want to toggle off, remove these fields from the screeners and the loaded in training data. \rm This will provide a massive performance increase. At many points in the algorithm, all of the test data is iterated over. If you can choose to stop iterating over - for example - 40\% of this data then the algorithm will execute $\approx$40\% faster after that point.
+\end{itemize}

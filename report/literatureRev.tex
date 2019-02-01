@@ -1,0 +1,50 @@
+\section{Literature Review}
+\subsection{Introduction \& Preamble}
+There is a rich variety of research available in the field of applying machine learning techniques to stock market trading. The earliest originate in the late 90's and cover a range of very specific niches within the field, from portfolio management and stock price forecasting, to establishing trading rules for automatic stock screeners. \newline
+
+To achieve these aims, an assortment of different machine learning techniques are utilised. Notably, the style of machine learning changes over time, with Genetic Algorithms being more popular in the early 00's and Neural Networks being the current go-to method.
+
+\subsection{Financial Forecasting Using GAs \cite{mahfoudMani}}
+This first paper outlines ``a new system that utilizes genetic algorithms...to predict the future performances of individual stocks''.
+
+\subsubsection{Genetic Algorithms and Chromosomes}
+
+It begins by outlining the basic terminology within Machine Learning and Genetic Algorithms, particularly the concepts of Mutation and Crossover within the field of GAs. A key term defined early on is ``genetic material'' (nowadays commonly referred to as the Chromosome or the Genotype). The Chromosome (Genotype) is a set of parameters which define a proposed solution (Phenotype). In layman's terms, the solution is a specific realisation of the chromosome. \newline
+
+The author makes a key distinction here, saying that the algorithm ``implicitly processes...the genetic material (chromosomes)...and not individual solutions''. This is an important separation of concepts; the algorithm doesn't transform existing solutions into new solutions, it transforms the set of possible solutions into a new set of possible solutions, which is ``better'' in some definable fashion. \newline
+
+The paper then gives a specific example saying ``...a GA may discover that one variable, such as price-to-earnings ratio, is a better indicator of future return than another, such as past return''. This is the core feature of genetic algorithms that enable them to search their domain more efficiently; they can bias in favour of the better ``dimension'', the more important rule in the chromosome.
+
+\subsubsection{Michigan Vs Pittsburgh}
+
+There are two approaches to how populations work within genetic algorithms. Either the population in its entirety forms one chromosome with each member being one part of that chromosome (Michigan approach), or every member is a chromosome and the population is a pool of viable chromosomes (Pittsburgh approach). This study in particular uses the Michigan approach, whilst I intend to use Pittsburgh. \newline
+
+The reason given in the study for this choice is that Pittsburgh constitutes a ``large handicap on a GA-based learner'', in terms of time efficiency. However, this is a paper from 20 years ago and concerns of learning speed due to large data size are far less relevant in the modern day. The vast majority of modern genetic algorithms use the Pittsburgh approach, as it is conceptually closer to the idea of evolution that the algorithm endeavours to recreate.
+
+\subsubsection{Niching}
+
+A short discussion on the benefits of niching comes next. Niching is the process of only allowing chromosomes to compete with each other if they are sufficiently similar. This can allow a good deal of variation to be present within the population, as the algorithm can optimise multiple potential chromosomes at once, each chromosome being wildly different. \newline
+
+The author goes on to specify that this is a useful construct within the field of financial prediction as ``different rules within a single population can perform forecasting under different market environments''.
+
+\subsubsection{The Experiments}
+
+The core of the study consists of two experiments, both effectively the same but the second at a larger scale; presumably this was done in the case that the second experiment wasn't successful so the authors would at least have something to report. Due to the similarity between these experiments, I'm going to ignore the first one. \newline
+
+In both experiments the authors genetic algorithm is compared to a neural network performing the same task. The task here is the classification of stocks into three categories: buy, sell, and no opinion. The algorithm is set up such that ``both GA and NN forecasts are made at the end of the week for three consecutive weeks. Each weekend, forecasts are made for over 1600 stocks. Twelve weeks after each forecast, the forecasts are compared with actual 12-week relative returns.'' \newline
+
+The GA and NN predict both the ``magnitude and direction of the return of each stock, relative to the market''. Extra statistics are then calculated such as the average returns of the positive and negative forecasts, as well as a measure of the spread between these two averages, with high spread implying a better set of predictions.
+
+\subsubsection{The Results}
+
+The GAs outperformed the NNs overall with a larger spread (2.16\% versus 1.4\%) and better mean relative return performance over the top two quintiles (typically only stocks in the top two quintiles of this statistic are traded). \newline
+
+The author goes on to reference a prior paper by Mahfoud \& Mani from 1995, suggesting that ``an approach that utilizes both GA and NN forecasts is superior to utilizing the better of the two algorithms, in isolation''. The author demonstrates that this hypothesis was correct in this case, with ``an average relative return of 6.61\% in the top quintile of the positive combined forecasts. This is a 21\% improvement over the GAs alone, and a 50\% improvement over the NNs alone.''
+
+\subsubsection{GA versus NN}
+
+The final discussion the author presents is whether GAs or NNs are better for this style of application. 
+
+\subsection{Using GAs to find Technical Trading rules \cite{allenKarjalainen}}
+
+\subsection{Generating trading rules with GAs \cite{potvinaSorianoaVallee}}

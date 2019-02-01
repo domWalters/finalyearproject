@@ -1,0 +1,93 @@
+\section{Initial Proposal}
+\subsection{Introduction}
+The stock market is ubiquitous within modern life. Any time you look at the news, it will be featured. References to NASDAQ, the FTSE 100, Dow Jones, or the S\&P 500 permeate any discussion of the economy in the modern day, and yet very few people actually interact directly with them. \newline
+
+The average person doesn’t buy stocks, the closest they get is investing in an ISA through their bank (and not even all ISAs invest in stocks). The prevailing reason for this is that it is simply too difficult to participate casually in it. The average person doesn’t understand the majority of the statistics behind stock trading, and they don't understand the basics of when to buy or sell. \newline
+
+This is where stock screeners come in, they provide a simple way to filter out stocks that are inappropriate to invest in. However, a large amount of currently used screening strategies are years (if not decades) old, calling their efficacy into question. Could these screeners be optimised in some way? \newline
+
+I propose a method to create new stock screeners (and optimise old ones), by using machine learning techniques. This will allow the screeners to be updated at any point, by simply running the algorithm again. This means that the screener can’t become “outdated” due to changes in the economy, in the same way, that human-designed screeners potentially can.
+
+\subsection{Project Layout}
+The project can be split into 4 parts, the last of which is a stretch goal.
+
+\subsubsection{The Simulation Game}
+In order to train a genetic algorithm over a market of historical data, we have to create some form of “Payoff” for each of the proposed screening strategies in the population, that is representative of how much profit that strategy would create in the real economy. \newline
+
+One way to do this would be to play a stock trading “game”. Run through historical data for a set of companies representative of the economy (or the specific section of the economy that we care about), at regular time steps over a number of years. At each time step, the population buys or sells according to their strategy. At the end of the game, net worth is calculated and payoff assigned based on profit attained. \newline
+
+This payoff is then used to perform the selection function required for the genetic algorithm. Furthermore, this can also be used to test the results of the genetic algorithm against Screening Strategies that are already used in the stock market.
+
+\subsubsection{The Genetic Algorithm}
+The core of the project. The standard genetic algorithm is split into four core sections:
+\begin{itemize}
+\item Generation of an initial population of screening rules.
+\item Computation of the fitness function (playing the simulation game) with each screener, producing a payoff for each of them.
+\item Create a new population by using a specialist crossover function on pairs of screens that are selected (using a specialist selection function) from the old population.
+\item Repeat step 2, N times, then terminate and return the best screening strategy in the final population.
+\end{itemize}
+
+This area of the project will require experimentation, as the crossover and selection methods will need to be specially designed. The crossover function is going to be the hardest element to construct. It has to allow a combination of two screening rules of potentially several hundred variables each, all representing different aspects of a stock with different scales and potentially wildly different values, in such a way that the result will on average be a better screen. This isn’t trivial.
+
+\subsubsection{Testing and Experimentation}
+After the algorithm is complete, the algorithm’s variables can be varied to attain the best screening rule possible. By running the algorithm multiple times, several candidate screens can be obtained and then evaluated individually by replaying the game over a variety of time frames. \newline
+
+The same can be done with screeners that are currently used in the real world, like James O'Shaughnessy’s Tiny Titans Screener, and their results compared to the genetic result. \newline
+
+This section is very open-ended in nature. This investigation will only be limited by what can be achieved within the time limits.
+
+\subsubsection{Overall GUI - Extended Goal}
+As an additional stretch goal, a GUI can be implemented to track/visualise how the simulation game proceeds over one run. This would allow for easier analysis of the screening strategies involved. A second GUI would also be useful to visualise how the Genetic Algorithm optimises the population.
+
+\subsection{Project Section Breakdown}
+A rough breakdown of the stages of the project:
+\begin{itemize}
+\item \bf Parse \& Understand Historical Data \rm - Time for me to understand what the historical data means, and to parse it into a machine-readable format. At this stage, I will attempt to remove any variables that I consider completely irrelevant.
+\item \bf Simulation Game \rm
+\begin{itemize}
+    \item[$\ast$] \bf Design \& Core \rm - A top view design of the simulation algorithm along with the beginning of its implementation.
+    \item[$\ast$] \bf Core \& Testing \rm - The remaining of the implementation and some basic testing.
+\end{itemize}
+\item \bf GA
+\begin{itemize}
+    \item[$\ast$] \bf Simple Core \rm - The implementation of the basic genetic algorithm, likely using uniform crossover and tournament selection as placeholder functions.
+    \item[$\ast$] \bf Investigate Efficiency \rm - An investigation into better crossover and selection methods, specialised to this form of data (namely an indicator set for stock screening). Then a further investigation into performing a variable reduction of the historical data.
+    \item[$\ast$] \bf Optimise Efficiency \rm - The implementation of the above, and potentially further investigation.
+    \item[$\ast$] \bf Parameter Optimisation \rm - Testing to choose the best values for the parameters used in the GA.
+    \item[$\ast$] \bf Evaluation \& Fixes \rm - Evaluation of the results of the GA against each other, and against currently used stock screeners. Additionally, any fixes needed as a result of this evaluation.
+\end{itemize}
+\item \bf GUI \rm - An all-encompassing simple GUI for the GA, and the Simulation Game.
+\item \bf Polish \rm - Any remaining code clean up, commenting etc.
+\end{itemize}
+
+\subsection{Initial Week-By-Week Timeline}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Semester & Week & Main Task & Compulsory \\
+\hline
+1 & 4 & & Proposal Hand In \\
+1 & 5 & Parse \& Understand Historical Data & \\
+1 & 6 & Simulation game - Design \& Core & Ethics Hand In \\
+1 & 7 & Simulation game - Core \& Testing & \\
+1 & 8 & GA - Simple Core & Literature Hand In \\
+1 & 9 & GA - Investigate Efficiency & \\
+1 & 10 & GA - Optimise Efficiency & Inspections \\
+1 & 11 & GA - Optimise Efficiency & \\
+CHRISTMAS & N/A & GA - Optimise Efficiency & \\
+2 & 1 & GA - Optimise Efficiency & \\
+2 & 2 & GA - Optimise Efficiency & \\
+2 & 3 & GA - Parameter Optimisation & \\
+2 & 4 & GA - Parameter Optimisation & \\
+2 & 5 & GA - Evaluation \& Fixes & \\
+2 & 6 & GA - Evaluation \& Fixes & \\
+2 & 7 & GUI & \\
+2 & 8 & GUI & \\
+2 & 9 & GUI & \\
+2 & 10 & Polish & Demonstrations \\
+2 & 11 & Polish & Demonstrations \\
+EASTER & 12 & & Report Hand In \\
+EASTER & 13 & & Late Report Hand In \\
+\hline
+\end{tabular}
+\newline \newline 
+I have dedicated by far the most time to “GA - Optimise Efficiency” as this is the least defined area of the project. The crossover function will almost certainly be non-trivial to design and implement. It is also likely that variable reduction of the historical data will be non-trivial and require further investigation.

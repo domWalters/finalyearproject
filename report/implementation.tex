@@ -1,0 +1,35 @@
+\section{Initial Implementation}
+\subsection{Language Consideration}
+I began with an initial informal design phase, where I had to make decisions on the rough structure of the algorithm, as well as what language I would use. These are fairly connected concepts, as an Object Oriented language like Java is going to have a very different structure to a program written in something like Ruby. \newline
+
+My chief concerns when choosing a platform on which to work were:
+\begin{itemize}
+    \item \bf Speed \rm - I was keenly aware at this stage that some of the procedures I was planning to run would require a large amount of CPU time. The language used would need to have well developed libraries with efficient methods of carrying out the procedures needed.
+    \item \bf Abstraction \rm - Tied to the previous concern, the more heavily abstracted a language, the worse it tends to run. The less abstracted a language, the harder it is to write in. The language used would need a balance.
+    \item \bf Familiarity \rm - I have to either be familiar with the language, or the language be close enough to one with which I am already familiar that learning it won't be too awkward.
+    \item \bf Community \rm - The language needs to have a sufficiently large user base, so that any issues I run into can be researched and fixed without too much trouble.
+\end{itemize}
+
+My final choice of language was Rust $\cite{rustLang}$, a newer language from 2010. It was designed as a systems programming language, with an emphasis on speed, memory efficiency, and safe concurrency. It is syntactically similar to C++, but doesn't have any of the memory/thread safety issues that C++ is known for. This is due to a robust ``ownership system'' which guarantees memory safety at compile time. \newline
+
+It's on a similar level of abstraction to C++ , but has many of the core aspects of an Object Oriented Language. I had used the language recreationally within the last year and due to it's similarity to a mix of Java and C++ (both of which I have used extensively), I felt confident that I could become proficient enough to achieve the goals of this project.
+
+\subsection{Design - Simulation Game}
+I began with a consideration of the data structures required to get my proposed ``Simulation Game'' to work. I settled on 4 core objects:
+\begin{itemize}
+    \item \bf DataSlice \rm - A vector of arbitrary length containing floating point data, along with a ``name'' string for this vector. This is the core data structure that will be used to hold all of the test data, as well as the proposed screening strategies that get passed through the game and algorithm. Each one will be a snapshot of a large number of statistics thought relevant to the overall performance of a business.
+    \item \bf Quarter \rm - A vector of arbitrary length containing DataSlices. This object will contain a section of our test data, the historical data that will be used to train a stock screener. Specifically these DataSlices will all be snapshots taken at the same time, namely at the start of one of the four quarters in a year.
+    \item \bf Player \rm - A struct containing:
+    \begin{itemize}
+        \item[$\ast$] A specific DataSlice to be used as the stock screening strategy throughout the game.
+        \item[$\ast$] A floating point payoff number, to be updated over the course of a run through of the game.
+        \item[$\ast$] A list of DataSlices representing the stocks that were bought by using the strategy over the course of the game.
+    \end{itemize}
+    This object represents a strategy as it passes through a run of the game. At the end, it has an associated list of stocks that it chose to purchase, as well as a payoff created by buying these stocks. This will be used during the generation of the next population.
+    \item \bf Game \rm - A struct containing:
+    \begin{itemize}
+        \item[$\ast$] A vector of arbitrary length containing all of the players for this run of the game.
+        \item[$\ast$] A variety of variables that track the current state that the game is in.
+    \end{itemize}
+        This object represents the game itself, and the associated population of players. It will have functions that perform iterations of the game, generate the next population, and reset the game.
+\end{itemize}
