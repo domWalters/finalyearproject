@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "$0")"
+
 mkdir -p zip-files
 mkdir -p test-data/PythonData
 mkdir -p test-data/FourFileData

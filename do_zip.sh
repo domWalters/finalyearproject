@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd "$(dirname "$0")"
 cd zip-files
 
 ZIPNAME=`date +%Y-%m-%d`
