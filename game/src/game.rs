@@ -118,10 +118,9 @@ impl Game {
         let mut population_field_counter = Vec::new();
         for player in &self.players {
             let mut player_field_counter = vec![0; player.strategy.len()];
-            population_field_counter.push(player_field_counter);
             for stock in &player.stocks_purchased {
                 for k in 0..player.strategy.len() {
-                    if stock.get(k) > player.strategy.get(k) {
+                    if (stock.get(k) > player.strategy.get(k)) && *player.fields_used.get(k).unwrap() {
                         player_field_counter[k] += 1;
                     }
                 }
@@ -130,8 +129,17 @@ impl Game {
                                                               .zip(player_field_counter.iter())
                                                               .map(|(a, p)| a + p)
                                                               .collect();
+            population_field_counter.push(player_field_counter);
         }
         println!("{:?}", aggregate_field_counter);
+        println!("{:?}", aggregate_field_counter.iter().zip(self.players[0].fields_used.iter()).filter_map(|(&a, &f)| {
+            if f {
+                Some(a)
+            } else {
+                None
+            }
+        }).collect::<Vec<_>>());
+        population_field_counter
     }
 
     pub fn recalc_fields_used(&mut self) {
