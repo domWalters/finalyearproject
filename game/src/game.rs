@@ -171,16 +171,6 @@ impl Game {
             player.soft_reset();
         }
     }
-
-    /// Run through all of the test data, and generate a new population. Uses
-    /// DEFAULT_TOURNEY_CONST and DEFAULT_MUTATION_CONST for the associated functions.
-    ///
-    /// # Arguments
-    /// * `quarter_max` - The maximum number of quarters to run through.
-    pub fn perform_generation_default(&mut self) {
-        let quarters_len = self.quarters.len();
-        self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, 0.5);
-    }
     /// Perform a tournament selection of size k within the current list of Players. The fitness
     /// function is the current payoff value of each player.
     ///
