@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd "$(dirname "$0")"
-cd report
+cd ../report
 rm *.pdf
 rm *.log
 
