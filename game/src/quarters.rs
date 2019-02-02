@@ -111,7 +111,7 @@ impl Quarters {
         });
 
         let output: Vec<Quarter> = pre_output.into_iter().filter(|quarter| {
-            let keep = quarter.len() >= (4 * largest_length) / 5;
+            let keep = quarter.len() >= (8 * largest_length) / 10;
             if !keep {
                 println!("Throwing away {:?} with length of {:?}, which is below 80% of {:?} ({:?}).", (quarter.year, quarter.quarter), quarter.len(), largest_length, (4 * largest_length) / 5);
             }

@@ -44,7 +44,7 @@ impl Game {
             quarters: quarters,
             current_quarter_index: 0,
             index_of_value: 0,
-            ratio: 0.5
+            ratio: 0.4
         }
     }
     fn calculate_cheap_limits(quarters: &Quarters) -> (Vec<f64>, Vec<f64>) {
