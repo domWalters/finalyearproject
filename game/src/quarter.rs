@@ -17,7 +17,11 @@ impl fmt::Display for Quarter {
 }
 
 impl Quarter {
-    // Creates a blank Quarter with a length of zero.
+    /// Creates a blank Quarter with a length of zero.
+    ///
+    /// # Arguments
+    /// * `year` - The year that this Quarter is from.
+    /// * `quarter` - The quarter that this Quarter represents.
     pub fn load_blank(year: i64, quarter: i64) -> Quarter {
         Quarter {
             quarter_vector: Vec::new(),
@@ -25,15 +29,21 @@ impl Quarter {
             quarter: quarter
         }
     }
-
+    /// Returns the length of the quarter_vector field.
     pub fn len(&self) -> usize {
         self.quarter_vector.len()
     }
-
+    /// Gets the requested index from the quarter_vector field, as an Option.
+    ///
+    /// # Arguments
+    /// * `index` - The index requested.
     pub fn get(&self, index: usize) -> Option<&DataRecord> {
         self.quarter_vector.get(index)
     }
-
+    /// Pushes a new DataRecord onto the end of the Quarter.
+    ///
+    /// # Arguments
+    /// * `new_record` - The record to be pushed.
     pub fn push(&mut self, new_record: DataRecord) {
         self.quarter_vector.push(new_record);
     }

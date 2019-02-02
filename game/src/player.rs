@@ -35,16 +35,13 @@ impl Player {
             fields_used: vec![true; l_limits.len()]
         }
     }
-    /// Resets the player, to have payoff 0.0 and an empty stocks_purchased vector.
-    ///
-    /// # Remarks
-    /// This doesn't create a new Player, it simply edits the old one.
+    /// Resets the player to have payoff 0, an empty stocks_purchased vector, and every field being used.
     pub fn reset(&mut self) {
         self.payoff = 0.0;
         self.stocks_purchased = Vec::new();
         self.fields_used = vec![true; self.strategy.len()];
     }
-
+    /// Resets the player to have payoff 0, and an empty stocks_purchased vector.
     pub fn soft_reset(&mut self) {
         self.payoff = 0.0;
         self.stocks_purchased = Vec::new();
@@ -57,7 +54,8 @@ impl Player {
     /// # Remarks
     /// The resultant Player is new, and therefore isn't in the memory location of either of
     /// the two that constructed it. This allows the reuse of the Players that construct this
-    /// crossover. The payoff and stocks_purchased entries are reset.
+    /// crossover. The payoff and stocks_purchased entries are reset. The fields_used entry has
+    /// it's elements picked randomly from either player.
     pub fn dumb_crossover(&self, player: &Player) -> Player {
         Player {
             strategy: self.strategy.dumb_crossover(&player.strategy),

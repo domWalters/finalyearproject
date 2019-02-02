@@ -41,12 +41,20 @@ impl DataRecord {
     pub fn get(&self, index: usize) -> f64 {
         self.record[index]
     }
+    /// Pushes a new element onto the end of the DataRecord.
     ///
-    pub fn push(&mut self, new_element: f64) {
-        self.record.push(new_element);
+    /// # Arguments
+    /// * `element` - The element to be pushed.
+    pub fn push(&mut self, element: f64) {
+        self.record.push(element);
     }
-
+    /// Returns true or false based on whether this record has 100*ratio% elements greater than the
+    /// corresponding element in the given Player's strategy.
     ///
+    /// # Arguments
+    /// * `player` - The player who's strategy needs to be checked.
+    /// * `ratio` - A number from the interval [0, 1], representing the percentage of elements that
+    /// need to be checked successfully.
     pub fn greater_by_ratio(&self, player: &Player, ratio: f64) -> bool {
         let mut true_track = 0;
         let mut false_track = 0;

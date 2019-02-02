@@ -38,14 +38,14 @@ impl Screener {
             screen: output
         }
     }
-    /// Perform a uniform crossover of two DataSlices.
+    /// Perform a uniform crossover of two Screeners.
     ///
     /// # Arguments
     /// * `slice` - The Screener to crossover with.
     ///
     /// # Remarks
     /// The resultant Screener is new, and therefore isn't in the memory location of either of
-    /// the two that constructed it. This allows the reuse of the DataSlices that construct this
+    /// the two that constructed it. This allows the reuse of the Screeners that construct this
     /// crossover.
     pub fn dumb_crossover(&self, slice: &Screener) -> Screener {
         Screener {
@@ -56,17 +56,19 @@ impl Screener {
                         .collect()
         }
     }
-    /// Perform a lazy mutation on the Screener.
+    /// Perform a lazy mutation on the Screener. This mutation is a per element multiplier
+    /// uniformly selected from the interval [0.9, 1.1].
     ///
     /// # Arguments
-    /// * `c` - The mutation constant to use for the mutation.
+    /// * `c` - The mutation constant to use for the mutation. On average `c` elements of the
+    /// Screener will be mutated.
     ///
     /// # Remarks
     /// This resultant Screener is new, and therefore isn't in the memory location of the Screener
     /// used to create it. This allows the reuse of the Screener that constructs this mutation.
-    pub fn lazy_mutate(&self, c: f64) -> Screener {    // does the mutate roll per element not per vector
+    pub fn lazy_mutate(&self, c: f64) -> Screener {
         let mut rng = rand::thread_rng();
-        let percent_mag = 10.0;                     // up to +/- 10% mutation
+        let percent_mag = 10.0;
         Screener {
             screen: self.screen
                         .iter()
@@ -84,7 +86,7 @@ impl Screener {
     pub fn len(&self) -> usize {
         self.screen.len()
     }
-    /// Gets a specified indexed element of the Screener.
+    /// Gets the requested indexed element of the Screener.
     ///
     /// # Arguments
     /// * `index` - The index requested.
