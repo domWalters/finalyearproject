@@ -1,7 +1,9 @@
 #!/bin/bash
 
 cd "$(dirname "$0")"
-cd ../report
+cd ../
+git submodule update
+cd report
 rm *.pdf
 rm *.log
 
