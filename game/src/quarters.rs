@@ -1,6 +1,5 @@
 use std::{
     fmt,
-    fs::*,
     env::* };
 use csv::Reader;
 
@@ -25,25 +24,23 @@ impl Quarters {
     /// Generate the Quarters object from the default data directory (from this files location, the
     /// folder is ../../test-data/TrimmedUnitedData).
     pub fn new_quarters_from_default_file() -> Quarters {
-        // pre_output vector
         let mut pre_output: Vec<Quarter> = Vec::new();
         // Populate with every blank quarter since epoch
-        let mut year = 1970;
-        let mut quarter = 1;
-        while year < 2019 {
-            pre_output.push(Quarter::load_blank(year, quarter));
-            if quarter == 4 {
-                year += 1;
-                quarter = 1;
+        let (mut year_count, mut quarter_count) = (1970, 1);
+        while year_count < 2019 {
+            pre_output.push(Quarter::load_blank(year_count, quarter_count));
+            if quarter_count == 4 {
+                year_count += 1;
+                quarter_count = 1;
             } else {
-                quarter += 1;
+                quarter_count += 1;
             }
         }
         // Path to trimmed folder
         let mut trim_unite_folder = current_dir().unwrap();
         trim_unite_folder.pop(); trim_unite_folder.push("test-data/TrimmedUnitedData");
         // Files list
-        let files_iter = read_dir(trim_unite_folder).unwrap().map(|r| r.unwrap()); // NOT SORTED
+        let files_iter = trim_unite_folder.read_dir().unwrap().map(|r| r.unwrap()); // NOT SORTED
         // Populate vector of readers
         let mut file_readers = Vec::new();
         for file in files_iter {
@@ -55,50 +52,48 @@ impl Quarters {
             }
         }
         // Go through every file and assemble quarters
+        let mut year_index = 0;
+        let mut quarter_index = 0;
+        let mut columns_found = false;
         for (mut reader, name) in file_readers {
-            // Find the year and quarter columns
-            let mut year_index = 0;
-            let mut quarter_index = 0;
-            {
-                let headers = reader.headers().unwrap();
-                for i in 0.. headers.len() {
-                    let field = headers.get(i).unwrap();
+            // Find the year and quarter columns (only done once, all files share this column index)
+            if !columns_found {
+                for (i, field) in reader.headers().unwrap().iter().enumerate() {
                     if field == "year" {
                         year_index = i;
                     } else if field == "period" {
                         quarter_index = i;
                     }
                 }
+                columns_found = true;
             }
             for row_wrapped in reader.records() {
                 if let Ok(row) = row_wrapped {
-                    // Get the row year, quarter
-                    let row_year_number = row.get(year_index).unwrap().to_string().parse::<i64>().unwrap();
-                    let row_quarter_number = row.get(quarter_index).unwrap().to_string()[1..=1].parse::<i64>().unwrap();
-                    // Get the quarter to put this row in
-                    let mut filtered_quarters = pre_output.iter_mut().filter(|quarter| {
-                        (quarter.year == row_year_number) & (quarter.quarter == row_quarter_number)
-                    });
-                    let mut quarter_to_use = filtered_quarters.next().unwrap();
+                    // Get the row year and quarter as numbers
+                    let year = row.get(year_index).unwrap().parse::<i64>().unwrap();
+                    let quarter = row.get(quarter_index).unwrap()[1..=1].parse::<i64>().unwrap();
                     // Create the DataRecord representation of the Record
                     let mut data_record = DataRecord {
                         record: Vec::new(),
                         stock_id: StockID {
                             name: name.clone(),
-                            year: row_year_number,
-                            quarter: row_quarter_number
+                            year: year,
+                            quarter: quarter
                         }
                     };
-                    for i in 0..row.len() {
+                    for (i, field) in row.iter().enumerate() {
                         if !((i == year_index) | (i == quarter_index)) {
-                            let parsed_field = row.get(i).unwrap().parse::<f64>();
+                            let parsed_field = field.parse::<f64>();
                             match parsed_field {
-                                Ok(field) => data_record.push(field),
-                                Err(_err) => data_record.push(0.0),
+                                Ok(float_field) => data_record.push(float_field),
+                                Err(_err) => data_record.push(0.0), // if the field is empty, use 0
                             }
                         }
                     }
-                    quarter_to_use.push(data_record);
+                    // Put it into the quarter it belongs to
+                    pre_output.get_mut(((year - 1970) * 4 + (quarter - 1)) as usize)
+                              .unwrap()
+                              .push(data_record);
                 }
             }
         }
@@ -122,12 +117,12 @@ impl Quarters {
             }
             keep
         }).collect();
-        let first_quarter_year = output[0].year;
-        let first_quarter_quarter = output[0].quarter;
+        let first_quarters_year = output[0].year;
+        let first_quarters_quarter = output[0].quarter;
         Quarters {
             quarters_vector: output,
-            starting_year: first_quarter_year,
-            starting_quarter: first_quarter_quarter
+            starting_year: first_quarters_year,
+            starting_quarter: first_quarters_quarter
         }
     }
     /// Calculates the average percentage gain of the whole market over time.
