@@ -13,7 +13,7 @@ pub struct Game {
     quarters: Quarters,
     current_quarter_index: usize,
     index_of_value: usize,
-    ratio: f64
+    pub ratio: f64
 }
 
 impl fmt::Display for Game {
@@ -85,11 +85,11 @@ impl Game {
     ///
     /// # Arguments
     /// * `quarter_max` - The maximum number of quarters to run through.
-    /// * `k` - Constant used for tournament selection (default: DEFAULT_TOURNEY_CONST = 3).
-    /// * `mut_const` - Constant used for mutation (default: DEFAULT_MUTATION_CONST = 1).
+    /// * `k` - Constant used for tournament selection.
+    /// * `mut_const` - Constant used for mutation.
     pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64) {
         while self.current_quarter_index < quarter_max - 1 {
-            self.next_quarter(self.ratio);
+            self.next_quarter();
         }
         //println!("{:?}", self.players[0].stocks_purchased.iter().map(|stock| stock.stock_id.clone()).collect::<Vec<_>>());
         self.final_quarter();
@@ -108,14 +108,16 @@ impl Game {
         }
         self.players = new_population;
     }
+    /// Perform a final generation of the algorithm, purely to analyse the potential screeners
     pub fn perform_analytical_final_run(&mut self) {
         while self.current_quarter_index < self.quarters.len() - 1 {
-            self.next_quarter(self.ratio);
+            self.next_quarter();
         }
         self.final_quarter();
         self.analyse_field_purchases();
     }
-
+    /// Produce a vector for each player, where the ith element is a count of the amount of
+    /// stocks which satisfied the ith element of the players strategy.
     pub fn analyse_field_purchases(&self) -> Vec<Vec<i64>> {
         let mut aggregate_field_counter = vec![0; self.players[0].strategy.len()];
         let mut population_field_counter = Vec::new();
@@ -144,7 +146,7 @@ impl Game {
         }).collect::<Vec<_>>());
         population_field_counter
     }
-
+    /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
     pub fn recalc_fields_used(&mut self) {
         let population_field_counter = self.analyse_field_purchases();
         for (player_field_counter, player) in population_field_counter.iter().zip(self.players.iter_mut()) {
@@ -155,19 +157,11 @@ impl Game {
             player.fields_used = new_fields_used;
         }
     }
-
+    /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
-        (100.0 * self.payoff_sum()) / (self.players.len() as f64)
+        (100.0 * self.players.iter().fold(0.0, |acc, player| acc + player.payoff - 1.0)) / (self.players.len() as f64)
     }
-
-    pub fn payoff_sum(&self) -> f64 {
-        let mut aggregate_payoff = 0.0;
-        for player in &self.players {
-            aggregate_payoff += player.payoff - 1.0;
-        }
-        aggregate_payoff
-    }
-
+    /// Soft resets the list of players.
     pub fn soft_reset(&mut self) {
         for mut player in &mut self.players {
             player.soft_reset();
