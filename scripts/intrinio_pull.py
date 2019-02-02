@@ -2,8 +2,6 @@
 import os
 import intrinio
 import pandas as pd
-#intrinio.client.username = '09e44d029099059db56b378fcf6533c0'  # dom - free account
-#intrinio.client.password = 'a8c65eedcc7875337c896ae12357b8d7'
 
 intrinio.client.username = 'd26718d74d93a71a12da6e0dec25ee66'   # premium account
 intrinio.client.password = '418bc2bbe443bca6f4d866d928daad41'
