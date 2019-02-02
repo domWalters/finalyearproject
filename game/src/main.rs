@@ -22,18 +22,19 @@ fn main() {
     let generation_max = 10;
 
     let mut game = Game::new_game(quarters, population_size);
-    let mut ratio = 0.5;
-    for i in 0..2 {
-        if i == 1 {
-            ratio = 0.9;
-        }
+    for i in 0..3 {
         for _j in 0..generation_max {
-            game.perform_generation(quarters_len, game::DEFAULT_TOURNEY_CONST, game::DEFAULT_MUTATION_CONST, ratio);
+            game.perform_generation(quarters_len, game::DEFAULT_TOURNEY_CONST, game::DEFAULT_MUTATION_CONST);
         }
-        game.perform_analytical_final_run(ratio);
+        game.perform_analytical_final_run();
         game.recalc_fields_used();
         game.soft_reset();
         println!("Run {:?} complete!", i);
+        if i == 0 {
+            game.ratio = 0.95;
+        } else if i == 1 {
+            game.ratio = 0.99;
+        }
     }
 
 }
