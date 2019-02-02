@@ -52,13 +52,13 @@ impl Game {
         let mut lower_limits = vec![std::f64::MAX; first_quarter.get(0).unwrap().len()];
         let mut upper_limits = vec![std::f64::MIN; first_quarter.get(0).unwrap().len()];
         for current_quarter in &quarters.quarters_vector {
-            for entry in &current_quarter.quarter_vector {
-                for k in 0..entry.len() {
-                    if entry.get(k) < lower_limits[k] {
-                        lower_limits[k] = entry.get(k);
+            for ref entry in &current_quarter.quarter_vector {
+                for (&field, (mut lower_limit, mut upper_limit)) in entry.record.iter().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
+                    if field < *lower_limit {
+                        *lower_limit = field;
                     }
-                    if entry.get(k) > upper_limits[k] {
-                        upper_limits[k] = entry.get(k);
+                    if field > *upper_limit {
+                        *upper_limit = field;
                     }
                 }
             }
@@ -93,12 +93,13 @@ impl Game {
         }
         //println!("{:?}", self.players[0].stocks_purchased.iter().map(|stock| stock.stock_id.clone()).collect::<Vec<_>>());
         self.final_quarter();
-        let mut players_with_payoff = 0;
-        for player in &self.players {
+        let players_with_payoff = self.players.iter().fold(0, |acc, player| {
             if player.payoff != 0.0 {
-                players_with_payoff += 1;
+                acc + 1
+            } else {
+                acc
             }
-        }
+        });
         self.analyse_field_purchases();
         println!("Player count: {:?}, Average % Profit: {:?}, Profit minus natural gain: {:?}", players_with_payoff, self.average_payoff(), self.average_payoff() - self.quarters.natural_gain(self.index_of_value));
         let mut new_population = Vec::new();
