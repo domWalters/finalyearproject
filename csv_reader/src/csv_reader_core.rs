@@ -10,43 +10,36 @@ fn drop_and_extend(new_record: &mut StringRecord, old_record: &StringRecord, dro
 }
 
 pub fn unite_stock_csvs(stock_string: String) {
-    let stock_name = stock_string.clone();
-
     // Configure Path
     let mut path = current_dir().unwrap();
-    path.pop(); path.push("test-data/FourFileDataRev");
+    path.pop(); path.push("test-data/FourFileDataRev/arbitrary_trash.csv");
 
     // Open all 4 file readers
-    let mut bal = stock_name.clone();
+    let mut bal = stock_string.clone();
     bal.push_str(&"_fudamentals_balance.csv".to_string());
-    path.push(bal);
+    path.set_file_name(bal);
     let mut balance = Reader::from_path(&path).unwrap();
-    path.pop();
 
-    let mut calcs = stock_name.clone();
+    let mut calcs = stock_string.clone();
     calcs.push_str(&"_fudamentals_calculations.csv".to_string());
-    path.push(calcs);
+    path.set_file_name(calcs);
     let mut calculations = Reader::from_path(&path).unwrap();
-    path.pop();
 
-    let mut case = stock_name.clone();
+    let mut case = stock_string.clone();
     case.push_str(&"_fudamentals_caseflow.csv".to_string());
-    path.push(case);
+    path.set_file_name(case);
     let mut caseflow = Reader::from_path(&path).unwrap();
-    path.pop();
 
-    let mut pri = stock_name.clone();
+    let mut pri = stock_string.clone();
     pri.push_str(&"_price.csv".to_string());
-    path.push(pri);
+    path.set_file_name(pri);
     let mut price = Reader::from_path(&path).unwrap();
-    path.pop();
 
     // Open writer
-    let mut uni = stock_name.clone();
+    let mut uni = stock_string.clone();
     uni.push_str(&"_unite.csv".to_string());
-    path.pop(); path.push("UnitedData"); path.push(uni);
+    path.pop(); path.pop(); path.push("UnitedData"); path.push(uni);
     let mut unite = Writer::from_path(&path).unwrap();
-    path.pop();
 
     // Construct new header
     {
@@ -79,9 +72,9 @@ pub fn unite_stock_csvs(stock_string: String) {
     let mut calcs_records_iter = calculations.records();
     let mut bal_records_iter = balance.records();
 
-    let mut next_case_record = case_records_iter.next();
-    let mut next_price_record = price_records_iter.next();
-    let mut next_calcs_record = calcs_records_iter.next();
+    let mut next_case_record_wrapped = case_records_iter.next();
+    let mut next_price_record_wrapped = price_records_iter.next();
+    let mut next_calcs_record_wrapped = calcs_records_iter.next();
     let mut next_bal_record = bal_records_iter.next();
 
     let mut first_run = true;
@@ -93,109 +86,98 @@ pub fn unite_stock_csvs(stock_string: String) {
 
     // Iterate through rows in caseflow
     while let Some(_) = case_records_iter.peek() {
-        if !mismatch_tracker.iter().fold(false, |expr, (val_l, _)| (expr | val_l) ) & !first_run {
-            next_case_record = case_records_iter.next();
-            next_price_record = price_records_iter.next();
-            next_calcs_record = calcs_records_iter.next();
+        if !mismatch_tracker.iter().fold(false, | acc, (val_l, _) | (acc | val_l) ) & !first_run {
+            next_case_record_wrapped = case_records_iter.next();
+            next_price_record_wrapped = price_records_iter.next();
+            next_calcs_record_wrapped = calcs_records_iter.next();
             next_bal_record = bal_records_iter.next();
         } else {
-            if mismatch_tracker[0].0 {
-                if mismatch_tracker[0].1 {
-                    next_price_record = price_records_iter.next();
-                } else {
-                    next_case_record = case_records_iter.next();
-                }
+            match mismatch_tracker[0] {
+                (true, true) => next_price_record_wrapped = price_records_iter.next(),
+                (true, false) => next_case_record_wrapped = case_records_iter.next(),
+                _ => (),
             }
-            if mismatch_tracker[1].0 {
-                if mismatch_tracker[1].1 {
-                    next_calcs_record = calcs_records_iter.next();
-                } else {
-                    next_case_record = case_records_iter.next();
-                }
+            match mismatch_tracker[1] {
+                (true, true) => next_calcs_record_wrapped = calcs_records_iter.next(),
+                (true, false) => next_case_record_wrapped = case_records_iter.next(),
+                _ => (),
             }
-            if mismatch_tracker[2].0 {
-                if mismatch_tracker[2].1 {
-                    next_bal_record = bal_records_iter.next();
-                } else {
-                    next_case_record = case_records_iter.next();
-                }
+            match mismatch_tracker[2] {
+                (true, true) => next_bal_record = bal_records_iter.next(),
+                (true, false) => next_case_record_wrapped = case_records_iter.next(),
+                _ => (),
             }
         }
         first_run = false;
         mismatch_tracker = vec![(false, false), (false, false), (false, false)];
 
-        if let (Some(next_price_record_unwrap), Some(next_calcs_record_unwrap), Some(next_bal_record_unwrap)) = (&next_price_record, &next_calcs_record, &next_bal_record) {
-            if let Some(Ok(ref mut new_record)) = next_case_record {
+        if let (Some(Ok(next_price_record)), Some(Ok(next_calcs_record)), Some(Ok(next_bal_record))) = (&next_price_record_wrapped, &next_calcs_record_wrapped, &next_bal_record) {
+            if let Some(Ok(ref mut new_record)) = next_case_record_wrapped {
                 let year = new_record.get(0).unwrap().to_string();
                 let quarter = new_record.get(1).unwrap().to_string();
                 let year_number = year.parse::<usize>().unwrap();
                 let quarter_number = quarter[1..=1].parse::<usize>().unwrap();
 
-                if let (Ok(next_price_record_unwrap_unwrap), Ok(next_calcs_record_unwrap_unwrap), Ok(next_bal_record_unwrap_unwrap)) = (next_price_record_unwrap, next_calcs_record_unwrap, next_bal_record_unwrap) {
-                    // price
-                    let price_year = &next_price_record_unwrap_unwrap.get(0).unwrap()[0..=3];
-                    let price_month = &next_price_record_unwrap_unwrap.get(0).unwrap()[5..=6];
-                    if price_year == year {
-                        if !(((price_month == "03") & (quarter == "Q1")) | ((price_month == "06") & (quarter == "Q2")) | ((price_month == "09") & (quarter == "Q3")) | ((price_month == "12") & (quarter == "Q4"))) {
-                            let price_quarter_number = price_month.parse::<usize>().unwrap() / 3;
-                            mismatch_tracker[0] = (true, price_quarter_number >= quarter_number);
-                            println!("Mismatch in price quarter. Price (Y, M): {:?}, New (Y, M): {:?}.", (price_year, price_month), (year, quarter));
-                            continue;
-                        }
-                    } else {
-                        let price_year_number = price_year.parse::<usize>().unwrap();
-                        mismatch_tracker[0] = (true, price_year_number > year_number);
+                // price
+                let price_year = &next_price_record.get(0).unwrap()[0..=3];
+                let price_month = &next_price_record.get(0).unwrap()[5..=6];
+                if price_year == year {
+                    if !(((price_month == "03") & (quarter == "Q1")) | ((price_month == "06") & (quarter == "Q2")) | ((price_month == "09") & (quarter == "Q3")) | ((price_month == "12") & (quarter == "Q4"))) {
+                        let price_quarter_number = price_month.parse::<usize>().unwrap() / 3;
+                        mismatch_tracker[0] = (true, price_quarter_number >= quarter_number);
                         println!("Mismatch in price quarter. Price (Y, M): {:?}, New (Y, M): {:?}.", (price_year, price_month), (year, quarter));
                         continue;
                     }
-                    // calcs
-                    let calcs_year = next_calcs_record_unwrap_unwrap.get(0).unwrap();
-                    let calcs_quarter = next_calcs_record_unwrap_unwrap.get(1).unwrap();
-                    if calcs_year == year {
-                        if calcs_quarter != quarter {
-                            let calcs_quarter_number = calcs_quarter[1..=1].parse::<usize>().unwrap();
-                            mismatch_tracker[1] = (true, calcs_quarter_number > quarter_number);
-                            println!("Mismatch in calculations quarter. Calculation (Y, M): {:?}, New (Y, M): {:?}.", (calcs_year, calcs_quarter), (year, quarter));
-                            continue;
-                        }
-                    } else {
-                        let calcs_year_number = calcs_year.parse::<usize>().unwrap();
-                        mismatch_tracker[1] = (true, calcs_year_number > year_number);
+                } else {
+                    let price_year_number = price_year.parse::<usize>().unwrap();
+                    mismatch_tracker[0] = (true, price_year_number > year_number);
+                    println!("Mismatch in price quarter. Price (Y, M): {:?}, New (Y, M): {:?}.", (price_year, price_month), (year, quarter));
+                    continue;
+                }
+                // calcs
+                let calcs_year = next_calcs_record.get(0).unwrap();
+                let calcs_quarter = next_calcs_record.get(1).unwrap();
+                if calcs_year == year {
+                    if calcs_quarter != quarter {
+                        let calcs_quarter_number = calcs_quarter[1..=1].parse::<usize>().unwrap();
+                        mismatch_tracker[1] = (true, calcs_quarter_number > quarter_number);
                         println!("Mismatch in calculations quarter. Calculation (Y, M): {:?}, New (Y, M): {:?}.", (calcs_year, calcs_quarter), (year, quarter));
                         continue;
                     }
-                    // bal
-                    let bal_field = next_bal_record_unwrap_unwrap.get(0).unwrap();
-                    if bal_field.len() == 4 {
-                        if &bal_field[0..=3] != year {
-                            let bal_year_number = bal_field[0..=3].parse::<usize>().unwrap();
-                            mismatch_tracker[2] = (true, bal_year_number > year_number);
+                } else {
+                    let calcs_year_number = calcs_year.parse::<usize>().unwrap();
+                    mismatch_tracker[1] = (true, calcs_year_number > year_number);
+                    println!("Mismatch in calculations quarter. Calculation (Y, M): {:?}, New (Y, M): {:?}.", (calcs_year, calcs_quarter), (year, quarter));
+                    continue;
+                }
+                // bal
+                let bal_field = next_bal_record.get(0).unwrap();
+                if bal_field.len() == 4 {
+                    if &bal_field[0..=3] != year {
+                        let bal_year_number = bal_field[0..=3].parse::<usize>().unwrap();
+                        mismatch_tracker[2] = (true, bal_year_number > year_number);
+                        println!("Mismatch in balance quarter. Balance (Y, M): {:?}, New (Y, M): {:?}.", bal_field, (year, quarter));
+                        continue;
+                    }
+                } else {
+                    if &bal_field[1..=4] == year {
+                        if &bal_field[7..=8] != quarter {
+                            let bal_quarter_number = bal_field[8..=8].parse::<usize>().unwrap();
+                            mismatch_tracker[2] = (true, bal_quarter_number > quarter_number);
                             println!("Mismatch in balance quarter. Balance (Y, M): {:?}, New (Y, M): {:?}.", bal_field, (year, quarter));
                             continue;
                         }
                     } else {
-                        if &bal_field[1..=4] == year {
-                            if &bal_field[7..=8] != quarter {
-                                let bal_quarter_number = bal_field[8..=8].parse::<usize>().unwrap();
-                                mismatch_tracker[2] = (true, bal_quarter_number > quarter_number);
-                                println!("Mismatch in balance quarter. Balance (Y, M): {:?}, New (Y, M): {:?}.", bal_field, (year, quarter));
-                                continue;
-                            }
-                        } else {
-                            let bal_year_number = bal_field[1..=4].parse::<usize>().unwrap();
-                            mismatch_tracker[2] = (true, bal_year_number > year_number);
-                            println!("Mismatch in balance quarter. Balance (Y, M): {:?}, New (Y, M): {:?}.", bal_field, (year, quarter));
-                            continue;
-                        }
+                        let bal_year_number = bal_field[1..=4].parse::<usize>().unwrap();
+                        mismatch_tracker[2] = (true, bal_year_number > year_number);
+                        println!("Mismatch in balance quarter. Balance (Y, M): {:?}, New (Y, M): {:?}.", bal_field, (year, quarter));
+                        continue;
                     }
-                    // If you've reached here, there was no mismatch.
-                    drop_and_extend(new_record, next_price_record_unwrap_unwrap, 1);
-                    drop_and_extend(new_record, next_calcs_record_unwrap_unwrap, 2);
-                    drop_and_extend(new_record, next_bal_record_unwrap_unwrap, 1);
-                } else {
-                    println!("Iterator Read Error");
-                    continue;
                 }
+                // If you've reached here, there was no mismatch.
+                drop_and_extend(new_record, next_price_record, 1);
+                drop_and_extend(new_record, next_calcs_record, 2);
+                drop_and_extend(new_record, next_bal_record, 1);
                 // Write and remember the yr and quarter
                 let this_year = &new_record.get(0).unwrap().parse::<i64>().unwrap();
                 let this_quarter = &new_record.get(1).unwrap()[1..=1].parse::<i64>().unwrap();
@@ -226,7 +208,7 @@ pub fn unite_stock_csvs(stock_string: String) {
 }
 
 pub fn create_all_unites() {
-    // Configure Path, open stock_names
+    // Configure Path
     let mut four = current_dir().unwrap();
     four.pop(); four.push("test-data/FourFileDataRev");
 
@@ -235,9 +217,7 @@ pub fn create_all_unites() {
     let mut files_iter = files.iter().peekable();
     while let Some(_) = files_iter.peek() {
         let first = files_iter.next().unwrap();
-        let _second = files_iter.next().unwrap();
-        let _third = files_iter.next().unwrap();
-        let _fourth = files_iter.next().unwrap();
+        files_iter.next(); files_iter.next(); files_iter.next();
 
         let first_file_name = first.file_name().into_string().unwrap();
         let first_stock_name = first_file_name.split('_').next().unwrap();
@@ -248,22 +228,21 @@ pub fn create_all_unites() {
 }
 
 pub fn complex_reverse() {
-    // Configure Path, open stock_names
+    // Create necessary file paths
     let mut four = current_dir().unwrap();
     four.pop(); four.push("test-data/FourFileData");
     let mut four_rev = current_dir().unwrap();
-    four_rev.pop(); four_rev.push("test-data/FourFileDataRev");
-
+    four_rev.pop(); four_rev.push("test-data/FourFileDataRev/arbitrary_trash.csv");
+    // Open directory to FourFileData
     let mut files: Vec<_> = read_dir(four).unwrap().map(|r| r.unwrap()).collect();
     files.sort_by_key(|dir| dir.file_name());
     let files_iter = files.iter();
-
     for file in files_iter {
+        // Create Reader/Writer
         let mut reader = Reader::from_path(file.path()).unwrap();
-        four_rev.push(file.file_name());
+        four_rev.set_file_name(file.file_name());
         let mut writer = Writer::from_path(&four_rev).unwrap();
-        four_rev.pop();
-
+        // Push the header.
         if let Err(_) = writer.write_record(reader.headers().unwrap()) {
             println!("WRITE ERROR WITH HEADERS.");
             std::process::exit(1);
@@ -272,62 +251,36 @@ pub fn complex_reverse() {
                 println!("FLUSH ERROR.");
             }
         }
-        if file.file_name().into_string().unwrap().contains("case") | file.file_name().into_string().unwrap().contains("calc") {
-            let records_iter = reader.records();
-            let mut actual_iter_vec = Vec::new();
-            for record in records_iter {
-                let record_unwrap = record.unwrap();
-                actual_iter_vec.push(record_unwrap);
-            }
-            let records_rev = actual_iter_vec.iter().rev();
-            for record in records_rev {
-                if let Err(_) = writer.write_record(record) {
-                    println!("WRITE ERROR WITH RECORD.");
-                    std::process::exit(1);
-                } else {
-                    if let Err(_) = writer.flush() {
-                        println!("FLUSH ERROR.");
-                    }
-                }
-            }
-        } else if file.file_name().into_string().unwrap().contains("balance") {
-            // Balance is an atrotious file.
-            // In ascending order but puts all Q4s before the sets of (Q1, Q2, Q3).
-            let records_iter = reader.records();
-            let mut actual_iter_vec = Vec::new();
-            for record in records_iter {
-                let record_unwrap = record.unwrap();
-                actual_iter_vec.push(record_unwrap);
-            }
-            // Have a vector of records, need to do a custom sort
-            actual_iter_vec.sort_by_key(|record| {
-                let mut field = record.get(0).unwrap().to_string();
-                if field.len() == 4 {
-                    field.push_str("Q4");
-                } else {
-                    let mut field_new = field[1..=4].to_string();
-                    field_new.push_str(&field[7..=8]);
-                    field = field_new;
-                }
-                field
-            });
-            let records_rev_iter = actual_iter_vec.iter().rev();
-            for record in records_rev_iter {
-                if let Err(_) = writer.write_record(record) {
-                    println!("WRITE ERROR WITH RECORD.");
-                    std::process::exit(1);
-                } else {
-                    if let Err(_) = writer.flush() {
-                        println!("FLUSH ERROR.");
-                    }
-                }
-            }
-        } else {
-            four_rev.push(file.file_name());
+        let mut records_vec = reader.records().map(|record| record.unwrap()).collect::<Vec<_>>();
+        if file.file_name().into_string().unwrap().contains("price") {
+            four_rev.set_file_name(file.file_name());
             if let Err(err) = copy(file.path(), &four_rev) {
                 println!("{:?}", err);
             }
-            four_rev.pop();
+        } else {
+            if file.file_name().into_string().unwrap().contains("balance") {
+                records_vec.sort_by_key(|record| {
+                    let mut field = record.get(0).unwrap().to_string();
+                    if field.len() == 4 {
+                        field.push_str("Q4");
+                    } else {
+                        let mut field_new = field[1..=4].to_string();
+                        field_new.push_str(&field[7..=8]);
+                        field = field_new;
+                    }
+                    field
+                });
+            }
+            for record in records_vec.iter().rev() {
+                if let Err(_) = writer.write_record(record) {
+                    println!("WRITE ERROR WITH RECORD.");
+                    std::process::exit(1);
+                } else {
+                    if let Err(_) = writer.flush() {
+                        println!("FLUSH ERROR.");
+                    }
+                }
+            }
         }
     }
 }
@@ -337,48 +290,19 @@ pub fn assemble_four_file_data() {
     let mut python = current_dir().unwrap();
     python.pop(); python.push("test-data/PythonData");
     let mut four = current_dir().unwrap();
-    four.pop(); four.push("test-data/FourFileData");
+    four.pop(); four.push("test-data/FourFileData/arbitrary_trash.csv");
     // Open Directory, pull out the first 4 things.
     let mut files: Vec<_> = read_dir(python).unwrap().map(|r| r.unwrap()).collect();
     files.sort_by_key(|dir| dir.file_name());
     let mut files_iter = files.iter();
 
-    let mut first = files_iter.next().unwrap();
+    let mut first;                                      // first loop iteration populates this
     let mut second = files_iter.next().unwrap();
     let mut third = files_iter.next().unwrap();
     let mut fourth = files_iter.next().unwrap();
 
-    let first_file_name = first.file_name().into_string().unwrap();
-    let second_file_name = second.file_name().into_string().unwrap();
-    let third_file_name = third.file_name().into_string().unwrap();
-    let fourth_file_name = fourth.file_name().into_string().unwrap();
-
-    let first_stock_name = first_file_name.split('_').next().unwrap();
-    let second_stock_name = second_file_name.split('_').next().unwrap();
-    let third_stock_name = third_file_name.split('_').next().unwrap();
-    let fourth_stock_name = fourth_file_name.split('_').next().unwrap();
-
-    if (first_stock_name == second_stock_name) & (first_stock_name == third_stock_name) & (first_stock_name == fourth_stock_name) {
-        // We have 4 file paths, copy them.
-        four.push(first.file_name());
-        if let Err(err) = copy(first.path(), &four) {
-            println!("{:?}", err);
-        }
-        four.pop(); four.push(second.file_name());
-        if let Err(err) = copy(second.path(), &four) {
-            println!("{:?}", err);
-        }
-        four.pop(); four.push(third.file_name());
-        if let Err(err) = copy(third.path(), &four) {
-            println!("{:?}", err);
-        }
-        four.pop(); four.push(fourth.file_name());
-        if let Err(err) = copy(fourth.path(), &four) {
-            println!("{:?}", err);
-        }
-        four.pop();
-    }
     for next_file in files_iter {
+
         first = second;
         second = third;
         third = fourth;
@@ -396,23 +320,22 @@ pub fn assemble_four_file_data() {
 
         if (first_stock_name == second_stock_name) & (first_stock_name == third_stock_name) & (first_stock_name == fourth_stock_name) {
             // We have 4 file paths, copy them.
-            four.push(first.file_name());
+            four.set_file_name(first.file_name());
             if let Err(err) = copy(first.path(), &four) {
                 println!("{:?}", err);
             }
-            four.pop(); four.push(second.file_name());
+            four.set_file_name(second.file_name());
             if let Err(err) = copy(second.path(), &four) {
                 println!("{:?}", err);
             }
-            four.pop(); four.push(third.file_name());
+            four.set_file_name(third.file_name());
             if let Err(err) = copy(third.path(), &four) {
                 println!("{:?}", err);
             }
-            four.pop(); four.push(fourth.file_name());
+            four.set_file_name(fourth.file_name());
             if let Err(err) = copy(fourth.path(), &four) {
                 println!("{:?}", err);
             }
-            four.pop();
         }
     }
 }
@@ -438,8 +361,8 @@ pub fn trim_and_sort() {
 
     let headers = header_reader.unwrap().headers().unwrap();
     'a : for field_to_find in headers {                                     // loop over prospective header
-        'b : for reader in &mut file_readers {                          // loop over readers
-            'c : for potential_field in reader.headers().unwrap().iter() {  // loop of elements of reader
+        'b : for reader in &mut file_readers {                              // loop over readers
+            'c : for potential_field in reader.headers().unwrap().iter() {  // loop over elements of reader
                 if potential_field == field_to_find {
                     continue 'b;
                 } else {
@@ -480,16 +403,15 @@ pub fn trim_and_sort() {
         // Get the header
         let mut indices = vec![None; Vec::from_iter(reader.headers().unwrap().iter()).len()];
         {
-            let old_header = Vec::from_iter(reader.headers().unwrap().iter());
             // Build the indice list
-            'i : for i in 0..old_header.len() {
-                'j : for j in 0..new_header_vec.len() {
-                    if old_header[i] == new_header_vec[j] {
-                        indices[i] = Some(j);
+            'i : for (indice, old_field) in indices.iter_mut().zip(reader.headers().unwrap().iter()) {
+                'j : for (j, new_field) in new_header_vec.iter().enumerate() {
+                    if old_field == *new_field {
+                        *indice = Some(j);
                         continue 'i;
                     }
                 }
-                indices[i] = None;
+                *indice = None;
             }
         }
         // Push the new header
@@ -501,9 +423,9 @@ pub fn trim_and_sort() {
         for old_row_wrapped in reader.records() {
             if let Ok(old_row) = old_row_wrapped {
                 let mut new_record = vec![""; new_header_vec.len()];
-                for i in 0..old_row.len() {
-                    if let Some(index) = indices[i] {
-                        new_record[index] = old_row.get(i).unwrap();
+                for (old_field, indice) in old_row.iter().zip(indices.iter()) {
+                    if let Some(index) = *indice {
+                        new_record[index] = old_field;
                     }
                 }
                 if let Err(err) = writer.write_record(new_record) {
