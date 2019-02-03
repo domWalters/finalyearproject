@@ -1,15 +1,140 @@
 use std::{iter::FromIterator, env::*, fs::*};
 use csv::{Writer, Reader, StringRecord};
 
-fn drop_and_extend(new_record: &mut StringRecord, old_record: &StringRecord, drop_count: usize) {
-    let mut iterator = old_record.iter();
-    for _i in 0..drop_count {
-        iterator.next();
+pub fn assemble_four_file_data() {
+    // Configure paths
+    let mut python = current_dir().unwrap();
+    python.pop(); python.push("test-data/PythonData");
+    let mut four = current_dir().unwrap();
+    four.pop(); four.push("test-data/FourFileData/arbitrary_trash.csv");
+    // Open Directory, pull out the first 4 things.
+    let mut files: Vec<_> = read_dir(python).unwrap().map(|r| r.unwrap()).collect();
+    files.sort_by_key(|dir| dir.file_name());
+    let mut files_iter = files.iter();
+
+    let mut first;                                      // first loop iteration populates this
+    let mut second = files_iter.next().unwrap();
+    let mut third = files_iter.next().unwrap();
+    let mut fourth = files_iter.next().unwrap();
+
+    for next_file in files_iter {
+
+        first = second;
+        second = third;
+        third = fourth;
+        fourth = next_file;
+
+        let first_file_name = first.file_name().into_string().unwrap();
+        let second_file_name = second.file_name().into_string().unwrap();
+        let third_file_name = third.file_name().into_string().unwrap();
+        let fourth_file_name = fourth.file_name().into_string().unwrap();
+
+        let first_stock_name = first_file_name.split('_').next().unwrap();
+        let second_stock_name = second_file_name.split('_').next().unwrap();
+        let third_stock_name = third_file_name.split('_').next().unwrap();
+        let fourth_stock_name = fourth_file_name.split('_').next().unwrap();
+
+        if (first_stock_name == second_stock_name) & (first_stock_name == third_stock_name) & (first_stock_name == fourth_stock_name) {
+            // We have 4 file paths, copy them.
+            four.set_file_name(first.file_name());
+            if let Err(err) = copy(first.path(), &four) {
+                println!("{:?}", err);
+            }
+            four.set_file_name(second.file_name());
+            if let Err(err) = copy(second.path(), &four) {
+                println!("{:?}", err);
+            }
+            four.set_file_name(third.file_name());
+            if let Err(err) = copy(third.path(), &four) {
+                println!("{:?}", err);
+            }
+            four.set_file_name(fourth.file_name());
+            if let Err(err) = copy(fourth.path(), &four) {
+                println!("{:?}", err);
+            }
+        }
     }
-    new_record.extend(iterator);
 }
 
-pub fn unite_stock_csvs(stock_string: String) {
+pub fn complex_reverse() {
+    // Create necessary file paths
+    let mut four = current_dir().unwrap();
+    four.pop(); four.push("test-data/FourFileData");
+    let mut four_rev = current_dir().unwrap();
+    four_rev.pop(); four_rev.push("test-data/FourFileDataRev/arbitrary_trash.csv");
+    // Open directory to FourFileData
+    let mut files: Vec<_> = read_dir(four).unwrap().map(|r| r.unwrap()).collect();
+    files.sort_by_key(|dir| dir.file_name());
+    let files_iter = files.iter();
+    for file in files_iter {
+        // Create Reader/Writer
+        let mut reader = Reader::from_path(file.path()).unwrap();
+        four_rev.set_file_name(file.file_name());
+        let mut writer = Writer::from_path(&four_rev).unwrap();
+        // Push the header.
+        if let Err(_) = writer.write_record(reader.headers().unwrap()) {
+            println!("WRITE ERROR WITH HEADERS.");
+            std::process::exit(1);
+        } else {
+            if let Err(_) = writer.flush() {
+                println!("FLUSH ERROR.");
+            }
+        }
+        let mut records_vec = reader.records().map(|record| record.unwrap()).collect::<Vec<_>>();
+        if file.file_name().into_string().unwrap().contains("price") {
+            four_rev.set_file_name(file.file_name());
+            if let Err(err) = copy(file.path(), &four_rev) {
+                println!("{:?}", err);
+            }
+        } else {
+            if file.file_name().into_string().unwrap().contains("balance") {
+                records_vec.sort_by_key(|record| {
+                    let mut field = record.get(0).unwrap().to_string();
+                    if field.len() == 4 {
+                        field.push_str("Q4");
+                    } else {
+                        let mut field_new = field[1..=4].to_string();
+                        field_new.push_str(&field[7..=8]);
+                        field = field_new;
+                    }
+                    field
+                });
+            }
+            for record in records_vec.iter().rev() {
+                if let Err(_) = writer.write_record(record) {
+                    println!("WRITE ERROR WITH RECORD.");
+                    std::process::exit(1);
+                } else {
+                    if let Err(_) = writer.flush() {
+                        println!("FLUSH ERROR.");
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn create_all_unites() {
+    // Configure Path
+    let mut four = current_dir().unwrap();
+    four.pop(); four.push("test-data/FourFileDataRev");
+
+    let mut files: Vec<_> = read_dir(four).unwrap().map(|r| r.unwrap()).collect();
+    files.sort_by_key(|dir| dir.file_name());
+    let mut files_iter = files.iter().peekable();
+    while let Some(_) = files_iter.peek() {
+        let first = files_iter.next().unwrap();
+        files_iter.next(); files_iter.next(); files_iter.next();
+
+        let first_file_name = first.file_name().into_string().unwrap();
+        let first_stock_name = first_file_name.split('_').next().unwrap();
+
+        println!("Uniting {:?}...", first_stock_name);
+        unite_stock_csvs(first_stock_name.to_string());
+    }
+}
+
+fn unite_stock_csvs(stock_string: String) {
     // Configure Path
     let mut path = current_dir().unwrap();
     path.pop(); path.push("test-data/FourFileDataRev/arbitrary_trash.csv");
@@ -207,137 +332,12 @@ pub fn unite_stock_csvs(stock_string: String) {
     }
 }
 
-pub fn create_all_unites() {
-    // Configure Path
-    let mut four = current_dir().unwrap();
-    four.pop(); four.push("test-data/FourFileDataRev");
-
-    let mut files: Vec<_> = read_dir(four).unwrap().map(|r| r.unwrap()).collect();
-    files.sort_by_key(|dir| dir.file_name());
-    let mut files_iter = files.iter().peekable();
-    while let Some(_) = files_iter.peek() {
-        let first = files_iter.next().unwrap();
-        files_iter.next(); files_iter.next(); files_iter.next();
-
-        let first_file_name = first.file_name().into_string().unwrap();
-        let first_stock_name = first_file_name.split('_').next().unwrap();
-
-        println!("Uniting {:?}...", first_stock_name);
-        unite_stock_csvs(first_stock_name.to_string());
+fn drop_and_extend(new_record: &mut StringRecord, old_record: &StringRecord, drop_count: usize) {
+    let mut iterator = old_record.iter();
+    for _i in 0..drop_count {
+        iterator.next();
     }
-}
-
-pub fn complex_reverse() {
-    // Create necessary file paths
-    let mut four = current_dir().unwrap();
-    four.pop(); four.push("test-data/FourFileData");
-    let mut four_rev = current_dir().unwrap();
-    four_rev.pop(); four_rev.push("test-data/FourFileDataRev/arbitrary_trash.csv");
-    // Open directory to FourFileData
-    let mut files: Vec<_> = read_dir(four).unwrap().map(|r| r.unwrap()).collect();
-    files.sort_by_key(|dir| dir.file_name());
-    let files_iter = files.iter();
-    for file in files_iter {
-        // Create Reader/Writer
-        let mut reader = Reader::from_path(file.path()).unwrap();
-        four_rev.set_file_name(file.file_name());
-        let mut writer = Writer::from_path(&four_rev).unwrap();
-        // Push the header.
-        if let Err(_) = writer.write_record(reader.headers().unwrap()) {
-            println!("WRITE ERROR WITH HEADERS.");
-            std::process::exit(1);
-        } else {
-            if let Err(_) = writer.flush() {
-                println!("FLUSH ERROR.");
-            }
-        }
-        let mut records_vec = reader.records().map(|record| record.unwrap()).collect::<Vec<_>>();
-        if file.file_name().into_string().unwrap().contains("price") {
-            four_rev.set_file_name(file.file_name());
-            if let Err(err) = copy(file.path(), &four_rev) {
-                println!("{:?}", err);
-            }
-        } else {
-            if file.file_name().into_string().unwrap().contains("balance") {
-                records_vec.sort_by_key(|record| {
-                    let mut field = record.get(0).unwrap().to_string();
-                    if field.len() == 4 {
-                        field.push_str("Q4");
-                    } else {
-                        let mut field_new = field[1..=4].to_string();
-                        field_new.push_str(&field[7..=8]);
-                        field = field_new;
-                    }
-                    field
-                });
-            }
-            for record in records_vec.iter().rev() {
-                if let Err(_) = writer.write_record(record) {
-                    println!("WRITE ERROR WITH RECORD.");
-                    std::process::exit(1);
-                } else {
-                    if let Err(_) = writer.flush() {
-                        println!("FLUSH ERROR.");
-                    }
-                }
-            }
-        }
-    }
-}
-
-pub fn assemble_four_file_data() {
-    // Configure paths
-    let mut python = current_dir().unwrap();
-    python.pop(); python.push("test-data/PythonData");
-    let mut four = current_dir().unwrap();
-    four.pop(); four.push("test-data/FourFileData/arbitrary_trash.csv");
-    // Open Directory, pull out the first 4 things.
-    let mut files: Vec<_> = read_dir(python).unwrap().map(|r| r.unwrap()).collect();
-    files.sort_by_key(|dir| dir.file_name());
-    let mut files_iter = files.iter();
-
-    let mut first;                                      // first loop iteration populates this
-    let mut second = files_iter.next().unwrap();
-    let mut third = files_iter.next().unwrap();
-    let mut fourth = files_iter.next().unwrap();
-
-    for next_file in files_iter {
-
-        first = second;
-        second = third;
-        third = fourth;
-        fourth = next_file;
-
-        let first_file_name = first.file_name().into_string().unwrap();
-        let second_file_name = second.file_name().into_string().unwrap();
-        let third_file_name = third.file_name().into_string().unwrap();
-        let fourth_file_name = fourth.file_name().into_string().unwrap();
-
-        let first_stock_name = first_file_name.split('_').next().unwrap();
-        let second_stock_name = second_file_name.split('_').next().unwrap();
-        let third_stock_name = third_file_name.split('_').next().unwrap();
-        let fourth_stock_name = fourth_file_name.split('_').next().unwrap();
-
-        if (first_stock_name == second_stock_name) & (first_stock_name == third_stock_name) & (first_stock_name == fourth_stock_name) {
-            // We have 4 file paths, copy them.
-            four.set_file_name(first.file_name());
-            if let Err(err) = copy(first.path(), &four) {
-                println!("{:?}", err);
-            }
-            four.set_file_name(second.file_name());
-            if let Err(err) = copy(second.path(), &four) {
-                println!("{:?}", err);
-            }
-            four.set_file_name(third.file_name());
-            if let Err(err) = copy(third.path(), &four) {
-                println!("{:?}", err);
-            }
-            four.set_file_name(fourth.file_name());
-            if let Err(err) = copy(fourth.path(), &four) {
-                println!("{:?}", err);
-            }
-        }
-    }
+    new_record.extend(iterator);
 }
 
 pub fn trim_and_sort() {
