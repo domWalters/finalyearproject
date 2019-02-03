@@ -139,7 +139,6 @@ impl Quarters {
             if let Some(record_in_final) = final_quarter.find_by_stock_name(&record_in_starting) {
                 value_multiplier.push(record_in_final.get(index_of_value) / record_in_starting.get(index_of_value));
             } else {
-                println!("Whoopsie doopsie.");
                 // Stock no longer existed...
             }
         }

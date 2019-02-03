@@ -13,7 +13,7 @@ pub struct Game {
     quarters: Quarters,
     current_quarter_index: usize,
     index_of_value: usize,
-    pub ratio: f64
+    ratio: f64
 }
 
 impl fmt::Display for Game {
@@ -65,21 +65,24 @@ impl Game {
         }
         (lower_limits, upper_limits)
     }
-    /// Runs through the next quarter of test data.
-    fn next_quarter(&mut self) {
-        let quarter = self.quarters.get(self.current_quarter_index).unwrap();
-        for mut player in self.players.iter_mut() {
-            quarter.select_for_player(&mut player, self.ratio);
+    pub fn run(&mut self, generation_max: i64, prelim_iterations: i64) {
+        let quarters_len = self.quarters.len();
+        for i in 0..(prelim_iterations + 1) {
+            for _j in 0..generation_max {
+                self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST);
+            }
+            self.perform_analytical_final_run();
+            self.recalc_fields_used();
+            self.soft_reset();
+            if i == 0 {
+                self.ratio = 0.6;
+            } else if i == 1 {
+                self.ratio = 0.8;
+            } else if i == 2 {
+                self.ratio = 0.9;
+            }
+            println!("Run {:?} complete!", i);
         }
-        self.current_quarter_index += 1;
-    }
-    /// Runs through the last quarter of test data.
-    fn final_quarter(&mut self) {
-        let quarter = self.quarters.get(self.current_quarter_index).unwrap();
-        for mut player in self.players.iter_mut() {
-            quarter.calc_payoffs(&mut player, self.index_of_value);
-        }
-        self.current_quarter_index = 0;
     }
     /// Run through all of the test data, and generate a new population.
     ///
@@ -107,6 +110,22 @@ impl Game {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
         }
         self.players = new_population;
+    }
+    /// Runs through the next quarter of test data.
+    fn next_quarter(&mut self) {
+        let quarter = self.quarters.get(self.current_quarter_index).unwrap();
+        for mut player in self.players.iter_mut() {
+            quarter.select_for_player(&mut player, self.ratio);
+        }
+        self.current_quarter_index += 1;
+    }
+    /// Runs through the last quarter of test data.
+    fn final_quarter(&mut self) {
+        let quarter = self.quarters.get(self.current_quarter_index).unwrap();
+        for mut player in self.players.iter_mut() {
+            quarter.calc_payoffs(&mut player, self.index_of_value);
+        }
+        self.current_quarter_index = 0;
     }
     /// Perform a final generation of the algorithm, purely to analyse the potential screeners
     pub fn perform_analytical_final_run(&mut self) {
