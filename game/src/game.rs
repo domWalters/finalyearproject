@@ -63,6 +63,7 @@ impl Game {
                 }
             }
         }
+        println!("{:?}", lower_limits);
         (lower_limits, upper_limits)
     }
     pub fn run(&mut self, generation_max: i64, prelim_iterations: i64) {
@@ -85,6 +86,7 @@ impl Game {
             }
             println!("Run {:?} complete!", i);
         }
+        println!("{:?}", self.players[0].strategy.screen.iter().zip(self.players[0].fields_used.iter()).collect::<Vec<_>>());
     }
     /// Run through all of the test data, and generate a new population.
     ///
@@ -106,7 +108,7 @@ impl Game {
             }
         });
         self.analyse_field_purchases();
-        println!("Player count: {:?}, Average % Profit: {:?}, Profit minus natural gain: {:?}", players_with_payoff, self.average_payoff(), self.average_payoff() - self.quarters.natural_gain(self.index_of_value));
+        println!("Player count: {:?}, Average % Profit NAH: {:?}, Profit minus natural gain: {:?}", players_with_payoff, self.average_payoff(), self.average_payoff() - self.quarters.natural_gain(self.index_of_value));
         let mut new_population = Vec::new();
         for _player in &self.players {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
@@ -123,11 +125,13 @@ impl Game {
     }
     /// Runs through the last quarter of test data.
     fn final_quarter(&mut self) {
+        println!("Starting final quarter...");
         let quarter = self.quarters.get(self.current_quarter_index).unwrap();
         for mut player in self.players.iter_mut() {
             quarter.calc_payoffs(&mut player, self.index_of_value);
         }
         self.current_quarter_index = 0;
+        println!("End of final quarter!");
     }
     /// Perform a final generation of the algorithm, purely to analyse the potential screeners
     pub fn perform_analytical_final_run(&mut self) {
@@ -136,6 +140,7 @@ impl Game {
         }
         self.final_quarter();
         self.analyse_field_purchases();
+        println!("{:?}", self.players[0].stocks_purchased);
     }
     /// Produce a vector for each player, where the ith element is a count of the amount of
     /// stocks which satisfied the ith element of the players strategy.
@@ -184,7 +189,13 @@ impl Game {
     }
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
-        (100.0 * self.players.iter().fold(0.0, |acc, player| acc + player.payoff - 1.0)) / (self.players.len() as f64)
+        (100.0 * self.players.iter().fold(0.0, |acc, player| acc + (player.payoff - 1.0) / (player.fields_used.iter().fold(0, |acc, &used| {
+            if used {
+                acc + 1
+            } else {
+                acc
+            }
+        }) as f64))) / (self.players.len() as f64)
     }
     /// Soft resets the list of players.
     pub fn soft_reset(&mut self) {
