@@ -177,13 +177,9 @@ impl Game {
     }
     /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
     pub fn recalc_fields_used(&mut self) {
-        let population_field_counter = self.analyse_field_purchases();
-        for (player_field_counter, player) in population_field_counter.iter().zip(self.players.iter_mut()) {
-            let mut new_fields_used = Vec::new();
-            for &field_count in player_field_counter {
-                new_fields_used.push(field_count != 0);
-            }
-            player.fields_used = new_fields_used;
+        let (l_limits, _r_limits) = Game::calculate_cheap_limits(&self.quarters);
+        for mut player in &mut self.players {
+            player.recalc_fields_used(&l_limits);
         }
     }
     /// Compute the average percentage gain across the entire population.

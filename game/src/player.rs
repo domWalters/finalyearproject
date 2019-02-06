@@ -90,4 +90,23 @@ impl Player {
             fields_used: self.fields_used.clone()
         }
     }
+    ///
+    pub fn recalc_fields_used(&mut self, l_limits: &Vec<f64>) {
+        let mut player_field_counter = vec![0; self.strategy.len()];
+        for stock in &self.stocks_purchased {
+            for k in 0..self.strategy.len() {
+                if (stock.get(k) > self.strategy.get(k)) & *self.fields_used.get(k).unwrap() {
+                    player_field_counter[k] += 1;
+                }
+            }
+        }
+        // let max = player_field_counter.iter().fold(0, |acc, &ele| {
+        //     if ele > acc {
+        //         ele
+        //     } else {
+        //         acc
+        //     }
+        // });
+        self.fields_used = player_field_counter.iter().zip(self.strategy.screen.iter().zip(l_limits.iter())).map(|(&field_count, (strat, lim))| (field_count > 0) & (strat >= lim)).collect();
+    }
 }
