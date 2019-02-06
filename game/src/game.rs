@@ -75,11 +75,13 @@ impl Game {
             self.recalc_fields_used();
             self.soft_reset();
             if i == 0 {
-                self.ratio = 0.6;
-            } else if i == 1 {
-                self.ratio = 0.8;
-            } else if i == 2 {
                 self.ratio = 0.9;
+            } else if i == 2 {
+                self.ratio = 0.95;
+            } else if i == 4 {
+                self.ratio = 0.98;
+            } else if i == 6 {
+                self.ratio = 0.99;
             }
             println!("Run {:?} complete!", i);
         }
