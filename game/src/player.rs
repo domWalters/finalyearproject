@@ -92,6 +92,18 @@ impl Player {
         }
     }
     ///
+    pub fn payoff_normalise(&mut self) {
+        let sym_length = if self.stocks_purchased.len() == 0 { 0.5 } else { self.stocks_purchased.len() as f64 };
+        //self.payoff = (sym_length * self.payoff) / (self.fields_used.iter().fold(0, |acc, &used| {
+        self.payoff = (self.payoff) / (self.fields_used.iter().fold(0, |acc, &used| {
+            if used {
+                acc + 1
+            } else {
+                acc
+            }
+        }) as f64);
+    }
+    ///
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
         let mut player_field_counter = vec![0; self.strategy.len()];
         for stock in &self.stocks_purchased {

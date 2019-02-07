@@ -124,6 +124,7 @@ impl Game {
         }
         //println!("{:?}", self.players[0].stocks_purchased.iter().map(|stock| stock.stock_id.clone()).collect::<Vec<_>>());
         self.final_quarter();
+        self.players.iter_mut().map(|player| player.payoff_normalise()).collect::<Vec<_>>();
         let players_with_payoff = self.players.iter().fold(0, |acc, player| {
             if player.payoff != 0.0 {
                 acc + 1
@@ -200,9 +201,11 @@ impl Game {
     }
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {   // this prints garbage early on
+        //(100.0 * self.players.iter().fold(0.0, |acc, player| acc + player.payoff - 1.0)) / (self.players.len() as f64)
         (100.0 * self.players.iter().fold(0.0, |acc, player| {
-            let sym_length = 1.0;//if player.stocks_purchased.len() == 0 { 0.5 } else { player.stocks_purchased.len() as f64 };
-            acc - 1.0 + ((player.payoff / sym_length) * (player.fields_used.iter().fold(0, |acc, &used| {
+            let sym_length = if player.stocks_purchased.len() == 0 { 0.5 } else { player.stocks_purchased.len() as f64 };
+            //acc - 1.0 + ((player.payoff / sym_length) * (player.fields_used.iter().fold(0, |acc, &used| {
+            acc - 1.0 + ((player.payoff) * (player.fields_used.iter().fold(0, |acc, &used| {
                 if used {
                     acc + 1
                 } else {
