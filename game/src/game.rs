@@ -179,13 +179,16 @@ impl Game {
     }
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {   // this prints garbage early on
-        (100.0 * self.players.iter().fold(0.0, |acc, player| acc - 1.0 + (player.payoff * (player.fields_used.iter().fold(0, |acc, &used| {
-            if used {
-                acc + 1
-            } else {
-                acc
-            }
-        }) as f64)))) / (self.players.len() as f64)
+        (100.0 * self.players.iter().fold(0.0, |acc, player| {
+            let sym_length = if player.stocks_purchased.len() == 0 { 0.5 } else { player.stocks_purchased.len() as f64 };
+            acc - 1.0 + ((player.payoff / sym_length) * (player.fields_used.iter().fold(0, |acc, &used| {
+                if used {
+                    acc + 1
+                } else {
+                    acc
+                }
+            }) as f64))
+        })) / (self.players.len() as f64)
     }
     /// Soft resets the list of players.
     pub fn soft_reset(&mut self) {

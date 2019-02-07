@@ -77,7 +77,8 @@ impl Quarter {
                 None => return,
             }
         }
-        player.payoff = player.payoff / (player.fields_used.iter().fold(0, |acc, &used| {
+        let sym_length = if player.stocks_purchased.len() == 0 { 0.5 } else { player.stocks_purchased.len() as f64 };
+        player.payoff = (sym_length * player.payoff) / (player.fields_used.iter().fold(0, |acc, &used| {
             if used {
                 acc + 1
             } else {
