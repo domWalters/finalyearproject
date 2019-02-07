@@ -111,7 +111,7 @@ impl Player {
                     if strat_field > field_analysis {
                         continue;
                     } else {
-                        return (((i + 1) / length) as f64) > 0.00005;
+                        return (((i + 1) as f64) / (length as f64)) > 0.001;
                     }
                 }
                 return false;   // this line is never hit but needed to compile
