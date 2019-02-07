@@ -144,11 +144,9 @@ impl Game {
         self.analyse_field_purchases();
         println!("{:?}", self.players[0].stocks_purchased);
     }
-    /// Produce a vector for each player, where the ith element is a count of the amount of
-    /// stocks which satisfied the ith element of the players strategy.
-    fn analyse_field_purchases(&self) -> (Vec<Vec<i64>>, Vec<i64>) {
+    /// Produces some useful print data.
+    fn analyse_field_purchases(&self) {
         let mut aggregate_field_counter = vec![0; self.players[0].strategy.len()];
-        let mut population_field_counter = Vec::new();
         for player in &self.players {
             let mut player_field_counter = vec![0; player.strategy.len()];
             for stock in &player.stocks_purchased {
@@ -162,7 +160,6 @@ impl Game {
                                                               .zip(player_field_counter.iter())
                                                               .map(|(a, p)| a + p)
                                                               .collect();
-            population_field_counter.push(player_field_counter);
         }
         println!("{:?}", aggregate_field_counter);
         println!("{:?}", aggregate_field_counter.iter().zip(self.players[0].fields_used.iter()).filter_map(|(&a, &f)| {
@@ -172,15 +169,6 @@ impl Game {
                 None
             }
         }).collect::<Vec<_>>());
-        (population_field_counter.clone(), population_field_counter.iter()
-                                                                   .map(|player_field_counter| player_field_counter.iter()
-                                                                                                                   .fold(0, |acc, &ele| {
-            if ele > acc {
-                ele
-            } else {
-                acc
-            }
-        })).collect())
     }
     /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
     pub fn recalc_fields_used(&mut self) {
