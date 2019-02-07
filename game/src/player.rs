@@ -92,7 +92,7 @@ impl Player {
         }
     }
     ///
-    pub fn recalc_fields_used(&mut self, l_limits: &Vec<f64>) {
+    pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
         let mut player_field_counter = vec![0; self.strategy.len()];
         for stock in &self.stocks_purchased {
             for k in 0..self.strategy.len() {
@@ -101,13 +101,21 @@ impl Player {
                 }
             }
         }
-        // let max = player_field_counter.iter().fold(0, |acc, &ele| {
-        //     if ele > acc {
-        //         ele
-        //     } else {
-        //         acc
-        //     }
-        // });
-        self.fields_used = player_field_counter.iter().zip(self.strategy.screen.iter().zip(l_limits.iter())).map(|(&field_count, (strat, lim))| (field_count > 0) & (strat >= lim)).collect();
+        self.fields_used = player_field_counter.iter().zip(self.strategy.screen.iter().zip(compounded_training_vectors.iter())).map(|(&field_count, (strat_field, ref analysis))| {
+            if field_count == 0 {
+                return false;
+            } else {
+                let length = analysis.len();
+                println!("{:?}", length);
+                for (i, field_analysis) in analysis.iter().enumerate() {
+                    if strat_field > field_analysis {
+                        continue;
+                    } else {
+                        return (((i + 1) / length) as f64) > 0.00005;
+                    }
+                }
+                return false;   // this line is never hit but needed to compile
+            }
+        }).collect();
     }
 }
