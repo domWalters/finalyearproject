@@ -77,6 +77,13 @@ impl Quarter {
                 None => return,
             }
         }
+        player.payoff = player.payoff / (player.fields_used.iter().fold(0, |acc, &used| {
+            if used {
+                acc + 1
+            } else {
+                acc
+            }
+        }) as f64);
     }
     /// Finds a DataRecord (if it exists) that has the same ".stock_id.name" as the input DataRecord.
     ///
