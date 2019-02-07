@@ -118,12 +118,11 @@ impl Player {
                 return false;
             } else {
                 let length = analysis.len();
-                println!("{:?}", length);
                 for (i, field_analysis) in analysis.iter().enumerate() {
                     if strat_field > field_analysis {
                         continue;
                     } else {
-                        return (((i + 1) as f64) / (length as f64)) > 0.001;
+                        return (((i + 1) as f64) / (length as f64)) > 0.01;
                     }
                 }
                 return false;   // this line is never hit but needed to compile

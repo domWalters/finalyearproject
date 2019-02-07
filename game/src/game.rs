@@ -65,7 +65,6 @@ impl Game {
                 }
             }
         }
-        println!("{:?}", lower_limits);
         (lower_limits, upper_limits)
     }
     pub fn expensive_training_data_analysis(&self) -> Vec<Vec<f64>> {
