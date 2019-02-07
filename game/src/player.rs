@@ -1,4 +1,5 @@
 use std::fmt;
+use rand;
 use rand::Rng;
 
 use DataRecord;

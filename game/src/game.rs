@@ -1,4 +1,6 @@
+use rand;
 use rand::Rng;
+use std;
 use std::fmt;
 
 use Player;
