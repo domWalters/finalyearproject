@@ -1,4 +1,6 @@
+use rand;
 use rand::Rng;
+use std;
 use std::fmt;
 
 use Player;
@@ -66,27 +68,49 @@ impl Game {
         println!("{:?}", lower_limits);
         (lower_limits, upper_limits)
     }
+    pub fn expensive_training_data_analysis(&self) -> Vec<Vec<f64>> {
+        let mut field_accumulator: Vec<Vec<f64>> = vec![Vec::new(); self.quarters.get(0).unwrap().get(0).unwrap().record.len()];    // Vector of all results for all fields
+        for current_quarter in &self.quarters.quarters_vector {
+            for ref row in &current_quarter.quarter_vector {
+                for (&field, mut field_store) in row.record.iter().zip(field_accumulator.iter_mut()) {
+                    field_store.push(field);
+                }
+            }
+        }
+        for field_store in &mut field_accumulator {
+            field_store.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        }
+        println!("{:?}", field_accumulator.iter().zip(self.quarters.field_names.iter()).collect::<Vec<_>>());
+        field_accumulator
+    }
     pub fn run(&mut self, generation_max: i64, prelim_iterations: i64) {
+        let compounded_training_vectors = self.expensive_training_data_analysis();
         let quarters_len = self.quarters.len();
         for i in 0..(prelim_iterations + 1) {
             for _j in 0..generation_max {
                 self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST);
             }
             self.perform_analytical_final_run();
-            self.recalc_fields_used();
+            self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset();
             if i == 0 {
                 self.ratio = 0.9;
-            } else if i == 2 {
+            } else if i == 1 {
                 self.ratio = 0.95;
-            } else if i == 4 {
+            } else if i == 2 {
                 self.ratio = 0.98;
-            } else if i == 6 {
+            } else if i == 3 {
                 self.ratio = 0.99;
             }
             println!("Run {:?} complete!", i);
         }
-        println!("{:?}", self.players[0].strategy.screen.iter().zip(self.players[0].fields_used.iter()).collect::<Vec<_>>());
+        println!("{:?}", self.players[0].strategy.screen.iter().zip(&self.quarters.field_names).zip(self.players[0].fields_used.iter()).filter_map(|((field, name), &used)| {
+            if used {
+                Some((name, field))
+            } else {
+                None
+            }
+        }).collect::<Vec<_>>());
     }
     /// Run through all of the test data, and generate a new population.
     ///
@@ -142,11 +166,9 @@ impl Game {
         self.analyse_field_purchases();
         println!("{:?}", self.players[0].stocks_purchased);
     }
-    /// Produce a vector for each player, where the ith element is a count of the amount of
-    /// stocks which satisfied the ith element of the players strategy.
-    fn analyse_field_purchases(&self) -> (Vec<Vec<i64>>, Vec<i64>) {
+    /// Produces some useful print data.
+    fn analyse_field_purchases(&self) {
         let mut aggregate_field_counter = vec![0; self.players[0].strategy.len()];
-        let mut population_field_counter = Vec::new();
         for player in &self.players {
             let mut player_field_counter = vec![0; player.strategy.len()];
             for stock in &player.stocks_purchased {
@@ -160,7 +182,6 @@ impl Game {
                                                               .zip(player_field_counter.iter())
                                                               .map(|(a, p)| a + p)
                                                               .collect();
-            population_field_counter.push(player_field_counter);
         }
         println!("{:?}", aggregate_field_counter);
         println!("{:?}", aggregate_field_counter.iter().zip(self.players[0].fields_used.iter()).filter_map(|(&a, &f)| {
@@ -170,32 +191,25 @@ impl Game {
                 None
             }
         }).collect::<Vec<_>>());
-        (population_field_counter.clone(), population_field_counter.iter()
-                                                                   .map(|player_field_counter| player_field_counter.iter()
-                                                                                                                   .fold(0, |acc, &ele| {
-            if ele > acc {
-                ele
-            } else {
-                acc
-            }
-        })).collect())
     }
     /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
-    pub fn recalc_fields_used(&mut self) {
-        let (l_limits, _r_limits) = Game::calculate_cheap_limits(&self.quarters);
+    pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
         for mut player in &mut self.players {
-            player.recalc_fields_used(&l_limits);
+            player.recalc_fields_used(&compounded_training_vectors);
         }
     }
     /// Compute the average percentage gain across the entire population.
-    pub fn average_payoff(&self) -> f64 {
-        (100.0 * self.players.iter().fold(0.0, |acc, player| acc + (player.payoff - 1.0) / (player.fields_used.iter().fold(0, |acc, &used| {
-            if used {
-                acc + 1
-            } else {
-                acc
-            }
-        }) as f64))) / (self.players.len() as f64)
+    pub fn average_payoff(&self) -> f64 {   // this prints garbage early on
+        (100.0 * self.players.iter().fold(0.0, |acc, player| {
+            let sym_length = 1.0;//if player.stocks_purchased.len() == 0 { 0.5 } else { player.stocks_purchased.len() as f64 };
+            acc - 1.0 + ((player.payoff / sym_length) * (player.fields_used.iter().fold(0, |acc, &used| {
+                if used {
+                    acc + 1
+                } else {
+                    acc
+                }
+            }) as f64))
+        })) / (self.players.len() as f64)
     }
     /// Soft resets the list of players.
     pub fn soft_reset(&mut self) {

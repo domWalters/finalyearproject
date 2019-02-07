@@ -9,6 +9,7 @@ use StockID;
 
 #[derive(Debug)]
 pub struct Quarters {
+    pub field_names: Vec<String>,
     pub quarters_vector: Vec<Quarter>,
     pub starting_year: i64,
     pub starting_quarter: i64
@@ -16,7 +17,7 @@ pub struct Quarters {
 
 impl fmt::Display for Quarters {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Quarters[quarters_vector: {:?}, starting_year: {:?}, starting_quarter: {:?}]", self.quarters_vector, self.starting_year, self.starting_quarter)
+        write!(f, "Quarters[field_names: {:?}, quarters_vector: {:?}, starting_year: {:?}, starting_quarter: {:?}]", self.field_names, self.quarters_vector, self.starting_year, self.starting_quarter)
     }
 }
 
@@ -44,17 +45,13 @@ impl Quarters {
         // Populate vector of readers
         let mut file_readers = Vec::new();
         for file in files_iter {
-            let file_name = file.file_name().into_string().unwrap();
-            if file_name.contains("README") {
-                continue;
-            } else {
-                file_readers.push((Reader::from_path(file.path()).unwrap(), file_name.split('_').next().unwrap().to_string()));
-            }
+            file_readers.push((Reader::from_path(file.path()).unwrap(), file.file_name().into_string().unwrap().split('_').next().unwrap().to_string()));
         }
         // Go through every file and assemble quarters
         let mut year_index = 0;
         let mut quarter_index = 0;
         let mut columns_found = false;
+        let mut field_names = Vec::new();
         for (mut reader, name) in file_readers {
             // Find the year and quarter columns (only done once, all files share this column index)
             if !columns_found {
@@ -65,6 +62,7 @@ impl Quarters {
                         quarter_index = i;
                     }
                 }
+                field_names = reader.headers().unwrap().iter().map(|field| field.to_string()).collect();
                 columns_found = true;
             }
             for row_wrapped in reader.records() {
@@ -120,6 +118,7 @@ impl Quarters {
         let first_quarters_year = output[0].year;
         let first_quarters_quarter = output[0].quarter;
         Quarters {
+            field_names: field_names,
             quarters_vector: output,
             starting_year: first_quarters_year,
             starting_quarter: first_quarters_quarter
