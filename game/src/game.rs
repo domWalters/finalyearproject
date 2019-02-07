@@ -88,7 +88,13 @@ impl Game {
             }
             println!("Run {:?} complete!", i);
         }
-        println!("{:?}", self.players[0].strategy.screen.iter().zip(self.players[0].fields_used.iter()).collect::<Vec<_>>());
+        println!("{:?}", self.players[0].strategy.screen.iter().zip(&self.quarters.field_names).zip(self.players[0].fields_used.iter()).filter_map(|((field, name), &used)| {
+            if used {
+                Some((name, field))
+            } else {
+                None
+            }
+        }).collect::<Vec<_>>());
     }
     /// Run through all of the test data, and generate a new population.
     ///
