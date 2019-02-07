@@ -55,8 +55,9 @@ impl Game {
         let mut upper_limits = vec![std::f64::MIN; first_quarter.get(0).unwrap().len()];
         for current_quarter in &quarters.quarters_vector {
             for ref entry in &current_quarter.quarter_vector {
-                for (&field, (mut lower_limit, mut upper_limit)) in entry.record.iter().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
+                for ((i, &field), (mut lower_limit, mut upper_limit)) in entry.record.iter().enumerate().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
                     if field < *lower_limit {
+                        println!("LOWER LIMIT CHANGE in field {:?} of {:?} with value {:?}", i, entry, field);
                         *lower_limit = field;
                     }
                     if field > *upper_limit {
@@ -94,13 +95,13 @@ impl Game {
             self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset();
             if i == 0 {
-                self.ratio = 0.9;
+                self.ratio = 0.6;
+            } else if i == 1 {
+                self.ratio = 0.7;
             } else if i == 2 {
-                self.ratio = 0.95;
-            } else if i == 4 {
+                self.ratio = 0.9;
+            } else if i == 3 {
                 self.ratio = 0.98;
-            } else if i == 6 {
-                self.ratio = 0.99;
             }
             println!("Run {:?} complete!", i);
         }
