@@ -1,5 +1,5 @@
 [package]
-name = "game"
+name = "data_generator"
 version = "0.1.0"
 authors = ["domWalters <waltersdom@gmail.com>"]
 edition = "2018"
