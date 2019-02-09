@@ -17,7 +17,7 @@ file_to_open = os.path.join(os.getcwd(), "test-data/Intrinio_all_symbols.csv")
 allcompanies = pd.read_csv(file_to_open, encoding='utf-8')
 
 data_folder = os.path.join(os.getcwd(), "test-data/PythonData")
-for i in range(11779,15000):
+for i in range(12001,15000):
     ticker = allcompanies['ticker'][i]
     try:
         file_date = allcompanies['latest_filing_date'][i][0:4]
