@@ -3,9 +3,8 @@ use std::{
     env::* };
 use csv::Reader;
 
-use Quarter;
-use DataRecord;
-use StockID;
+use crate::quarter::Quarter;
+use crate::data_record::{StockID, DataRecord};
 
 #[derive(Debug)]
 pub struct Quarters {

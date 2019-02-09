@@ -1,7 +1,7 @@
 use std::fmt;
 
-use DataRecord;
-use Player;
+use crate::data_record::DataRecord;
+use crate::player::Player;
 
 #[derive(Debug)]
 pub struct Quarter {

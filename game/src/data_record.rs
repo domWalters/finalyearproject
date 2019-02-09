@@ -1,6 +1,6 @@
 use std::fmt;
 
-use Player;
+use crate::player::Player;
 
 #[derive(Debug)]
 #[derive(Clone)]

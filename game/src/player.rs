@@ -2,8 +2,8 @@ use std::fmt;
 use rand;
 use rand::Rng;
 
-use DataRecord;
-use Screener;
+use crate::data_record::DataRecord;
+use crate::screener::Screener;
 
 #[derive(Debug)]
 pub struct Player {

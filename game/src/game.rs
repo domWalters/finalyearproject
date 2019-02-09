@@ -3,8 +3,8 @@ use rand::Rng;
 use std;
 use std::fmt;
 
-use Player;
-use Quarters;
+use crate::player::Player;
+use crate::quarters::Quarters;
 
 pub static DEFAULT_TOURNEY_CONST: usize = 3;
 pub static DEFAULT_MUTATION_CONST: f64 = 0.7;
@@ -55,7 +55,7 @@ impl Game {
         let mut upper_limits = vec![std::f64::MIN; first_quarter.get(0).unwrap().len()];
         for current_quarter in &quarters.quarters_vector {
             for ref entry in &current_quarter.quarter_vector {
-                for (&field, (mut lower_limit, mut upper_limit)) in entry.record.iter().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
+                for (&field, (lower_limit, upper_limit)) in entry.record.iter().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
                     if field < *lower_limit {
                         *lower_limit = field;
                     }
@@ -71,7 +71,7 @@ impl Game {
         let mut field_accumulator: Vec<Vec<f64>> = vec![Vec::new(); self.quarters.get(0).unwrap().get(0).unwrap().record.len()];    // Vector of all results for all fields
         for current_quarter in &self.quarters.quarters_vector {
             for ref row in &current_quarter.quarter_vector {
-                for (&field, mut field_store) in row.record.iter().zip(field_accumulator.iter_mut()) {
+                for (&field, field_store) in row.record.iter().zip(field_accumulator.iter_mut()) {
                     field_store.push(field);
                 }
             }
@@ -121,7 +121,6 @@ impl Game {
         while self.current_quarter_index < quarter_max - 1 {
             self.next_quarter();
         }
-        //println!("{:?}", self.players[0].stocks_purchased.iter().map(|stock| stock.stock_id.clone()).collect::<Vec<_>>());
         self.final_quarter();
         self.players.iter_mut().map(|player| player.payoff_normalise()).collect::<Vec<_>>();
         let players_with_payoff = self.players.iter().fold(0, |acc, player| {
@@ -194,7 +193,7 @@ impl Game {
     }
     /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
-        for mut player in &mut self.players {
+        for player in &mut self.players {
             player.recalc_fields_used(&compounded_training_vectors);
         }
     }
@@ -215,7 +214,7 @@ impl Game {
     }
     /// Soft resets the list of players.
     pub fn soft_reset(&mut self) {
-        for mut player in &mut self.players {
+        for player in &mut self.players {
             player.soft_reset();
         }
     }
