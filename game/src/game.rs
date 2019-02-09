@@ -93,13 +93,13 @@ impl Game {
             self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset();
             if i == 0 {
-                self.ratio = 0.9;
+                self.ratio = 0.5;
             } else if i == 1 {
-                self.ratio = 0.95;
+                self.ratio = 0.6;
             } else if i == 2 {
-                self.ratio = 0.98;
+                self.ratio = 0.7;
             } else if i == 3 {
-                self.ratio = 0.99;
+                self.ratio = 0.8;
             }
             println!("Run {:?} complete!", i);
         }
@@ -198,18 +198,18 @@ impl Game {
         }
     }
     /// Compute the average percentage gain across the entire population.
-    pub fn average_payoff(&self) -> f64 {   // this prints garbage early on
+    pub fn average_payoff(&self) -> f64 {
         //(100.0 * self.players.iter().fold(0.0, |acc, player| acc + player.payoff - 1.0)) / (self.players.len() as f64)
         (100.0 * self.players.iter().fold(0.0, |acc, player| {
-            let sym_length = if player.stocks_purchased.len() == 0 { 0.5 } else { player.stocks_purchased.len() as f64 };
+            let sym_length = 1.0 + (player.stocks_purchased.len() as f64 / 400.0);
             //acc - 1.0 + ((player.payoff / sym_length) * (player.fields_used.iter().fold(0, |acc, &used| {
-            acc - 1.0 + ((player.payoff) * (player.fields_used.iter().fold(0, |acc, &used| {
+            acc - 1.0 + (player.payoff * ((player.fields_used.iter().fold(0.0, |acc, &used| {
                 if used {
-                    acc + 1
+                    acc + 1.0
                 } else {
                     acc
                 }
-            }) as f64))
+            }) * 0.25) / sym_length))
         })) / (self.players.len() as f64)
     }
     /// Soft resets the list of players.
