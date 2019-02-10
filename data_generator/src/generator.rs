@@ -3,14 +3,14 @@ use csv::Writer;
 use rand;
 use rand::Rng;
 
-pub fn build_fake_data(number_of_stocks: usize, number_of_columns: usize, number_of_records: usize, relationship_index: usize) {
+pub fn build_fake_data (num_stocks: usize, num_col: usize, num_rec: usize, relationship_indicies: Vec<usize>) {
     // Path
     let mut trim_unite_folder = current_dir().unwrap();
     trim_unite_folder.pop(); trim_unite_folder.push("test-data/TrimmedUnitedData/arbitrary_trash.csv");
     // Rng
     let mut rng = rand::thread_rng();
     // Make each stock file
-    for i in 0..number_of_stocks {
+    for i in 0..num_stocks {
         // New writer
         let stock_file_name = format!("STCK{}_unite_trim.csv", i);
         println!("Generating {:?}...", stock_file_name);
@@ -18,12 +18,12 @@ pub fn build_fake_data(number_of_stocks: usize, number_of_columns: usize, number
         let mut writer = Writer::from_path(&trim_unite_folder).unwrap();
         // Make header
         let mut header_vec = Vec::new();
-        for j in 0..number_of_columns {
+        for j in 0..num_col {
             if j == 0 {
                 header_vec.push("adj_price".to_string());
-            } else if j == number_of_columns - 2 {
+            } else if j == num_col - 2 {
                 header_vec.push("period".to_string());
-            } else if j == number_of_columns - 1 {
+            } else if j == num_col - 1 {
                 header_vec.push("year".to_string());
             } else {
                 header_vec.push(format!("mischeaderfield{}", j - 1));
@@ -39,22 +39,28 @@ pub fn build_fake_data(number_of_stocks: usize, number_of_columns: usize, number
         // Make rows
         let (mut year, mut quarter) = (2018, 3);
         let mut records: Vec<Vec<String>> = Vec::new();
-        for j in 0..number_of_records {
+        for j in 0..num_rec {
             let mut record_vec: Vec<String> = Vec::new();
-            for k in 0..number_of_columns {
+            for k in 0..num_col {
                 if k == 0 {
-                    let four_yr_old_rel_value;
-                    if j >= 4 {
-                        four_yr_old_rel_value = records[j-4][relationship_index].parse::<f64>().unwrap();
+                    // if j >= 1 {
+                    //     let changes: Vec<f64> = relationship_indicies.iter().map(|&index| (records[j-1][index].parse::<f64>().unwrap() - 50.0) / 5.0).collect();
+                    //     record_vec.push((records[j-1][0].parse::<f64>().unwrap() + changes.iter().fold(0.0, |acc, ele| acc + ele)).to_string());
+                    if j == num_rec - 1 {
+                        let mut total_change = 0.0;
+                        for j in 1..num_rec {
+                            total_change += relationship_indicies.iter().map(|&index| (records[j-1][index].parse::<f64>().unwrap() - 50.0) / 5.0).fold(0.0, |acc, ele| acc + ele);
+                        }
+                        println!("price: {:?}, change: {:?}", records[j-1][0], total_change);
+                        record_vec.push((records[j-1][0].parse::<f64>().unwrap() + total_change).to_string());
                     } else {
-                        four_yr_old_rel_value = rng.gen_range(0.0, 100.0);
+                        record_vec.push(rng.gen_range(0.0, 100.0).to_string());
                     }
-                    record_vec.push(if four_yr_old_rel_value > 50.0 {rng.gen_range(50.0, 100.0).to_string()} else {rng.gen_range(0.0, 75.0).to_string()});
-                } else if k == relationship_index {
+                } else if relationship_indicies.contains(&k) {
                     record_vec.push(rng.gen_range(0.0, 100.0).to_string());
-                } else if k == number_of_columns - 2 {
+                } else if k == num_col - 2 {
                     record_vec.push(format!("Q{}", quarter));
-                } else if k == number_of_columns - 1 {
+                } else if k == num_col - 1 {
                     record_vec.push(year.to_string());
                 } else {
                     record_vec.push(rng.gen_range(0.0, 100.0).to_string());
