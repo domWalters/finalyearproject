@@ -43,16 +43,16 @@ pub fn build_fake_data (num_stocks: usize, num_col: usize, num_rec: usize, relat
             let mut record_vec: Vec<String> = Vec::new();
             for k in 0..num_col {
                 if k == 0 {
-                    // if j >= 1 {
-                    //     let changes: Vec<f64> = relationship_indicies.iter().map(|&index| (records[j-1][index].parse::<f64>().unwrap() - 50.0) / 5.0).collect();
-                    //     record_vec.push((records[j-1][0].parse::<f64>().unwrap() + changes.iter().fold(0.0, |acc, ele| acc + ele)).to_string());
-                    if j == num_rec - 1 {
-                        let mut total_change = 0.0;
-                        for j in 1..num_rec {
-                            total_change += relationship_indicies.iter().map(|&index| (records[j-1][index].parse::<f64>().unwrap() - 50.0) / 5.0).fold(0.0, |acc, ele| acc + ele);
-                        }
-                        println!("price: {:?}, change: {:?}", records[j-1][0], total_change);
-                        record_vec.push((records[j-1][0].parse::<f64>().unwrap() + total_change).to_string());
+                    if j >= 1 {
+                        let changes: Vec<f64> = relationship_indicies.iter().map(|&index| (records[j-1][index].parse::<f64>().unwrap() - 50.0) / 5.0).collect();
+                        record_vec.push((records[j-1][0].parse::<f64>().unwrap() + changes.iter().fold(0.0, |acc, ele| acc + ele)).to_string());
+                    // if j == num_rec - 1 {
+                    //     let mut total_change = 0.0;
+                    //     for j in 1..num_rec {
+                    //         total_change += relationship_indicies.iter().map(|&index| (records[j-1][index].parse::<f64>().unwrap() - 50.0) / 5.0).fold(0.0, |acc, ele| acc + ele);
+                    //     }
+                    //     println!("price: {:?}, change: {:?}", records[j-1][0], total_change);
+                    //     record_vec.push((records[j-1][0].parse::<f64>().unwrap() + total_change).to_string());
                     } else {
                         record_vec.push(rng.gen_range(0.0, 100.0).to_string());
                     }
