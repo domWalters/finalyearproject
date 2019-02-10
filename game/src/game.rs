@@ -131,7 +131,7 @@ impl Game {
             }
         });
         self.analyse_field_purchases();
-        println!("Player count: {:?}, Average % Profit NAH: {:?}, Profit minus natural gain: {:?}", players_with_payoff, self.average_payoff(), self.average_payoff() - self.quarters.natural_gain(self.index_of_value));
+        println!("Player count: {:?}, Average % Profit: {:?}", players_with_payoff, self.average_payoff());
         let mut new_population = Vec::new();
         for _player in &self.players {
             new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
