@@ -4,7 +4,7 @@ use std::{
 use csv::Reader;
 
 use crate::quarter::Quarter;
-use crate::data_record::{StockID, DataRecord};
+use crate::data_record::{TimeID, StockID, DataRecord};
 
 #[derive(Debug)]
 pub struct Quarters {
@@ -74,8 +74,10 @@ impl Quarters {
                         record: Vec::new(),
                         stock_id: StockID {
                             name: name.clone(),
-                            year: year,
-                            quarter: quarter
+                            time_id: TimeID {
+                                year: year,
+                                quarter: quarter
+                            }
                         }
                     };
                     for (i, field) in row.iter().enumerate() {
@@ -100,7 +102,7 @@ impl Quarters {
         let largest_length = pre_output.iter().fold(0, |acc, quarter| {
             let len = quarter.len();
             if len > acc {
-                println!("New largest quarter {:?} with value {}", (quarter.year, quarter.quarter), len);
+                println!("New largest quarter {:?} with value {}", quarter.time_id, len);
                 len
             } else {
                 acc
@@ -110,12 +112,12 @@ impl Quarters {
         let output: Vec<Quarter> = pre_output.into_iter().filter(|quarter| {
             let keep = quarter.len() >= (8 * largest_length) / 10;
             if !keep {
-                println!("Throwing away {:?} with length of {:?}, which is below 80% of {:?} ({:?}).", (quarter.year, quarter.quarter), quarter.len(), largest_length, (4 * largest_length) / 5);
+                println!("Throwing away {:?} with length of {:?}, which is below 80% of {:?} ({:?}).", quarter.time_id, quarter.len(), largest_length, (4 * largest_length) / 5);
             }
             keep
         }).collect();
-        let first_quarters_year = output[0].year;
-        let first_quarters_quarter = output[0].quarter;
+        let first_quarters_year = output[0].time_id.year;
+        let first_quarters_quarter = output[0].time_id.quarter;
         Quarters {
             field_names: field_names,
             quarters_vector: output,

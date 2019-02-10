@@ -13,19 +13,55 @@ pub struct DataRecord {
 #[derive(Clone)]
 pub struct StockID {
     pub name: String,
+    pub time_id: TimeID,
+}
+
+#[derive(Debug)]
+#[derive(Clone)]
+pub struct TimeID {
     pub year: i64,
     pub quarter: i64
 }
 
+impl fmt::Display for TimeID {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "TimeID[year: {}, quarter: {}]", self.year, self.quarter)
+    }
+}
+
 impl fmt::Display for StockID {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "StockID[name: {:?}, year: {}, quarter: {}]", self.name, self.year, self.quarter)
+        write!(f, "StockID[name: {:?}, time_id: {:?}]", self.name, self.time_id)
     }
 }
 
 impl fmt::Display for DataRecord {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "DataRecord[record: {:?}, stock_id: {}]", self.record, self.stock_id)
+    }
+}
+
+impl TimeID {
+    pub fn is_date(&self, time_id: &TimeID) -> bool {
+        (self.quarter == time_id.quarter) & (self.year == time_id.year)
+    }
+
+    pub fn is_immediate_previous_of(&self, time_id: &TimeID) -> bool {
+        if time_id.quarter != 1 {
+            self.quarter + 1 == time_id.quarter
+        } else {
+            (self.year + 1 == time_id.year) && (self.quarter == 4)
+        }
+    }
+}
+
+impl StockID {
+    pub fn is_name(&self, stock_id: &StockID) -> bool {
+        self.name == stock_id.name
+    }
+
+    pub fn is_date(&self, stock_id: &StockID) -> bool {
+        self.time_id.is_date(&stock_id.time_id)
     }
 }
 

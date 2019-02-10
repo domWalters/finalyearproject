@@ -9,13 +9,14 @@ use crate::screener::Screener;
 pub struct Player {
     pub strategy: Screener,
     pub payoff: f64,
+    pub stocks_sold: u64,
     pub stocks_purchased: Vec<DataRecord>,
     pub fields_used: Vec<bool>
 }
 
 impl fmt::Display for Player {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Player[strategy: {}, payoff: {}, stocks_purchased: {:?}]", self.strategy, self.payoff, self.stocks_purchased)
+        write!(f, "Player[strategy: {}, payoff: {}, stocks_sold: {}, stocks_purchased: {:?}]", self.strategy, self.payoff, self.stocks_sold, self.stocks_purchased)
     }
 }
 
@@ -32,6 +33,7 @@ impl Player {
         Player {
             strategy: Screener::new_uniform_random((l_limits, r_limits)),
             payoff: 0.0,                     // dangerous
+            stocks_sold: 0,
             stocks_purchased: Vec::new(),
             fields_used: vec![true; l_limits.len()]
         }
@@ -39,12 +41,14 @@ impl Player {
     /// Resets the player to have payoff 0, an empty stocks_purchased vector, and every field being used.
     pub fn reset(&mut self) {
         self.payoff = 0.0;
+        self.stocks_sold = 0;
         self.stocks_purchased = Vec::new();
         self.fields_used = vec![true; self.strategy.len()];
     }
     /// Resets the player to have payoff 0, and an empty stocks_purchased vector.
     pub fn soft_reset(&mut self) {
         self.payoff = 0.0;
+        self.stocks_sold = 0;
         self.stocks_purchased = Vec::new();
     }
     /// Perform a uniform crossover of two Players.
@@ -61,6 +65,7 @@ impl Player {
         Player {
             strategy: self.strategy.dumb_crossover(&player.strategy),
             payoff: 0.0,
+            stocks_sold: 0,
             stocks_purchased: Vec::new(),
             fields_used: self.fields_used.iter()
                                          .zip(player.fields_used.iter())
@@ -87,6 +92,7 @@ impl Player {
         Player {
             strategy: self.strategy.lazy_mutate(c),
             payoff: 0.0,
+            stocks_sold: 0,
             stocks_purchased: Vec::new(),
             fields_used: self.fields_used.clone()
         }

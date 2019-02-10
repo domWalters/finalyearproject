@@ -1,18 +1,17 @@
 use std::fmt;
 
-use crate::data_record::DataRecord;
+use crate::data_record::{DataRecord, StockID, TimeID};
 use crate::player::Player;
 
 #[derive(Debug)]
 pub struct Quarter {
     pub quarter_vector: Vec<DataRecord>,
-    pub year: i64,
-    pub quarter: i64
+    pub time_id: TimeID
 }
 
 impl fmt::Display for Quarter {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Quarter[quarter_vector: {:?}, year: {:?}, quarter: {:?}]", self.quarter_vector, self.year, self.quarter)
+        write!(f, "Quarter[quarter_vector: {:?}, time_id: {:?}]", self.quarter_vector, self.time_id)
     }
 }
 
@@ -25,8 +24,10 @@ impl Quarter {
     pub fn load_blank(year: i64, quarter: i64) -> Quarter {
         Quarter {
             quarter_vector: Vec::new(),
-            year: year,
-            quarter: quarter
+            time_id: TimeID {
+                year: year,
+                quarter: quarter
+            }
         }
     }
     /// Returns the length of the quarter_vector field.
