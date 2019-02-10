@@ -79,7 +79,7 @@ impl Game {
         for field_store in &mut field_accumulator {
             field_store.sort_by(|a, b| a.partial_cmp(b).unwrap());
         }
-        println!("{:?}", field_accumulator.iter().zip(self.quarters.field_names.iter()).collect::<Vec<_>>());
+        //println!("{:?}", field_accumulator.iter().zip(self.quarters.field_names.iter()).collect::<Vec<_>>());
         field_accumulator
     }
     pub fn run(&mut self, generation_max: i64, prelim_iterations: i64) {
@@ -163,7 +163,8 @@ impl Game {
         }
         self.final_quarter();
         self.analyse_field_purchases();
-        println!("{:?}", self.players[0].stocks_purchased);
+        println!("{:?}", self.players[0].stocks_sold.iter().map(|stock| stock.stock_id.to_string()).collect::<Vec<_>>());
+        // this print isn't ordered...? concerning
     }
     /// Produces some useful print data.
     fn analyse_field_purchases(&self) {
@@ -200,13 +201,13 @@ impl Game {
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {   //BROKEN
         self.players.iter().fold(0.0, |acc, player| {
-            acc + (player.payoff * (player.fields_used.iter().fold(0.0, |acc_two, &used| {
+            acc + ((player.payoff * (player.fields_used.iter().fold(0.0, |acc_two, &used| {
                 if used {
                     acc_two + 1.0
                 } else {
                     acc_two
                 }
-            }) / 4.0))
+            }) / 4.0)) / (if player.stocks_sold.len() != 0 {(player.stocks_sold.len() as f64) * (player.stocks_sold.len() as f64)} else {1.0}))
         }) / (self.players.len() as f64)
     }
     /// Soft resets the list of players.

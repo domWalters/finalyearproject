@@ -89,15 +89,13 @@ impl Quarter {
         for i in indicies_to_bin.iter().rev().map(|(i, _stock)| i) {
             match self.find_by_stock_name(&player.stocks_purchased[*i]) {
                 Some(current_value) => {
-                    player.stocks_sold += 1;
                     player.payoff += 100.0 * ((current_value.get(index) / player.stocks_purchased[*i].get(index)) - 1.0);
                 },
                 None => {
-                    player.stocks_sold += 1;
                     player.payoff += 0.0;
                 }
             }
-            player.stocks_purchased.remove(*i);
+            player.stocks_sold.push(player.stocks_purchased.remove(*i));
         }
     }
     /// Calculates a payoff given to a player based on the value of the stocks that were purchased.
@@ -113,14 +111,13 @@ impl Quarter {
         for stock in &player.stocks_purchased {
             match self.find_by_stock_name(&stock) {
                 Some(current_value) => {
-                    player.stocks_sold += 1;
                     player.payoff += 100.0 * ((current_value.get(index) / stock.get(index)) - 1.0);
                 },
                 None => {
-                    player.stocks_sold += 1;
                     player.payoff += 0.0;
                 }
             }
+            player.stocks_sold.push(stock.clone());
         }
     }
     /// Finds a DataRecord (if it exists) that has the same ".stock_id.name" as the input DataRecord.

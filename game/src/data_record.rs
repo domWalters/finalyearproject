@@ -53,6 +53,10 @@ impl TimeID {
             (self.year + 1 == time_id.year) && (self.quarter == 4)
         }
     }
+
+    pub fn to_string(&self) -> String {
+        format!("{}-{}", self.year, self.quarter)
+    }
 }
 
 impl StockID {
@@ -62,6 +66,10 @@ impl StockID {
 
     pub fn is_date(&self, stock_id: &StockID) -> bool {
         self.time_id.is_date(&stock_id.time_id)
+    }
+
+    pub fn to_string(&self) -> String {
+        format!("{}-{}", self.name, self.time_id.to_string())
     }
 }
 
