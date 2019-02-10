@@ -93,13 +93,13 @@ impl Game {
             self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset();
             if i == 0 {
-                self.ratio = 0.6;
+                self.ratio = 0.5;
             } else if i == 1 {
-                self.ratio = 0.8;
+                self.ratio = 0.6;
             } else if i == 2 {
-                self.ratio = 0.9;
+                self.ratio = 0.7;
             } else if i == 3 {
-                self.ratio = 0.95;
+                self.ratio = 0.8;
             }
             println!("Run {:?} complete!", i);
         }
