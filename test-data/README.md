@@ -8,7 +8,7 @@ If you don't mind reading this file in it's raw unformatted form, then simply op
 
 ### File Properties
 
-This zip file contains formatted data for "acceptable" stocks in alphanumeric indexes 10000-12230 from the Intrinio Platform "all\_companies" list.
+This zip file contains formatted data for "acceptable" stocks in alphanumeric indexes 10000-12516 from the Intrinio Platform "all\_companies" list.
 Stocks are only downloaded from the IntrinioAPI if the following conditions are met:
 
 * The "last\_filing\_date" field in the Intrinio "all\_companies" list has an entry.
