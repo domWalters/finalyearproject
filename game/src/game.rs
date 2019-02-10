@@ -93,13 +93,13 @@ impl Game {
             self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset();
             if i == 0 {
-                self.ratio = 0.5;
-            } else if i == 1 {
                 self.ratio = 0.6;
-            } else if i == 2 {
-                self.ratio = 0.7;
-            } else if i == 3 {
+            } else if i == 1 {
                 self.ratio = 0.8;
+            } else if i == 2 {
+                self.ratio = 0.9;
+            } else if i == 3 {
+                self.ratio = 0.95;
             }
             println!("Run {:?} complete!", i);
         }
@@ -142,7 +142,7 @@ impl Game {
     fn next_quarter(&mut self) {
         let quarter = self.quarters.get(self.current_quarter_index).unwrap();
         for mut player in self.players.iter_mut() {
-            quarter.select_for_player(&mut player, self.ratio);
+            quarter.select_for_player(&mut player, self.ratio, self.index_of_value);
         }
         self.current_quarter_index += 1;
     }
@@ -198,19 +198,16 @@ impl Game {
         }
     }
     /// Compute the average percentage gain across the entire population.
-    pub fn average_payoff(&self) -> f64 {
-        //(100.0 * self.players.iter().fold(0.0, |acc, player| acc + player.payoff - 1.0)) / (self.players.len() as f64)
-        (100.0 * self.players.iter().fold(0.0, |acc, player| {
-            let sym_length = 1.0 + (player.stocks_purchased.len() as f64 / 400.0);
-            //acc - 1.0 + ((player.payoff / sym_length) * (player.fields_used.iter().fold(0, |acc, &used| {
-            acc - 1.0 + (player.payoff * ((player.fields_used.iter().fold(0.0, |acc, &used| {
+    pub fn average_payoff(&self) -> f64 {   //BROKEN
+        self.players.iter().fold(0.0, |acc, player| {
+            acc + (player.payoff * (player.fields_used.iter().fold(0.0, |acc_two, &used| {
                 if used {
-                    acc + 1.0
+                    acc_two + 1.0
                 } else {
-                    acc
+                    acc_two
                 }
-            }) * 0.25) / sym_length))
-        })) / (self.players.len() as f64)
+            }) / 4.0))
+        }) / (self.players.len() as f64)
     }
     /// Soft resets the list of players.
     pub fn soft_reset(&mut self) {

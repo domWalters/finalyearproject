@@ -99,14 +99,17 @@ impl Player {
     }
     ///
     pub fn payoff_normalise(&mut self) {
-        let sym_length = 1.0 + (self.stocks_purchased.len() as f64 / 400.0);
-        self.payoff = self.payoff * (sym_length / (self.fields_used.iter().fold(0.0, |acc, &used| {
-            if used {
-                acc + 1.0
-            } else {
-                acc
-            }
-        }) * 0.25));
+        if self.stocks_sold != 0 {
+            self.payoff = (self.payoff * (4.0 / self.fields_used.iter().fold(0.0, |acc, &used| {
+                if used {
+                    acc + 1.0
+                } else {
+                    acc
+                }
+            }))) / (self.stocks_sold as f64);
+        } else {
+            self.payoff = 0.0;
+        }
     }
     ///
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {

@@ -53,11 +53,51 @@ impl Quarter {
     ///
     /// # Arguments
     /// * `player` - A Player struct.
-    pub fn select_for_player(&self, player: &mut Player, ratio: f64) {
+    pub fn select_for_player(&self, player: &mut Player, ratio: f64, index: usize) {
+        // Buy from quarter
         for stock in &self.quarter_vector {
             if stock.greater_by_ratio(&player, ratio) {
                 player.stocks_purchased.push(stock.clone());
             }
+        }
+        // Sell discontinuous stocks, create a list of what to sell
+        let mut indicies_to_bin: Vec<(usize, StockID)> = Vec::new();
+        for (i, stock) in player.stocks_purchased.iter().enumerate() {  // THIS ITER IS ORDERED BY DEFINITION
+            if stock.stock_id.time_id.is_date(&self.time_id) {
+                let mut indicies_to_save: Vec<usize> = Vec::new();
+                for (j, (_, bin_stock_id)) in indicies_to_bin.iter().enumerate() {
+                    if stock.stock_id.is_name(&bin_stock_id) {
+                        if bin_stock_id.time_id.is_immediate_previous_of(&stock.stock_id.time_id) {
+                            indicies_to_save.push(j);
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+                // Now remove those in the save list from the bin list
+                //println!("Current quarter: {:?}, Current bin: {:?}, Current save: {:?}", self.time_id, indicies_to_bin, indicies_to_save);
+                for j in indicies_to_save.iter().rev() {
+                    indicies_to_bin.remove(*j);
+                }
+            } else {
+                indicies_to_bin.push((i, stock.stock_id.clone()));  // throw away everything not in this quarter
+            }
+        }
+        // Fully constructed bin list, construct payoff and chuck
+        for i in indicies_to_bin.iter().rev().map(|(i, _stock)| i) {
+            match self.find_by_stock_name(&player.stocks_purchased[*i]) {
+                Some(current_value) => {
+                    player.stocks_sold += 1;
+                    player.payoff += 100.0 * ((current_value.get(index) / player.stocks_purchased[*i].get(index)) - 1.0);
+                },
+                None => {
+                    player.stocks_sold += 1;
+                    player.payoff += 0.0;
+                }
+            }
+            player.stocks_purchased.remove(*i);
         }
     }
     /// Calculates a payoff given to a player based on the value of the stocks that were purchased.
@@ -73,9 +113,13 @@ impl Quarter {
         for stock in &player.stocks_purchased {
             match self.find_by_stock_name(&stock) {
                 Some(current_value) => {
-                    player.payoff += current_value.get(index) / (stock.get(index) * (player.stocks_purchased.len() as f64));
+                    player.stocks_sold += 1;
+                    player.payoff += 100.0 * ((current_value.get(index) / stock.get(index)) - 1.0);
                 },
-                None => return,
+                None => {
+                    player.stocks_sold += 1;
+                    player.payoff += 0.0;
+                }
             }
         }
     }
