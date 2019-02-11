@@ -122,7 +122,7 @@ impl Game {
             self.next_quarter();
         }
         self.final_quarter();
-        self.players.iter_mut().map(|player| player.payoff_normalise()).collect::<Vec<_>>();
+        let _normalise = self.players.iter_mut().map(|player| player.payoff_normalise()).collect::<Vec<_>>();
         let players_with_payoff = self.players.iter().fold(0, |acc, player| {
             if player.payoff != 0.0 {
                 acc + 1

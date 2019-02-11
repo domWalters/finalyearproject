@@ -27,12 +27,11 @@ impl Screener {
     /// the ith element of r_limits.
     pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>)) -> Screener {
         let mut output = Vec::new();
-        let mut rng = rand::thread_rng();
         for (l, r) in l_limits.iter().zip(r_limits) {
             if l == r {
                 output.push((*l, true));
             } else {
-                output.push((rng.gen_range(*l, *r), true));
+                output.push((rand::thread_rng().gen_range(*l, *r), true));
             }
         }
         Screener {

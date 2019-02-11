@@ -1,6 +1,4 @@
-use std::{
-    fmt,
-    env::* };
+use std::{fmt, env::*, slice::Iter};
 use csv::Reader;
 
 use crate::quarter::Quarter;
@@ -122,25 +120,6 @@ impl Quarters {
             starting_time: starting_time
         }
     }
-    /// Calculates the average percentage gain of the whole market over time.
-    ///
-    /// # Arguments
-    /// * `index_of_value` - The index in a DataRecord which represents the value of the stock.
-    // pub fn natural_gain(&self, index_of_value: usize) -> f64 {
-    //     // Get quarters
-    //     let starting_quarter = self.quarters_vector.first().unwrap();
-    //     let final_quarter = self.quarters_vector.last().unwrap();
-    //     // For each element of the first, find it in the second.
-    //     let mut value_multiplier = Vec::new();
-    //     for record_in_starting in &starting_quarter.quarter_vector {
-    //         if let Some(record_in_final) = final_quarter.find_by_stock_name(&record_in_starting) {
-    //             value_multiplier.push(record_in_final.get(index_of_value) / record_in_starting.get(index_of_value));
-    //         } else {
-    //             // Stock no longer existed...
-    //         }
-    //     }
-    //     value_multiplier.iter().fold(0.0, |acc, f| acc + f ) / (value_multiplier.len() as f64)
-    // }
     /// Gets the requested index from the quarters_vector field, as an Option.
     ///
     /// # Arguments
@@ -151,5 +130,9 @@ impl Quarters {
     /// Returns the length of the quarters_vector field.
     pub fn len(&self) -> usize {
         self.quarters_vector.len()
+    }
+    ///
+    pub fn iter(&self) -> Iter<Quarter> {
+        self.quarters_vector.iter()
     }
 }

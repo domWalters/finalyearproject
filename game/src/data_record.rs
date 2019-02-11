@@ -54,6 +54,14 @@ impl TimeID {
         }
     }
 
+    pub fn strictly_after(&self, time_id: &TimeID) -> bool {
+        if self.year == time_id.year {
+            self.quarter > time_id.quarter
+        } else {
+            self.year > time_id.year
+        }
+    }
+
     pub fn to_string(&self) -> String {
         format!("{}-{}", self.year, self.quarter)
     }
@@ -66,6 +74,10 @@ impl StockID {
 
     pub fn is_date(&self, stock_id: &StockID) -> bool {
         self.time_id.is_date(&stock_id.time_id)
+    }
+
+    pub fn is_immediate_previous_of(&self, stock_id: &StockID) -> bool {
+        self.time_id.is_immediate_previous_of(&stock_id.time_id)
     }
 
     pub fn to_string(&self) -> String {
@@ -93,7 +105,7 @@ impl DataRecord {
     pub fn get(&self, index: usize) -> f64 {
         self.record[index]
     }
-
+    ///
     pub fn iter(&self) -> Iter<f64> {
         self.record.iter()
     }

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, slice::Iter};
 
 use crate::data_record::{DataRecord, StockID, TimeID};
 use crate::player::Player;
@@ -48,6 +48,14 @@ impl Quarter {
     pub fn push(&mut self, new_record: DataRecord) {
         self.quarter_vector.push(new_record);
     }
+    ///
+    pub fn iter(&self) -> Iter<DataRecord> {
+        self.quarter_vector.iter()
+    }
+    ///
+    pub fn remove(&mut self, index: usize) -> DataRecord {
+        self.quarter_vector.remove(index)
+    }
     /// Assigns to a Player a vector of DataRecords that are piecewise strictly larger than that
     /// Player's set strategy
     ///
@@ -67,7 +75,7 @@ impl Quarter {
                 let mut indicies_to_save: Vec<usize> = Vec::new();
                 for (j, (_, bin_stock_id)) in indicies_to_bin.iter().enumerate() {
                     if stock.stock_id.is_name(&bin_stock_id) {
-                        if bin_stock_id.time_id.is_immediate_previous_of(&stock.stock_id.time_id) {
+                        if bin_stock_id.is_immediate_previous_of(&stock.stock_id) {
                             indicies_to_save.push(j);
                         } else {
                             continue;
