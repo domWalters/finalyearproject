@@ -10,13 +10,12 @@ use crate::data_record::{TimeID, StockID, DataRecord};
 pub struct Quarters {
     pub field_names: Vec<String>,
     pub quarters_vector: Vec<Quarter>,
-    pub starting_year: i64,
-    pub starting_quarter: i64
+    pub starting_time: TimeID
 }
 
 impl fmt::Display for Quarters {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Quarters[field_names: {:?}, quarters_vector: {:?}, starting_year: {:?}, starting_quarter: {:?}]", self.field_names, self.quarters_vector, self.starting_year, self.starting_quarter)
+        write!(f, "Quarters[field_names: {:?}, quarters_vector: {:?}, starting_time: {}]", self.field_names, self.quarters_vector, self.starting_time)
     }
 }
 
@@ -102,7 +101,7 @@ impl Quarters {
         let largest_length = pre_output.iter().fold(0, |acc, quarter| {
             let len = quarter.len();
             if len > acc {
-                println!("New largest quarter {:?} with value {}", quarter.time_id, len);
+                println!("New largest quarter {} with value {}", quarter.time_id.to_string(), len);
                 len
             } else {
                 acc
@@ -112,17 +111,15 @@ impl Quarters {
         let output: Vec<Quarter> = pre_output.into_iter().filter(|quarter| {
             let keep = quarter.len() >= (8 * largest_length) / 10;
             if !keep {
-                println!("Throwing away {:?} with length of {:?}, which is below 80% of {:?} ({:?}).", quarter.time_id, quarter.len(), largest_length, (4 * largest_length) / 5);
+                println!("Throwing away {} with length of {}, which is below 80% of {} ({}).", quarter.time_id.to_string(), quarter.len(), largest_length, (4 * largest_length) / 5);
             }
             keep
         }).collect();
-        let first_quarters_year = output[0].time_id.year;
-        let first_quarters_quarter = output[0].time_id.quarter;
+        let starting_time = output[0].time_id.clone();
         Quarters {
             field_names: field_names,
             quarters_vector: output,
-            starting_year: first_quarters_year,
-            starting_quarter: first_quarters_quarter
+            starting_time: starting_time
         }
     }
     /// Calculates the average percentage gain of the whole market over time.
