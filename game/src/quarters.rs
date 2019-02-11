@@ -96,23 +96,47 @@ impl Quarters {
         // Issue from above: Files may still start and end at different times.
         // Solution: Assemble quarters even if they don't hold enough. Then ditch them by using length after the fact.
         println!("Finding largest quarter...");
-        let largest_length = pre_output.iter().fold(0, |acc, quarter| {
+        let mut largest_time_id = TimeID {
+            year: 1970,
+            quarter: 1
+        };
+        let _largest_length = pre_output.iter().fold(0, |acc, quarter| {
             let len = quarter.len();
             if len > acc {
                 println!("New largest quarter {} with value {}", quarter.time_id.to_string(), len);
+                largest_time_id = quarter.time_id.clone();
                 len
             } else {
                 acc
             }
         });
-
-        let output: Vec<Quarter> = pre_output.into_iter().filter(|quarter| {
-            let keep = quarter.len() >= (8 * largest_length) / 10;
+        let mut output: Vec<Quarter> = pre_output.into_iter().filter(|quarter| {
+            let keep = largest_time_id.strictly_after(&quarter.time_id) & (quarter.quarter_vector.len() > 0);
             if !keep {
-                println!("Throwing away {} with length of {}, which is below 80% of {} ({}).", quarter.time_id.to_string(), quarter.len(), largest_length, (4 * largest_length) / 5);
+                println!("Throwing away {}.", quarter.time_id.to_string());
             }
             keep
         }).collect();
+        // Now ditch all stocks that don't exist in the final quarter
+        let final_quarter = &output[output.len() - 1];
+        let mut indicies_to_bin = vec![Vec::new(); output.len()];
+        for (i, quarter) in output.iter().enumerate() {
+            'a: for (j, stock) in quarter.iter().enumerate() {
+                for final_stock in final_quarter.iter() {
+                    if stock.is_name(&final_stock) {
+                        continue 'a;
+                    }
+                }
+                // If you are here, the stock wasn't found.
+                indicies_to_bin[i].push(j);
+            }
+        }
+        for (i, quarter) in output.iter_mut().enumerate() {
+            for j in indicies_to_bin[i].iter().rev() {
+                quarter.remove(*j);
+            }
+        }
+
         let starting_time = output[0].time_id.clone();
         Quarters {
             field_names: field_names,
