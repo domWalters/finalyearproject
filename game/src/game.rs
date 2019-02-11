@@ -71,7 +71,7 @@ impl Game {
         let mut field_accumulator: Vec<Vec<f64>> = vec![Vec::new(); self.quarters.get(0).unwrap().get(0).unwrap().len()];    // Vector of all results for all fields
         for current_quarter in &self.quarters.quarters_vector {
             for ref row in &current_quarter.quarter_vector {
-                for (&field, field_store) in row.record.iter().zip(field_accumulator.iter_mut()) {
+                for (&field, field_store) in row.iter().zip(field_accumulator.iter_mut()) {
                     field_store.push(field);
                 }
             }
@@ -103,8 +103,8 @@ impl Game {
             }
             println!("Run {:?} complete!", i);
         }
-        println!("{:?}", self.players[0].strategy.screen.iter().zip(&self.quarters.field_names).zip(self.players[0].fields_used.iter()).filter_map(|((field, name), &used)| {
-            if used {
+        println!("{:?}", self.players[0].strategy.iter().zip(&self.quarters.field_names).filter_map(|((field, used), name)| {
+            if *used {
                 Some((name, field))
             } else {
                 None
@@ -172,8 +172,8 @@ impl Game {
         for player in &self.players {
             let mut player_field_counter = vec![0; player.strategy.len()];
             for stock in &player.stocks_purchased {
-                for k in 0..player.strategy.len() {
-                    if (stock.get(k) > player.strategy.get(k)) & *player.fields_used.get(k).unwrap() {
+                for (k, (strat, used)) in player.strategy.iter().enumerate() {
+                    if (stock.get(k) > *strat) & *used {
                         player_field_counter[k] += 1;
                     }
                 }
@@ -184,9 +184,9 @@ impl Game {
                                                               .collect();
         }
         println!("{:?}", aggregate_field_counter);
-        println!("{:?}", aggregate_field_counter.iter().zip(self.players[0].fields_used.iter()).filter_map(|(&a, &f)| {
-            if f {
-                Some(a)
+        println!("{:?}", aggregate_field_counter.iter().zip(self.players[0].strategy.iter()).filter_map(|(&counter, (_, used))| {
+            if *used {
+                Some(counter)
             } else {
                 None
             }
@@ -201,8 +201,8 @@ impl Game {
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {   //BROKEN
         self.players.iter().fold(0.0, |acc, player| {
-            acc + ((player.payoff * (player.fields_used.iter().fold(0.0, |acc_two, &used| {
-                if used {
+            acc + ((player.payoff * (player.strategy.iter().fold(0.0, |acc_two, (_, used)| {
+                if *used {
                     acc_two + 1.0
                 } else {
                     acc_two

@@ -5,7 +5,7 @@ use rand::Rng;
 #[derive(Debug)]
 #[derive(Clone)]
 pub struct Screener {
-    pub screen: Vec<f64>
+    pub screen: Vec<(f64, bool)>
 }
 
 impl fmt::Display for Screener {
@@ -30,9 +30,9 @@ impl Screener {
         let mut rng = rand::thread_rng();
         for (l, r) in l_limits.iter().zip(r_limits) {
             if l == r {
-                output.push(*l);
+                output.push((*l, true));
             } else {
-                output.push(rng.gen_range(*l, *r));
+                output.push((rng.gen_range(*l, *r), true));
             }
         }
         Screener {
@@ -50,10 +50,9 @@ impl Screener {
     /// crossover.
     pub fn dumb_crossover(&self, slice: &Screener) -> Screener {
         Screener {
-            screen: self.screen
-                        .iter()
-                        .zip(slice.screen.iter())
-                        .map(|(l, r)| (l + r) / 2.0)
+            screen: self.iter()
+                        .zip(slice.iter())
+                        .map(|((l, l_used), (r, r_used))| ((l + r) / 2.0, if rand::thread_rng().gen_bool(0.5) {*l_used} else {*r_used}))
                         .collect()
         }
     }
@@ -69,15 +68,14 @@ impl Screener {
     /// used to create it. This allows the reuse of the Screener that constructs this mutation.
     pub fn lazy_mutate(&self, c: f64) -> Screener {
         let mut rng = rand::thread_rng();
-        let percent_mag = 10.0;
+        let percent_mag = 10.0;                         // perform an up to +/-percent_mag% mutation
         Screener {
-            screen: self.screen
-                        .iter()
-                        .map(|&e| {
+            screen: self.iter()
+                        .map(|(e, used)| {
                             if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
-                                e * rng.gen_range(1.0 - (percent_mag / 100.0), 1.0 + (percent_mag / 100.0)) // perform an up to +/-percent_mag% mutation
+                                (*e * rng.gen_range(1.0 - (percent_mag / 100.0), 1.0 + (percent_mag / 100.0)), *used)
                             } else {
-                                e
+                                (*e, *used)
                             }
                         })
                         .collect()

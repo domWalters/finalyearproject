@@ -114,20 +114,13 @@ impl DataRecord {
     pub fn greater_by_ratio(&self, player: &Player, ratio: f64) -> bool {
         let mut true_track = 0;
         let mut false_track = 0;
-        let fields_used_count = player.fields_used.iter()
-                                                  .fold(0, |acc, &next| {
-                                                      if next {
-                                                          acc + 1
-                                                      } else {
-                                                          acc
-                                                      }
-                                                  });
+        let fields_used_count = player.strategy.iter().fold(0, |acc, (_, next)| if *next {acc + 1} else {acc});
         let ratio_true_limit = ratio * (fields_used_count as f64);
         let ratio_false_limit = (1.0 - ratio) * (fields_used_count as f64);
-        let zip = self.record.iter().zip(player.strategy.screen.iter()).zip(player.fields_used.iter());
-        for ((&stock_element, &screen_element), &field_used) in zip {
-            if field_used {
-                if stock_element >= screen_element {
+        let zip = self.record.iter().zip(player.strategy.iter());
+        for (&stock_element, (screen_element, field_used)) in zip {
+            if *field_used {
+                if stock_element >= *screen_element {
                     true_track += 1;
                     if true_track as f64 > ratio_true_limit {
                         return true;

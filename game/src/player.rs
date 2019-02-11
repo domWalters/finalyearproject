@@ -8,8 +8,7 @@ pub struct Player {
     pub strategy: Screener,
     pub payoff: f64,
     pub stocks_sold: Vec<DataRecord>,
-    pub stocks_purchased: Vec<DataRecord>,
-    pub fields_used: Vec<bool>
+    pub stocks_purchased: Vec<DataRecord>
 }
 
 impl fmt::Display for Player {
@@ -33,15 +32,7 @@ impl Player {
             payoff: 0.0,                     // dangerous
             stocks_sold: Vec::new(),
             stocks_purchased: Vec::new(),
-            fields_used: vec![true; l_limits.len()]
         }
-    }
-    /// Resets the player to have payoff 0, an empty stocks_purchased vector, and every field being used.
-    pub fn reset(&mut self) {
-        self.payoff = 0.0;
-        self.stocks_sold = Vec::new();
-        self.stocks_purchased = Vec::new();
-        self.fields_used = vec![true; self.strategy.len()];
     }
     /// Resets the player to have payoff 0, and an empty stocks_purchased vector.
     pub fn soft_reset(&mut self) {
@@ -64,17 +55,7 @@ impl Player {
             strategy: self.strategy.dumb_crossover(&player.strategy),
             payoff: 0.0,
             stocks_sold: Vec::new(),
-            stocks_purchased: Vec::new(),
-            fields_used: self.fields_used.iter()
-                                         .zip(player.fields_used.iter())
-                                         .map(|(l, r)| {
-                                             let mut rng = rand::thread_rng();
-                                             if rng.gen_bool(0.5) {
-                                                 *l
-                                             } else {
-                                                 *r
-                                             }
-                                         }).collect()
+            stocks_purchased: Vec::new()
         }
     }
     /// Perform a lazy mutation on the Player.
@@ -91,15 +72,14 @@ impl Player {
             strategy: self.strategy.lazy_mutate(c),
             payoff: 0.0,
             stocks_sold: Vec::new(),
-            stocks_purchased: Vec::new(),
-            fields_used: self.fields_used.clone()
+            stocks_purchased: Vec::new()
         }
     }
     ///
     pub fn payoff_normalise(&mut self) {
         if self.stocks_sold.len() != 0 {
-            self.payoff = (self.payoff * (4.0 / self.fields_used.iter().fold(0.0, |acc, &used| {
-                if used {
+            self.payoff = (self.payoff * (4.0 / self.strategy.iter().fold(0.0, |acc, (_, used)| {
+                if *used {
                     acc + 1.0
                 } else {
                     acc
@@ -113,25 +93,25 @@ impl Player {
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
         let mut player_field_counter = vec![0; self.strategy.len()];
         for stock in &self.stocks_purchased {
-            for k in 0..self.strategy.len() {
-                if (stock.get(k) > self.strategy.get(k)) & *self.fields_used.get(k).unwrap() {
+            for (k, (strat_element, used)) in self.strategy.iter().enumerate() {
+                if (stock.get(k) > *strat_element) & *used {
                     player_field_counter[k] += 1;
                 }
             }
         }
-        self.fields_used = player_field_counter.iter().zip(self.strategy.screen.iter().zip(compounded_training_vectors.iter())).map(|(&field_count, (strat_field, ref analysis))| {
+        self.strategy.screen = player_field_counter.iter().zip(self.strategy.iter().zip(compounded_training_vectors.iter())).map(|(&field_count, ((strat_field, _), ref analysis))| {
             if field_count == 0 {
-                return false;
+                return (*strat_field, false);
             } else {
                 let length = analysis.len();
                 for (i, field_analysis) in analysis.iter().enumerate() {
                     if strat_field > field_analysis {
                         continue;
                     } else {
-                        return (((i + 1) as f64) / (length as f64)) > 0.01;
+                        return (*strat_field, (((i + 1) as f64) / (length as f64)) > 0.01);
                     }
                 }
-                return false;   // this line is never hit but needed to compile
+                return (*strat_field, false);   // this line is never hit but needed to compile
             }
         }).collect();
     }
