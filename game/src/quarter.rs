@@ -11,7 +11,7 @@ pub struct Quarter {
 
 impl fmt::Display for Quarter {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Quarter[quarter_vector: {:?}, time_id: {:?}]", self.quarter_vector, self.time_id)
+        write!(f, "Quarter[quarter_vector: {:?}, time_id: {}]", self.quarter_vector, self.time_id)
     }
 }
 

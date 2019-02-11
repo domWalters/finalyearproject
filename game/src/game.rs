@@ -20,7 +20,7 @@ pub struct Game {
 
 impl fmt::Display for Game {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {  // Overly verbose
-        write!(f, "Game[players: {:?}, quarters: {:?}, current_quarter_index: {}, index_of_value: {:?}]", self.players, self.quarters, self.current_quarter_index, self.index_of_value)
+        write!(f, "Game[players: {:?}, quarters: {}, current_quarter_index: {}, index_of_value: {}]", self.players, self.quarters, self.current_quarter_index, self.index_of_value)
     }
 }
 

@@ -31,7 +31,7 @@ impl fmt::Display for TimeID {
 
 impl fmt::Display for StockID {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "StockID[name: {:?}, time_id: {:?}]", self.name, self.time_id)
+        write!(f, "StockID[name: {:?}, time_id: {}]", self.name, self.time_id)
     }
 }
 

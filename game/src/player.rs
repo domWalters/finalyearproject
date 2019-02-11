@@ -1,6 +1,4 @@
 use std::fmt;
-use rand;
-use rand::Rng;
 
 use crate::data_record::DataRecord;
 use crate::screener::Screener;
