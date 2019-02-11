@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, slice::Iter};
 use rand;
 use rand::Rng;
 
@@ -87,11 +87,8 @@ impl Screener {
     pub fn len(&self) -> usize {
         self.screen.len()
     }
-    /// Gets the requested indexed element of the Screener.
-    ///
-    /// # Arguments
-    /// * `index` - The index requested.
-    pub fn get(&self, index: usize) -> f64 {
-        self.screen[index]
+
+    pub fn iter(&self) -> Iter<(f64, bool)> {
+        self.screen.iter()
     }
 }

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, slice::Iter};
 
 use crate::player::Player;
 
@@ -74,6 +74,14 @@ impl StockID {
 }
 
 impl DataRecord {
+    ///
+    pub fn is_name(&self, record: &DataRecord) -> bool {
+        self.stock_id.is_name(&record.stock_id)
+    }
+    ///
+    pub fn is_date(&self, record: &DataRecord) -> bool {
+        self.stock_id.is_date(&record.stock_id)
+    }
     /// Returns the length of the DataRecord
     pub fn len(&self) -> usize {
         self.record.len()
@@ -84,6 +92,10 @@ impl DataRecord {
     /// * `index` - The index requested.
     pub fn get(&self, index: usize) -> f64 {
         self.record[index]
+    }
+
+    pub fn iter(&self) -> Iter<f64> {
+        self.record.iter()
     }
     /// Pushes a new element onto the end of the DataRecord.
     ///

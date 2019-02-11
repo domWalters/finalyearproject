@@ -55,7 +55,7 @@ impl Game {
         let mut upper_limits = vec![std::f64::MIN; first_quarter.get(0).unwrap().len()];
         for current_quarter in &quarters.quarters_vector {
             for ref entry in &current_quarter.quarter_vector {
-                for (&field, (lower_limit, upper_limit)) in entry.record.iter().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
+                for (&field, (lower_limit, upper_limit)) in entry.iter().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
                     if field < *lower_limit {
                         *lower_limit = field;
                     }
@@ -68,7 +68,7 @@ impl Game {
         (lower_limits, upper_limits)
     }
     pub fn expensive_training_data_analysis(&self) -> Vec<Vec<f64>> {
-        let mut field_accumulator: Vec<Vec<f64>> = vec![Vec::new(); self.quarters.get(0).unwrap().get(0).unwrap().record.len()];    // Vector of all results for all fields
+        let mut field_accumulator: Vec<Vec<f64>> = vec![Vec::new(); self.quarters.get(0).unwrap().get(0).unwrap().len()];    // Vector of all results for all fields
         for current_quarter in &self.quarters.quarters_vector {
             for ref row in &current_quarter.quarter_vector {
                 for (&field, field_store) in row.record.iter().zip(field_accumulator.iter_mut()) {

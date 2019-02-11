@@ -126,7 +126,7 @@ impl Quarter {
     /// * `entry` - A DataRecord to find in the Quarter.
     pub fn find_by_stock_name<'a>(&'a self, entry: &DataRecord) -> Option<&'a DataRecord> {
         for stock in &self.quarter_vector {
-            if stock.stock_id.name == entry.stock_id.name {
+            if stock.is_name(entry) {
                 return Some(&stock)
             }
         }
