@@ -102,7 +102,7 @@ impl Quarters {
         };
         let _largest_length = pre_output.iter().fold(0, |acc, quarter| {
             let len = quarter.len();
-            if len > acc {
+            if len >= acc {
                 println!("New largest quarter {} with value {}", quarter.time_id.to_string(), len);
                 largest_time_id = quarter.time_id.clone();
                 len
