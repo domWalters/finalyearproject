@@ -1,5 +1,7 @@
 use std::{fmt, env::*, slice::Iter};
 use csv::Reader;
+use rand;
+use rand::Rng;
 
 use crate::quarter::Quarter;
 use crate::data_record::{TimeID, StockID, DataRecord};
@@ -20,7 +22,7 @@ impl fmt::Display for Quarters {
 impl Quarters {
     /// Generate the Quarters object from the default data directory (from this files location, the
     /// folder is ../../test-data/TrimmedUnitedData).
-    pub fn new_quarters_from_default_file() -> Quarters {
+    pub fn new_quarters_from_default_file(iteration_max: usize) -> Quarters {
         let mut pre_output: Vec<Quarter> = Vec::new();
         // Populate with every blank quarter since epoch
         let (mut year_count, mut quarter_count) = (1970, 1);
@@ -48,6 +50,7 @@ impl Quarters {
         let mut quarter_index = 0;
         let mut columns_found = false;
         let mut field_names = Vec::new();
+        let mut rng = rand::thread_rng();
         for (mut reader, name) in file_readers {
             // Find the year and quarter columns (only done once, all files share this column index)
             if !columns_found {
@@ -61,6 +64,8 @@ impl Quarters {
                 field_names = reader.headers().unwrap().iter().map(|field| field.to_string()).collect();
                 columns_found = true;
             }
+            // Generate which iteration this should be used on
+            let iteration = rng.gen_range(0, iteration_max);
             for row_wrapped in reader.records() {
                 if let Ok(row) = row_wrapped {
                     // Get the row year and quarter as numbers
@@ -74,7 +79,8 @@ impl Quarters {
                             time_id: TimeID {
                                 year: year,
                                 quarter: quarter
-                            }
+                            },
+                            iteration: iteration
                         }
                     };
                     for (i, field) in row.iter().enumerate() {

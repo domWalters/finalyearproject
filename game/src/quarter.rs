@@ -61,10 +61,10 @@ impl Quarter {
     ///
     /// # Arguments
     /// * `player` - A Player struct.
-    pub fn select_for_player(&self, player: &mut Player, ratio: f64, index: usize) {
+    pub fn select_for_player(&self, player: &mut Player, ratio: f64, index: usize, iteration: usize) {
         // Buy from quarter
         for stock in &self.quarter_vector {
-            if stock.greater_by_ratio(&player, ratio) {
+            if stock.greater_by_ratio(&player, ratio) & (stock.stock_id.iteration == iteration) {
                 player.stocks_purchased.push(stock.clone());
             }
         }

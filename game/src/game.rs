@@ -92,14 +92,14 @@ impl Game {
         //println!("{:?}", field_accumulator.iter().zip(self.quarters.field_names.iter()).collect::<Vec<_>>());
         field_accumulator
     }
-    pub fn run(&mut self, mut generation_max: i64, prelim_iterations: i64) {
+    pub fn run(&mut self, mut generation_max: i64, iteration: usize) {
         let compounded_training_vectors = self.expensive_training_data_analysis();
         let quarters_len = self.quarters.len();
-        for i in 0..(prelim_iterations + 1) {
+        for i in 0..iteration {
             for _j in 0..generation_max {
-                self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST);
+                self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i);
             }
-            self.perform_analytical_final_run();
+            self.perform_analytical_final_run(i);
             self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset();
             if i == 0 {
@@ -134,9 +134,9 @@ impl Game {
     /// * `quarter_max` - The maximum number of quarters to run through.
     /// * `k` - Constant used for tournament selection.
     /// * `mut_const` - Constant used for mutation.
-    pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64) {
+    pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64, iteration: usize) {
         while self.current_quarter_index < quarter_max - 1 {
-            self.next_quarter();
+            self.next_quarter(iteration);
         }
         self.final_quarter();
         let _normalise = self.players.iter_mut().map(|player| player.payoff_normalise()).collect::<Vec<_>>();
@@ -156,14 +156,14 @@ impl Game {
         self.players = new_population;
     }
     /// Runs through the next quarter of test data.
-    fn next_quarter(&mut self) {
+    fn next_quarter(&mut self, iteration: usize) {
         let quarter = self.quarters.get(self.current_quarter_index).unwrap();
         let (ratio, index_of_value) = (self.ratio, self.index_of_value);
         let player_iter = self.players.iter_mut();
         thread::scope(|s| {
             for mut player in player_iter {
                 s.spawn(move |_| {
-                    quarter.select_for_player(&mut player, ratio, index_of_value);
+                    quarter.select_for_player(&mut player, ratio, index_of_value, iteration);
                 });
             }
         }).unwrap();
@@ -186,9 +186,9 @@ impl Game {
         println!("End of final quarter!");
     }
     /// Perform a final generation of the algorithm, purely to analyse the potential screeners
-    pub fn perform_analytical_final_run(&mut self) {
+    pub fn perform_analytical_final_run(&mut self, iteration: usize) {
         while self.current_quarter_index < self.quarters.len() - 1 {
-            self.next_quarter();
+            self.next_quarter(iteration);
         }
         self.final_quarter();
         self.analyse_field_purchases();

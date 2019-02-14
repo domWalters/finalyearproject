@@ -14,6 +14,7 @@ pub struct DataRecord {
 pub struct StockID {
     pub name: String,
     pub time_id: TimeID,
+    pub iteration: usize
 }
 
 #[derive(Debug)]
