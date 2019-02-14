@@ -111,7 +111,7 @@ impl Quarters {
             }
         });
         let mut output: Vec<Quarter> = pre_output.into_iter().filter(|quarter| {
-            let keep = largest_time_id.strictly_after(&quarter.time_id) & (quarter.quarter_vector.len() > 0);
+            let keep = largest_time_id.after(&quarter.time_id) & (quarter.quarter_vector.len() > 0);
             if !keep {
                 println!("Throwing away {}.", quarter.time_id.to_string());
             }

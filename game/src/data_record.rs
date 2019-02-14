@@ -54,11 +54,11 @@ impl TimeID {
         }
     }
 
-    pub fn strictly_after(&self, time_id: &TimeID) -> bool {
+    pub fn after(&self, time_id: &TimeID) -> bool {
         if self.year == time_id.year {
-            self.quarter > time_id.quarter
+            self.quarter >= time_id.quarter
         } else {
-            self.year > time_id.year
+            self.year >= time_id.year
         }
     }
 
