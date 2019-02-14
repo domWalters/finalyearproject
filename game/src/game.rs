@@ -92,7 +92,7 @@ impl Game {
         //println!("{:?}", field_accumulator.iter().zip(self.quarters.field_names.iter()).collect::<Vec<_>>());
         field_accumulator
     }
-    pub fn run(&mut self, generation_max: i64, prelim_iterations: i64) {
+    pub fn run(&mut self, mut generation_max: i64, prelim_iterations: i64) {
         let compounded_training_vectors = self.expensive_training_data_analysis();
         let quarters_len = self.quarters.len();
         for i in 0..(prelim_iterations + 1) {
