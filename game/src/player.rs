@@ -26,9 +26,9 @@ impl Player {
     ///
     /// # Remarks
     /// See Screener::new_uniform_random() documentation.
-    pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>)) -> Player {
+    pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>), banned_indicies: &Vec<usize>) -> Player {
         Player {
-            strategy: Screener::new_uniform_random((l_limits, r_limits)),
+            strategy: Screener::new_uniform_random((l_limits, r_limits), banned_indicies),
             payoff: 0.0,                     // dangerous
             stocks_sold: Vec::new(),
             stocks_purchased: Vec::new(),

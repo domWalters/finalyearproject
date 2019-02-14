@@ -25,13 +25,14 @@ impl Screener {
     /// Each argument is a vector that is as long as the Screener that needs to be generated.
     /// The ith element of the Screener is greater than the ith element of l_limits, and less than
     /// the ith element of r_limits.
-    pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>)) -> Screener {
+    pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>), banned_fields: &Vec<usize>) -> Screener {
         let mut output = Vec::new();
-        for (l, r) in l_limits.iter().zip(r_limits) {
+        for (i, (l, r)) in l_limits.iter().zip(r_limits).enumerate() {
+            let field_used = !banned_fields.contains(&i);
             if l == r {
-                output.push((*l, true));
+                output.push((*l, field_used));
             } else {
-                output.push((rand::thread_rng().gen_range(*l, *r), true));
+                output.push((rand::thread_rng().gen_range(*l, *r), field_used));
             }
         }
         Screener {

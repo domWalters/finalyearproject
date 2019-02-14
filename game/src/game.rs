@@ -37,9 +37,18 @@ impl Game {
     /// initialised between the test data element limits. Will likely need to be more sophisticated.
     pub fn new_game(quarters: Quarters, num_of_players: usize) -> Game {
         let (l_limits, u_limits) = Game::calculate_cheap_limits(&quarters);
+        // Get the banned indicies list
+        let banned_names = vec!["adj_close", "adj_factor", "adj_high", "adj_low", "adj_open", "adj_volume", "close", "high", "low", "open", "volume"];
+        let mut banned_indicies = Vec::new();
+        for (i, field_name) in quarters.field_names.iter().enumerate() {
+            if banned_names.contains(&&field_name[0..]) {
+                banned_indicies.push(i);
+            }
+        }
+        // Make players
         let mut players = Vec::new();
         for _i in 0..num_of_players {
-            players.push(Player::new_uniform_random((&l_limits, &u_limits)));
+            players.push(Player::new_uniform_random((&l_limits, &u_limits), &banned_indicies));
         }
         Game {
             players: players,
