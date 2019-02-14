@@ -103,23 +103,30 @@ impl Game {
             self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset();
             if i == 0 {
-                self.ratio = 0.5;
+                self.ratio = 0.4;
+                generation_max = 10;
             } else if i == 1 {
-                self.ratio = 0.6;
+                self.ratio = 0.5;
             } else if i == 2 {
-                self.ratio = 0.7;
+                self.ratio = 0.6;
             } else if i == 3 {
+                self.ratio = 0.7;
+            } else if i == 4 {
                 self.ratio = 0.8;
+            } else if i == 5 {
+                self.ratio = 0.9;
+            } else if i == 6 {
+                self.ratio = 0.99;
             }
             println!("Run {:?} complete!", i);
+            println!("{:?}", self.players[0].strategy.iter().zip(&self.quarters.field_names).filter_map(|((field, used), name)| {
+                if *used {
+                    Some((name, field))
+                } else {
+                    None
+                }
+            }).collect::<Vec<_>>());
         }
-        println!("{:?}", self.players[0].strategy.iter().zip(&self.quarters.field_names).filter_map(|((field, used), name)| {
-            if *used {
-                Some((name, field))
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>());
     }
     /// Run through all of the test data, and generate a new population.
     ///
