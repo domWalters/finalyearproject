@@ -2,6 +2,7 @@ use rand;
 use rand::Rng;
 use std;
 use std::fmt;
+use crossbeam::thread;
 
 use crate::player::Player;
 use crate::quarters::Quarters;
@@ -150,9 +151,15 @@ impl Game {
     /// Runs through the next quarter of test data.
     fn next_quarter(&mut self) {
         let quarter = self.quarters.get(self.current_quarter_index).unwrap();
-        for mut player in self.players.iter_mut() {
-            quarter.select_for_player(&mut player, self.ratio, self.index_of_value);
-        }
+        let (ratio, index_of_value) = (self.ratio, self.index_of_value);
+        let player_iter = self.players.iter_mut();
+        thread::scope(|s| {
+            for mut player in player_iter {
+                s.spawn(move |_| {
+                    quarter.select_for_player(&mut player, ratio, index_of_value);
+                });
+            }
+        }).unwrap();
         self.current_quarter_index += 1;
     }
     /// Runs through the last quarter of test data.
