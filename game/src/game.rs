@@ -166,9 +166,15 @@ impl Game {
     fn final_quarter(&mut self) {
         println!("Starting final quarter...");
         let quarter = self.quarters.get(self.current_quarter_index).unwrap();
-        for mut player in self.players.iter_mut() {
-            quarter.calc_payoffs(&mut player, self.index_of_value);
-        }
+        let index_of_value = self.index_of_value;
+        let player_iter = self.players.iter_mut();
+        thread::scope(|s| {
+            for mut player in player_iter {
+                s.spawn(move |_| {
+                    quarter.calc_payoffs(&mut player, index_of_value);
+                });
+            }
+        }).unwrap();
         self.current_quarter_index = 0;
         println!("End of final quarter!");
     }
@@ -210,9 +216,14 @@ impl Game {
     }
     /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
-        for player in &mut self.players {
-            player.recalc_fields_used(&compounded_training_vectors);
-        }
+        let players = &mut self.players;
+        thread::scope(|s| {
+            for player in players.iter_mut() {
+                s.spawn(move |_| {
+                    player.recalc_fields_used(&compounded_training_vectors);
+                });
+            }
+        }).unwrap();
     }
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {   //BROKEN
