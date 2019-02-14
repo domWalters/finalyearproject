@@ -233,15 +233,16 @@ impl Game {
         }).unwrap();
     }
     /// Compute the average percentage gain across the entire population.
-    pub fn average_payoff(&self) -> f64 {   //BROKEN
+    pub fn average_payoff(&self) -> f64 {
         self.players.iter().fold(0.0, |acc, player| {
-            acc + ((player.payoff * (player.strategy.iter().fold(0.0, |acc_two, (_, used)| {
+            let field_used_symbolic_length = player.strategy.iter().fold(0.0, |acc, (_, used)| {
                 if *used {
-                    acc_two + 1.0
+                    acc + 1.0
                 } else {
-                    acc_two
+                    acc
                 }
-            }) / 4.0)) / (if player.stocks_sold.len() != 0 {(player.stocks_sold.len() as f64) * (player.stocks_sold.len() as f64)} else {1.0}))
+            });
+            acc + ((player.payoff * (if field_used_symbolic_length > 5.0 {field_used_symbolic_length} else {5.0} / 4.0)) / (if player.stocks_sold.len() != 0 {(player.stocks_sold.len() as f64) * (player.stocks_sold.len() as f64)} else {1.0}))
         }) / (self.players.len() as f64)
     }
     /// Soft resets the list of players.

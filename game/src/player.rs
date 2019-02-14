@@ -76,15 +76,16 @@ impl Player {
         }
     }
     ///
-    pub fn payoff_normalise(&mut self) {
+    pub fn payoff_normalise(&mut self) {    // change the punishment for long field lists to be constant below a certain length
         if self.stocks_sold.len() != 0 {
-            self.payoff = (self.payoff * (4.0 / self.strategy.iter().fold(0.0, |acc, (_, used)| {
+            let field_used_symbolic_length = self.strategy.iter().fold(0.0, |acc, (_, used)| {
                 if *used {
                     acc + 1.0
                 } else {
                     acc
                 }
-            }))) * (self.stocks_sold.len() as f64);
+            });
+            self.payoff = (self.payoff * (4.0 / if field_used_symbolic_length > 5.0 {field_used_symbolic_length} else {5.0})) * (self.stocks_sold.len() as f64);
         } else {
             self.payoff = 0.0;
         }
