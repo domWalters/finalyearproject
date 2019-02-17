@@ -36,7 +36,8 @@ impl Player {
         }
     }
     /// Resets the player to have payoff 0, and an empty stocks_purchased vector.
-    pub fn soft_reset(&mut self) {
+    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<f64>, &Vec<f64>)) {
+        self.strategy.soft_reset((l_limits, u_limits));
         self.payoff = 0.0;
         self.stocks_sold = Vec::new();
         self.stocks_purchased = Vec::new();

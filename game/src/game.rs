@@ -94,6 +94,7 @@ impl Game {
         field_accumulator
     }
     pub fn run(&mut self, mut generation_max: i64, iteration: usize) {
+        let (l_limits, u_limits) = Game::calculate_cheap_limits(&self.quarters);
         let compounded_training_vectors = self.expensive_training_data_analysis();
         let quarters_len = self.quarters.len();
         for i in 0..iteration {
@@ -102,7 +103,7 @@ impl Game {
             }
             self.perform_analytical_final_run(i);
             self.recalc_fields_used(&compounded_training_vectors);
-            self.soft_reset();
+            self.soft_reset((&l_limits, &u_limits));
             if i == 0 {
                 self.ratio = 0.4;
                 generation_max = 10;
@@ -251,9 +252,9 @@ impl Game {
         }) / (self.players.len() as f64)
     }
     /// Soft resets the list of players.
-    pub fn soft_reset(&mut self) {
+    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<f64>, &Vec<f64>)) {
         for player in &mut self.players {
-            player.soft_reset();
+            player.soft_reset((l_limits, u_limits));
         }
     }
     /// Perform a tournament selection of size k within the current list of Players. The fitness

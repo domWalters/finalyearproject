@@ -22,6 +22,10 @@ impl fmt::Display for Screener {
 }
 
 impl Screener {
+    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<f64>, &Vec<f64>)) {
+        let mut rng = rand::thread_rng();
+        self.screen = self.screen.iter().zip(l_limits.iter().zip(u_limits)).map(|((_, used, rule), (l, u))| (if l == u {*l} else {rng.gen_range(*l, *u)}, *used, rule.clone())).collect();
+    }
     /// Creates a uniform random Screener within a set list of boundaries.
     ///
     /// # Arguments
