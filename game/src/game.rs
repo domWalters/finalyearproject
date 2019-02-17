@@ -158,7 +158,11 @@ impl Game {
         println!("Player count: {:?}, Average % Profit: {:?}", players_with_payoff, self.average_payoff());
         let mut new_population = Vec::new();
         for _player in &self.players {
-            new_population.push(self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const));
+            let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const);
+            while new_player.strategy.iter().fold(0, |acc, (_, used, _)| if *used {acc + 1} else {acc}) < 1 {   // this stalls the algorithm out permenanently
+                new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const);
+            }
+            new_population.push(new_player);
         }
         self.players = new_population;
     }
