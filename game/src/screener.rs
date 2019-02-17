@@ -4,8 +4,15 @@ use rand::Rng;
 
 #[derive(Debug)]
 #[derive(Clone)]
+pub enum Rule {
+    Lt,
+    Gt
+}
+
+#[derive(Debug)]
+#[derive(Clone)]
 pub struct Screener {
-    pub screen: Vec<(f64, bool)>
+    pub screen: Vec<(f64, bool, Rule)>
 }
 
 impl fmt::Display for Screener {
@@ -25,14 +32,15 @@ impl Screener {
     /// Each argument is a vector that is as long as the Screener that needs to be generated.
     /// The ith element of the Screener is greater than the ith element of l_limits, and less than
     /// the ith element of r_limits.
-    pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>), banned_fields: &Vec<usize>) -> Screener {
+    pub fn new_uniform_random((l_limits, u_limits): (&Vec<f64>, &Vec<f64>), banned_fields: &Vec<usize>) -> Screener {
         let mut output = Vec::new();
-        for (i, (l, r)) in l_limits.iter().zip(r_limits).enumerate() {
+        let mut rng = rand::thread_rng();
+        for (i, (l, u)) in l_limits.iter().zip(u_limits).enumerate() {
             let field_used = !banned_fields.contains(&i);
-            if l == r {
-                output.push((*l, field_used));
+            if l == u {
+                output.push((*l, field_used, if rng.gen_bool(0.5) {Rule::Lt} else {Rule::Gt}));
             } else {
-                output.push((rand::thread_rng().gen_range(*l, *r), field_used));
+                output.push((rng.gen_range(*l, *u), field_used, if rng.gen_bool(0.5) {Rule::Lt} else {Rule::Gt}));
             }
         }
         Screener {
@@ -49,10 +57,11 @@ impl Screener {
     /// the two that constructed it. This allows the reuse of the Screeners that construct this
     /// crossover.
     pub fn dumb_crossover(&self, slice: &Screener) -> Screener {
+        let mut rng = rand::thread_rng();
         Screener {
             screen: self.iter()
                         .zip(slice.iter())
-                        .map(|((l, l_used), (r, r_used))| ((l + r) / 2.0, if rand::thread_rng().gen_bool(0.5) {*l_used} else {*r_used}))
+                        .map(|((l, l_used, l_rule), (r, r_used, r_rule))| ((l + r) / 2.0, if rng.gen_bool(0.5) {*l_used} else {*r_used}, if rng.gen_bool(0.5) {l_rule.clone()} else {r_rule.clone()}))
                         .collect()
         }
     }
@@ -71,11 +80,11 @@ impl Screener {
         let percent_mag = 10.0;                         // perform an up to +/-percent_mag% mutation
         Screener {
             screen: self.iter()
-                        .map(|(e, used)| {
+                        .map(|(e, used, rule)| {
                             if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
-                                (*e * rng.gen_range(1.0 - (percent_mag / 100.0), 1.0 + (percent_mag / 100.0)), *used)
+                                (*e * rng.gen_range(1.0 - (percent_mag / 100.0), 1.0 + (percent_mag / 100.0)), *used, rule.clone())
                             } else {
-                                (*e, *used)
+                                (*e, *used, rule.clone())
                             }
                         })
                         .collect()
@@ -86,7 +95,7 @@ impl Screener {
         self.screen.len()
     }
 
-    pub fn iter(&self) -> Iter<(f64, bool)> {
+    pub fn iter(&self) -> Iter<(f64, bool, Rule)> {
         self.screen.iter()
     }
 }

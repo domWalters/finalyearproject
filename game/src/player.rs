@@ -2,6 +2,7 @@ use std::fmt;
 
 use crate::data_record::DataRecord;
 use crate::screener::Screener;
+use crate::screener::Rule;
 
 #[derive(Debug)]
 pub struct Player {
@@ -78,7 +79,7 @@ impl Player {
     ///
     pub fn payoff_normalise(&mut self) {    // change the punishment for long field lists to be constant below a certain length
         if self.stocks_sold.len() != 0 {
-            let field_used_symbolic_length = self.strategy.iter().fold(0.0, |acc, (_, used)| {
+            let field_used_symbolic_length = self.strategy.iter().fold(0.0, |acc, (_, used, _)| {
                 if *used {
                     acc + 1.0
                 } else {
@@ -94,26 +95,43 @@ impl Player {
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
         let mut player_field_counter = vec![0; self.strategy.len()];
         for stock in &self.stocks_purchased {
-            for (k, (strat_element, used)) in self.strategy.iter().enumerate() {
-                if (stock.get(k) > *strat_element) & *used {
+            for (k, (strat_element, used, rule)) in self.strategy.iter().enumerate() {
+                let rule_met = match rule {
+                    Rule::Lt => stock.get(k) <= *strat_element,
+                    Rule::Gt => stock.get(k) >= *strat_element
+                };
+                if rule_met & *used {
                     player_field_counter[k] += 1;
                 }
             }
         }
-        self.strategy.screen = player_field_counter.iter().zip(self.strategy.iter().zip(compounded_training_vectors.iter())).map(|(&field_count, ((strat_field, _), ref analysis))| {
+        self.strategy.screen = player_field_counter.iter().zip(self.strategy.iter().zip(compounded_training_vectors.iter())).map(|(&field_count, ((strat_field, _, rule), ref analysis))| {
             if field_count == 0 {
-                return (*strat_field, false);
+                return (*strat_field, false, rule.clone());
             } else {
                 let length = analysis.len();
-                for (i, field_analysis) in analysis.iter().enumerate() {
-                    if strat_field > field_analysis {
-                        continue;
-                    } else {
-                        return (*strat_field, (((i + 1) as f64) / (length as f64)) > 0.01);
+                match rule {
+                    Rule::Lt => {
+                        for (i, field_analysis) in analysis.iter().rev().enumerate() {
+                            if strat_field <= field_analysis {
+                                continue;
+                            } else {
+                                return (*strat_field, (((i + 1) as f64) / (length as f64)) > 0.01, rule.clone());
+                            }
+                        }
+                    },
+                    Rule::Gt => {
+                        for (i, field_analysis) in analysis.iter().enumerate() {
+                            if strat_field >= field_analysis {
+                                continue;
+                            } else {
+                                return (*strat_field, (((i + 1) as f64) / (length as f64)) > 0.01, rule.clone());
+                            }
+                        }
                     }
                 }
-                return (*strat_field, false);   // this line is never hit but needed to compile
             }
+            return (*strat_field, false, rule.clone());   // this line is never hit but needed to compile
         }).collect();
     }
 }

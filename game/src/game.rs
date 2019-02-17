@@ -6,6 +6,7 @@ use crossbeam::thread;
 
 use crate::player::Player;
 use crate::quarters::Quarters;
+use crate::screener::Rule;
 
 pub static DEFAULT_TOURNEY_CONST: usize = 3;
 pub static DEFAULT_MUTATION_CONST: f64 = 0.7;
@@ -119,9 +120,9 @@ impl Game {
                 self.ratio = 0.99;
             }
             println!("Run {:?} complete!", i);
-            println!("{:?}", self.players[0].strategy.iter().zip(&self.quarters.field_names).filter_map(|((field, used), name)| {
+            println!("{:?}", self.players[0].strategy.iter().zip(&self.quarters.field_names).filter_map(|((field, used, rule), name)| {
                 if *used {
-                    Some((name, field))
+                    Some((name, rule, field))
                 } else {
                     None
                 }
@@ -201,8 +202,12 @@ impl Game {
         for player in &self.players {
             let mut player_field_counter = vec![0; player.strategy.len()];
             for stock in &player.stocks_purchased {
-                for (k, (strat, used)) in player.strategy.iter().enumerate() {
-                    if (stock.get(k) > *strat) & *used {
+                for (k, (strat, used, rule)) in player.strategy.iter().enumerate() {
+                    let rule_met = match rule {
+                        Rule::Lt => stock.get(k) <= *strat,
+                        Rule::Gt => stock.get(k) >= *strat
+                    };
+                    if rule_met & *used {
                         player_field_counter[k] += 1;
                     }
                 }
@@ -213,7 +218,7 @@ impl Game {
                                                               .collect();
         }
         println!("{:?}", aggregate_field_counter);
-        println!("{:?}", aggregate_field_counter.iter().zip(self.players[0].strategy.iter()).filter_map(|(&counter, (_, used))| {
+        println!("{:?}", aggregate_field_counter.iter().zip(self.players[0].strategy.iter()).filter_map(|(&counter, (_, used, _))| {
             if *used {
                 Some(counter)
             } else {
@@ -235,7 +240,7 @@ impl Game {
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
         self.players.iter().fold(0.0, |acc, player| {
-            let field_used_symbolic_length = player.strategy.iter().fold(0.0, |acc, (_, used)| {
+            let field_used_symbolic_length = player.strategy.iter().fold(0.0, |acc, (_, used, _)| {
                 if *used {
                     acc + 1.0
                 } else {
