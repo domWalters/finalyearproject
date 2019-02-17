@@ -253,7 +253,7 @@ impl Game {
                     acc
                 }
             });
-            acc + ((player.payoff * (if field_used_symbolic_length > 10.0 {field_used_symbolic_length} else {10.0} / 4.0)) / (if player.stocks_sold.len() != 0 {(player.stocks_sold.len() as f64) * (player.stocks_sold.len() as f64)} else {1.0}))
+            acc + ((player.payoff * (if field_used_symbolic_length > 10.0 {field_used_symbolic_length} else if field_used_symbolic_length < 5.0 {10.0 + 5.0 - field_used_symbolic_length} else {10.0} / 4.0)) / (if player.stocks_sold.len() != 0 {(player.stocks_sold.len() as f64) * (player.stocks_sold.len() as f64)} else {1.0}))
         }) / (self.players.len() as f64)
     }
     /// Soft resets the list of players.
