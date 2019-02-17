@@ -2,6 +2,10 @@ use rand;
 use rand::Rng;
 use std;
 use std::fmt;
+use std::fs::File;
+use std::io::Write;
+use std::env::current_dir;
+use std::error::Error;
 use crossbeam::thread;
 
 use crate::player::Player;
@@ -129,6 +133,7 @@ impl Game {
                 }
             }).collect::<Vec<_>>());
         }
+        self.save();
     }
     /// Run through all of the test data, and generate a new population.
     ///
@@ -278,6 +283,28 @@ impl Game {
                 }
             }
             candidate
+        }
+    }
+
+    pub fn save(&self) {
+        let mut path = current_dir().unwrap();
+        path.pop(); path.push("test-data/output.txt");
+        let mut file = match File::create(&path) {
+            Err(why) => panic!("couldn't create file {:?}: {}", path, why.description()),
+            Ok(file) => file,
+        };
+        for player in &self.players {
+            let output_string = format!["{:?}", player.strategy.iter().zip(&self.quarters.field_names).filter_map(|((field, used, rule), name)| {
+                if *used {
+                    Some((name, rule, field))
+                } else {
+                    None
+                }
+            }).collect::<Vec<_>>()];
+            match file.write_all(output_string.as_bytes()) {
+                Err(why) => panic!("couldn't write to file {:?}: {}", path, why.description()),
+                Ok(_) => println!("successfully wrote to {:?}", path)
+            }
         }
     }
 }
