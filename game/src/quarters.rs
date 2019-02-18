@@ -141,7 +141,6 @@ impl Quarters {
                 quarter.remove(*j);
             }
         }
-
         let starting_time = output[0].time_id.clone();
         Quarters {
             field_names: field_names,
@@ -160,7 +159,8 @@ impl Quarters {
     pub fn len(&self) -> usize {
         self.quarters_vector.len()
     }
-    ///
+    /// Returns an iterator over references to the elements in the quarters_vector variable of
+    /// the Quarters object.
     pub fn iter(&self) -> Iter<Quarter> {
         self.quarters_vector.iter()
     }

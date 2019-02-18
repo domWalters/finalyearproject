@@ -76,6 +76,7 @@ impl Game {
         }
         (lower_limits, upper_limits)
     }
+    /// Creates an ordered vector of vectors of each field of the training data.
     pub fn expensive_training_data_analysis(&self) -> Vec<Vec<f64>> {
         let mut field_accumulator: Vec<Vec<f64>> = vec![Vec::new(); self.quarters.get(0).unwrap().get(0).unwrap().len()];    // Vector of all results for all fields
         for current_quarter in &self.quarters.quarters_vector {
@@ -91,6 +92,11 @@ impl Game {
         //println!("{:?}", field_accumulator.iter().zip(self.quarters.field_names.iter()).collect::<Vec<_>>());
         field_accumulator
     }
+    /// Runs the algorithm.
+    ///
+    /// # Arguments
+    /// * `generation_max` - The max number of generations to execute each time.
+    /// * `iteration`- The number of iterations over the whole algorithm that should be performed.
     pub fn run(&mut self, mut generation_max: i64, iteration: usize) {
         let (l_limits, u_limits) = Game::calculate_cheap_limits(&self.quarters);
         let compounded_training_vectors = self.expensive_training_data_analysis();
@@ -129,12 +135,13 @@ impl Game {
         }
         self.save();
     }
-    /// Run through all of the test data, and generate a new population.
+    /// Run through the training data, and generate a new population.
     ///
     /// # Arguments
     /// * `quarter_max` - The maximum number of quarters to run through.
     /// * `k` - Constant used for tournament selection.
     /// * `mut_const` - Constant used for mutation.
+    /// * `iteration` - The number of the current iteration.
     pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64, iteration: usize) {
         while self.current_quarter_index < quarter_max - 1 {
             self.next_quarter(iteration);
@@ -155,6 +162,9 @@ impl Game {
         self.players = new_population;
     }
     /// Runs through the next quarter of test data.
+    ///
+    /// # Arguments
+    /// * `iteration` - The number of the current iteration.
     fn next_quarter(&mut self, iteration: usize) {
         let quarter = self.quarters.get(self.current_quarter_index).unwrap();
         let (ratio, index_of_value) = (self.ratio, self.index_of_value);
@@ -185,6 +195,9 @@ impl Game {
         println!("End of final quarter!");
     }
     /// Perform a final generation of the algorithm, purely to analyse the potential screeners
+    ///
+    /// # Arguments
+    /// * `iteration` - The number of the current iteration.
     pub fn perform_analytical_final_run(&mut self, iteration: usize) {
         while self.current_quarter_index < self.quarters.len() - 1 {
             self.next_quarter(iteration);
@@ -248,7 +261,7 @@ impl Game {
             acc + ((player.payoff * (if field_used_symbolic_length > 10.0 {field_used_symbolic_length} else if field_used_symbolic_length < 5.0 {10.0 + 5.0 - field_used_symbolic_length} else {10.0} / 4.0)) / (if player.stocks_sold.len() != 0 {(player.stocks_sold.len() as f64) * (player.stocks_sold.len() as f64)} else {1.0}))
         }) / (self.players.len() as f64)
     }
-    /// Soft resets the list of players.
+    /// Calls each players soft reset function.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<f64>, &Vec<f64>)) {
         for player in &mut self.players {
             player.soft_reset((l_limits, u_limits));
@@ -277,7 +290,7 @@ impl Game {
             candidate
         }
     }
-
+    /// Save the current set of strategies in a human readable format to the test-data/output.txt
     pub fn save(&self) {
         let mut path = current_dir().unwrap();
         path.pop(); path.push("test-data/output.txt");

@@ -21,6 +21,8 @@ impl fmt::Display for Screener {
 }
 
 impl Screener {
+    /// Performs a soft reset of the screener. This regenerates the floating point value whilst
+    /// retaining the same boolean and Rule values.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<f64>, &Vec<f64>)) {
         let mut rng = rand::thread_rng();
         self.screen = self.screen.iter().zip(l_limits.iter().zip(u_limits)).map(|((_, used, rule), (l, u))| (if l == u {*l} else {rng.gen_range(*l, *u)}, *used, rule.clone())).collect();
@@ -97,7 +99,7 @@ impl Screener {
     pub fn len(&self) -> usize {
         self.screen.len()
     }
-
+    /// Returns an iterator over references to the elements in the screen variable of the Screener.
     pub fn iter(&self) -> Iter<(f64, bool, Rule)> {
         self.screen.iter()
     }

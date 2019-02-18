@@ -35,7 +35,7 @@ impl Player {
             stocks_purchased: Vec::new(),
         }
     }
-    /// Resets the player to have payoff 0, and an empty stocks_purchased vector.
+    /// Resets the player to have payoff 0, empty stocks vectors, and soft resets the strategies.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<f64>, &Vec<f64>)) {
         self.strategy.soft_reset((l_limits, u_limits));
         self.payoff = 0.0;
@@ -77,7 +77,7 @@ impl Player {
             stocks_purchased: Vec::new()
         }
     }
-    ///
+    /// Transforms the payoff to punish long strats and small sold vectors.
     pub fn payoff_normalise(&mut self) {    // change the punishment for long field lists to be constant below a certain length
         if self.stocks_sold.len() != 0 {
             let field_used_symbolic_length = self.strategy.iter().fold(0.0, |acc, (_, used, _)| {
@@ -92,7 +92,9 @@ impl Player {
             self.payoff = 0.0;
         }
     }
-    ///
+    /// Recalculate the used variable of the strategy. A field is thrown away if it filters out
+    /// less than 0.1% of the training data, or no stock that was successfully bought matched
+    /// the rule for that field. 
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
         let mut player_field_counter = vec![0; self.strategy.len()];
         for stock in &self.stocks_purchased {

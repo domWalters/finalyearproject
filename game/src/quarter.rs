@@ -48,19 +48,26 @@ impl Quarter {
     pub fn push(&mut self, new_record: DataRecord) {
         self.quarter_vector.push(new_record);
     }
-    ///
+    /// Returns an iterator over references to the elements in the quarter_vector variable of the
+    /// Quarter.
     pub fn iter(&self) -> Iter<DataRecord> {
         self.quarter_vector.iter()
     }
+    /// Removes the DataRecord in the index provided, and returns it.
     ///
+    /// # Arguments
+    /// * `index` - The index of the element to be removed and returned.
     pub fn remove(&mut self, index: usize) -> DataRecord {
         self.quarter_vector.remove(index)
     }
     /// Assigns to a Player a vector of DataRecords that are piecewise strictly larger than that
-    /// Player's set strategy
+    /// Player's set strategy.
     ///
     /// # Arguments
     /// * `player` - A Player struct.
+    ///
+    /// # Remarks
+    /// This function is overly convoluted.
     pub fn select_for_player(&self, player: &mut Player, ratio: f64, index: usize, iteration: usize) {
         // Buy from quarter
         for stock in &self.quarter_vector {
@@ -85,7 +92,6 @@ impl Quarter {
                     }
                 }
                 // Now remove those in the save list from the bin list
-                //println!("Current quarter: {:?}, Current bin: {:?}, Current save: {:?}", self.time_id, indicies_to_bin, indicies_to_save);
                 for j in indicies_to_save.iter().rev() {
                     indicies_to_bin.remove(*j);
                 }
