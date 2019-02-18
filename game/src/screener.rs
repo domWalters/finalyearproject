@@ -1,5 +1,4 @@
 use std::{fmt, slice::Iter};
-use rand;
 use rand::Rng;
 
 #[derive(Debug)]

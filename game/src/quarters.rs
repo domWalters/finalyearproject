@@ -1,6 +1,5 @@
 use std::{fmt, env::*, slice::Iter};
 use csv::Reader;
-use rand;
 use rand::Rng;
 
 use crate::quarter::Quarter;

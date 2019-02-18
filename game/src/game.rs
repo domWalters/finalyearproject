@@ -1,11 +1,5 @@
-use rand;
 use rand::Rng;
-use std;
-use std::fmt;
-use std::fs::File;
-use std::io::Write;
-use std::env::current_dir;
-use std::error::Error;
+use std::{env::current_dir, error::Error, fmt, fs::File, io::Write};
 use crossbeam::thread;
 
 use crate::player::Player;
