@@ -147,13 +147,7 @@ impl Game {
         }
         self.final_quarter();
         let _normalise = self.players.iter_mut().map(|player| player.payoff_normalise()).collect::<Vec<_>>();
-        let players_with_payoff = self.players.iter().fold(0, |acc, player| {
-            if player.payoff != 0.0 {
-                acc + 1
-            } else {
-                acc
-            }
-        });
+        let players_with_payoff = self.players.iter().fold(0, |acc, player| if player.payoff != 0.0 {acc + 1} else {acc});
         self.analyse_field_purchases();
         println!("Player count: {:?}, Average % Profit: {:?}", players_with_payoff, self.average_payoff());
         let mut new_population = Vec::new();
