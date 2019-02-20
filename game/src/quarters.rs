@@ -149,6 +149,21 @@ impl Quarters {
             starting_time: starting_time
         }
     }
+    /// Creates an ordered vector of vectors of each field of the training data.
+    pub fn expensive_training_data_analysis(&self) -> Vec<Vec<f64>> {
+        let mut field_accumulator: Vec<Vec<f64>> = vec![Vec::new(); self.get(0).unwrap().get(0).unwrap().len()];    // Vector of all results for all fields
+        for current_quarter in &self.quarters_vector {
+            for ref row in &current_quarter.quarter_vector {
+                for (&field, field_store) in row.iter().zip(field_accumulator.iter_mut()) {
+                    field_store.push(field);
+                }
+            }
+        }
+        for field_store in &mut field_accumulator {
+            field_store.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        }
+        field_accumulator
+    }
     /// Gets the requested index from the quarters_vector field, as an Option.
     ///
     /// # Arguments

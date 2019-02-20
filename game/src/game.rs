@@ -76,22 +76,6 @@ impl Game {
         }
         (lower_limits, upper_limits)
     }
-    /// Creates an ordered vector of vectors of each field of the training data.
-    pub fn expensive_training_data_analysis(&self) -> Vec<Vec<f64>> {
-        let mut field_accumulator: Vec<Vec<f64>> = vec![Vec::new(); self.quarters.get(0).unwrap().get(0).unwrap().len()];    // Vector of all results for all fields
-        for current_quarter in &self.quarters.quarters_vector {
-            for ref row in &current_quarter.quarter_vector {
-                for (&field, field_store) in row.iter().zip(field_accumulator.iter_mut()) {
-                    field_store.push(field);
-                }
-            }
-        }
-        for field_store in &mut field_accumulator {
-            field_store.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        }
-        //println!("{:?}", field_accumulator.iter().zip(self.quarters.field_names.iter()).collect::<Vec<_>>());
-        field_accumulator
-    }
     /// Runs the algorithm.
     ///
     /// # Arguments
@@ -99,7 +83,7 @@ impl Game {
     /// * `iteration`- The number of iterations over the whole algorithm that should be performed.
     pub fn run(&mut self, mut generation_max: i64, iteration: usize) {
         let (l_limits, u_limits) = Game::calculate_cheap_limits(&self.quarters);
-        let compounded_training_vectors = self.expensive_training_data_analysis();
+        let compounded_training_vectors = self.quarters.expensive_training_data_analysis();
         let quarters_len = self.quarters.len();
         for i in 0..iteration {
             for _j in 0..generation_max {
