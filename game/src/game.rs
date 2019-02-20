@@ -2,6 +2,7 @@ use rand::Rng;
 use std::{env::current_dir, error::Error, fmt, fs::File, io::Write};
 use crossbeam::thread;
 
+use crate::data_trait::DataTrait;
 use crate::player::Player;
 use crate::quarters::Quarters;
 use crate::screener::Rule;
@@ -10,21 +11,22 @@ pub static DEFAULT_TOURNEY_CONST: usize = 3;
 pub static DEFAULT_MUTATION_CONST: f64 = 0.7;
 
 #[derive(Debug)]
-pub struct Game {
-    players: Vec<Player>,
-    quarters: Quarters,
+pub struct Game<T: DataTrait> {
+    players: Vec<Player<T>>,
+    quarters_initial: Quarters<f64>,
+    quarters_actual: Quarters<T>,
     current_quarter_index: usize,
     index_of_value: usize,
     ratio: f64
 }
 
-impl fmt::Display for Game {
+impl<T: DataTrait> fmt::Display for Game<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {  // Overly verbose
-        write!(f, "Game[players: {:?}, quarters: {}, current_quarter_index: {}, index_of_value: {}]", self.players, self.quarters, self.current_quarter_index, self.index_of_value)
+        write!(f, "Game[players: {:?}, quarters_initial: {:?}, quarters_actual: {:?}, current_quarter_index: {}, index_of_value: {}]", self.players, self.quarters_initial, self.quarters_actual, self.current_quarter_index, self.index_of_value)
     }
 }
 
-impl Game {
+impl<T: DataTrait> Game<T> {
     /// Create a new Game object, initialised randomly. Internal game parameters set to default
     /// values.
     ///
@@ -35,16 +37,18 @@ impl Game {
     /// # Remarks
     /// Not currently implemented properly, just generates a standard random Game with players
     /// initialised between the test data element limits. Will likely need to be more sophisticated.
-    pub fn new_game(quarters: Quarters, num_of_players: usize) -> Game {
-        let (l_limits, u_limits) = Game::calculate_cheap_limits(&quarters);
+    pub fn new_game(quarters_initial: Quarters<f64>, num_of_players: usize) -> Game<usize> {
         // Get the banned indicies list
         let banned_names = vec!["adj_close", "adj_factor", "adj_high", "adj_low", "adj_open", "adj_volume", "close", "high", "low", "open", "volume"];
         let mut banned_indicies = Vec::new();
-        for (i, field_name) in quarters.field_names.iter().enumerate() {
+        for (i, field_name) in quarters_initial.field_names.iter().enumerate() {
             if banned_names.contains(&&field_name[0..]) {
                 banned_indicies.push(i);
             }
         }
+        // Create the actual quarters, and it's limits.
+        let quarters_actual = quarters_initial.create_percentile_quarters(1, quarters_initial.expensive_training_data_analysis());
+        let (l_limits, u_limits) = Game::calculate_cheap_limits(&quarters_actual);
         // Make players
         let mut players = Vec::new();
         for _i in 0..num_of_players {
@@ -52,16 +56,17 @@ impl Game {
         }
         Game {
             players: players,
-            quarters: quarters,
+            quarters_initial: quarters_initial,
+            quarters_actual: quarters_actual,
             current_quarter_index: 0,
             index_of_value: 0,
             ratio: 0.4
         }
     }
-    fn calculate_cheap_limits(quarters: &Quarters) -> (Vec<f64>, Vec<f64>) {
+    fn calculate_cheap_limits(quarters: &Quarters<T>) -> (Vec<T>, Vec<T>) {
         let first_quarter = quarters.get(0).unwrap();
-        let mut lower_limits = vec![std::f64::MAX; first_quarter.get(0).unwrap().len()];
-        let mut upper_limits = vec![std::f64::MIN; first_quarter.get(0).unwrap().len()];
+        let mut lower_limits = vec![T::max_value(); first_quarter.get(0).unwrap().len()];
+        let mut upper_limits = vec![T::min_value(); first_quarter.get(0).unwrap().len()];
         for current_quarter in &quarters.quarters_vector {
             for ref entry in &current_quarter.quarter_vector {
                 for (&field, (lower_limit, upper_limit)) in entry.iter().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
@@ -82,9 +87,9 @@ impl Game {
     /// * `generation_max` - The max number of generations to execute each time.
     /// * `iteration`- The number of iterations over the whole algorithm that should be performed.
     pub fn run(&mut self, mut generation_max: i64, iteration: usize) {
-        let (l_limits, u_limits) = Game::calculate_cheap_limits(&self.quarters);
-        let compounded_training_vectors = self.quarters.expensive_training_data_analysis();
-        let quarters_len = self.quarters.len();
+        let (l_limits, u_limits) = Game::calculate_cheap_limits(&self.quarters_actual);
+        let compounded_training_vectors = self.quarters_actual.expensive_training_data_analysis();
+        let quarters_len = self.quarters_actual.len();
         for i in 0..iteration {
             for _j in 0..generation_max {
                 self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i);
@@ -109,7 +114,7 @@ impl Game {
                 self.ratio = 0.99;
             }
             println!("Run {:?} complete!", i);
-            println!("{:?}", self.players[0].strategy.iter().zip(&self.quarters.field_names).filter_map(|((field, used, rule), name)| {
+            println!("{:?}", self.players[0].strategy.iter().zip(&self.quarters_actual.field_names).filter_map(|((field, used, rule), name)| {
                 if *used {
                     Some((name, rule, field))
                 } else {
@@ -150,13 +155,14 @@ impl Game {
     /// # Arguments
     /// * `iteration` - The number of the current iteration.
     fn next_quarter(&mut self, iteration: usize) {
-        let quarter = self.quarters.get(self.current_quarter_index).unwrap();
+        let quarter = self.quarters_actual.get(self.current_quarter_index).unwrap();
+        let float_quarter = self.quarters_initial.get(self.current_quarter_index).unwrap();
         let (ratio, index_of_value) = (self.ratio, self.index_of_value);
         let player_iter = self.players.iter_mut();
         thread::scope(|s| {
             for mut player in player_iter {
                 s.spawn(move |_| {
-                    quarter.select_for_player(&mut player, ratio, index_of_value, iteration);
+                    quarter.select_for_player(float_quarter, &mut player, ratio, index_of_value, iteration);
                 });
             }
         }).unwrap();
@@ -165,13 +171,14 @@ impl Game {
     /// Runs through the last quarter of test data.
     fn final_quarter(&mut self) {
         println!("Starting final quarter...");
-        let quarter = self.quarters.get(self.current_quarter_index).unwrap();
+        let quarter = self.quarters_actual.get(self.current_quarter_index).unwrap();
+        let float_quarter = self.quarters_initial.get(self.current_quarter_index).unwrap();
         let index_of_value = self.index_of_value;
         let player_iter = self.players.iter_mut();
         thread::scope(|s| {
             for mut player in player_iter {
                 s.spawn(move |_| {
-                    quarter.calc_payoffs(&mut player, index_of_value);
+                    quarter.calc_payoffs(&float_quarter, &mut player, index_of_value);
                 });
             }
         }).unwrap();
@@ -183,7 +190,7 @@ impl Game {
     /// # Arguments
     /// * `iteration` - The number of the current iteration.
     pub fn perform_analytical_final_run(&mut self, iteration: usize) {
-        while self.current_quarter_index < self.quarters.len() - 1 {
+        while self.current_quarter_index < self.quarters_actual.len() - 1 {
             self.next_quarter(iteration);
         }
         self.final_quarter();
@@ -196,7 +203,7 @@ impl Game {
         let mut aggregate_field_counter = vec![0; self.players[0].strategy.len()];
         for player in &self.players {
             let mut player_field_counter = vec![0; player.strategy.len()];
-            for stock in &player.stocks_purchased {
+            for (_, stock) in &player.stocks_purchased {
                 for (k, (strat, used, rule)) in player.strategy.iter().enumerate() {
                     let rule_met = match rule {
                         Rule::Lt => stock.get(k) <= *strat,
@@ -222,7 +229,7 @@ impl Game {
         }).collect::<Vec<_>>());
     }
     /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
-    pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
+    pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<T>>) {
         let players = &mut self.players;
         thread::scope(|s| {
             for player in players.iter_mut() {
@@ -246,7 +253,7 @@ impl Game {
         }) / (self.players.len() as f64)
     }
     /// Calls each players soft reset function.
-    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<f64>, &Vec<f64>)) {
+    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
         for player in &mut self.players {
             player.soft_reset((l_limits, u_limits));
         }
@@ -259,7 +266,7 @@ impl Game {
     ///
     /// # Remarks
     /// This will fail at runtime if called with k = 0.
-    fn tourney_select(&self, k: usize) -> &Player {
+    fn tourney_select(&self, k: usize) -> &Player<T> {
         let mut rng = rand::thread_rng();
         let mut candidate = &self.players[rng.gen_range(0, self.players.len())];
         if k == 0 {
@@ -283,7 +290,7 @@ impl Game {
             Ok(file) => file,
         };
         for player in &self.players {
-            let output_string = format!["{:?}", player.strategy.iter().zip(&self.quarters.field_names).filter_map(|((field, used, rule), name)| {
+            let output_string = format!["{:?}", player.strategy.iter().zip(&self.quarters_actual.field_names).filter_map(|((field, used, rule), name)| {
                 if *used {
                     Some((name, rule, field))
                 } else {

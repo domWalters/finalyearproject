@@ -1,12 +1,13 @@
 use std::{fmt, slice::Iter};
 
+use crate::data_trait::DataTrait;
 use crate::player::Player;
 use crate::screener::Rule;
 
 #[derive(Debug)]
 #[derive(Clone)]
-pub struct DataRecord {
-    pub record: Vec<f64>,
+pub struct DataRecord<T: DataTrait> {
+    pub record: Vec<T>,
     pub stock_id: StockID
 }
 
@@ -37,7 +38,7 @@ impl fmt::Display for StockID {
     }
 }
 
-impl fmt::Display for DataRecord {
+impl<T: DataTrait> fmt::Display for DataRecord<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "DataRecord[record: {:?}, stock_id: {}]", self.record, self.stock_id)
     }
@@ -87,13 +88,13 @@ impl StockID {
     }
 }
 
-impl DataRecord {
+impl<T: DataTrait> DataRecord<T> {
     ///
-    pub fn is_name(&self, record: &DataRecord) -> bool {
+    pub fn is_name<U: DataTrait>(&self, record: &DataRecord<U>) -> bool {
         self.stock_id.is_name(&record.stock_id)
     }
     ///
-    pub fn is_date(&self, record: &DataRecord) -> bool {
+    pub fn is_date<U: DataTrait>(&self, record: &DataRecord<U>) -> bool {
         self.stock_id.is_date(&record.stock_id)
     }
     /// Returns the length of the DataRecord
@@ -104,18 +105,18 @@ impl DataRecord {
     ///
     /// # Arguments
     /// * `index` - The index requested.
-    pub fn get(&self, index: usize) -> f64 {
+    pub fn get(&self, index: usize) -> T {
         self.record[index]
     }
     ///
-    pub fn iter(&self) -> Iter<f64> {
+    pub fn iter(&self) -> Iter<T> {
         self.record.iter()
     }
     /// Pushes a new element onto the end of the DataRecord.
     ///
     /// # Arguments
     /// * `element` - The element to be pushed.
-    pub fn push(&mut self, element: f64) {
+    pub fn push(&mut self, element: T) {
         self.record.push(element);
     }
     /// Returns true or false based on whether this record has 100*ratio% elements greater than the
@@ -125,18 +126,18 @@ impl DataRecord {
     /// * `player` - The player who's strategy needs to be checked.
     /// * `ratio` - A number from the interval [0, 1], representing the percentage of elements that
     /// need to be checked successfully.
-    pub fn greater_by_ratio(&self, player: &Player, ratio: f64) -> bool {
+    pub fn greater_by_ratio(&self, player: &Player<T>, ratio: f64) -> bool {
         let mut true_track = 0;
         let mut false_track = 0;
         let fields_used_count = player.strategy.iter().fold(0, |acc, (_, used, _)| if *used {acc + 1} else {acc});
         let ratio_true_limit = ratio * (fields_used_count as f64);
         let ratio_false_limit = (1.0 - ratio) * (fields_used_count as f64);
         let zip = self.record.iter().zip(player.strategy.iter());
-        for (&stock_element, (screen_element, field_used, rule)) in zip {
+        for (stock_element, (screen_element, field_used, rule)) in zip {
             if *field_used {
                 let rule_met = match rule {
-                    Rule::Lt => stock_element <= *screen_element,
-                    Rule::Gt => stock_element >= *screen_element
+                    Rule::Lt => stock_element <= screen_element,
+                    Rule::Gt => stock_element >= screen_element
                 };
                 if rule_met {
                     true_track += 1;

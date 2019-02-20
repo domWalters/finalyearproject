@@ -2,28 +2,29 @@ use std::{fmt, env::*, slice::Iter};
 use csv::Reader;
 use rand::Rng;
 
+use crate::data_trait::DataTrait;
 use crate::quarter::Quarter;
 use crate::data_record::{TimeID, StockID, DataRecord};
 
 #[derive(Debug)]
 #[derive(Clone)]
-pub struct Quarters {
+pub struct Quarters<T: DataTrait> {
     pub field_names: Vec<String>,
-    pub quarters_vector: Vec<Quarter>,
+    pub quarters_vector: Vec<Quarter<T>>,
     pub starting_time: TimeID
 }
 
-impl fmt::Display for Quarters {
+impl<T: DataTrait> fmt::Display for Quarters<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Quarters[field_names: {:?}, quarters_vector: {:?}, starting_time: {}]", self.field_names, self.quarters_vector, self.starting_time)
     }
 }
 
-impl Quarters {
+impl<T: DataTrait> Quarters<T> {
     /// Generate the Quarters object from the default data directory (from this files location, the
     /// folder is ../../test-data/TrimmedUnitedData).
-    pub fn new_quarters_from_default_file(iteration_max: usize) -> Quarters {
-        let mut pre_output: Vec<Quarter> = Vec::new();
+    pub fn new_quarters_from_default_file(iteration_max: usize) -> Quarters<f64> {
+        let mut pre_output: Vec<Quarter<f64>> = Vec::new();
         // Populate with every blank quarter since epoch
         let (mut year_count, mut quarter_count) = (1970, 1);
         while year_count < 2019 {
@@ -116,7 +117,7 @@ impl Quarters {
                 acc
             }
         });
-        let mut output: Vec<Quarter> = pre_output.into_iter().filter(|quarter| {
+        let mut output: Vec<Quarter<f64>> = pre_output.into_iter().filter(|quarter| {
             let keep = largest_time_id.after(&quarter.time_id) & (quarter.quarter_vector.len() > 0);
             if !keep {
                 println!("Throwing away {}.", quarter.time_id.to_string());
@@ -150,8 +151,8 @@ impl Quarters {
         }
     }
     /// Creates an ordered vector of vectors of each field of the training data.
-    pub fn expensive_training_data_analysis(&self) -> Vec<Vec<f64>> {
-        let mut field_accumulator: Vec<Vec<f64>> = vec![Vec::new(); self.get(0).unwrap().get(0).unwrap().len()];    // Vector of all results for all fields
+    pub fn expensive_training_data_analysis(&self) -> Vec<Vec<T>> {
+        let mut field_accumulator: Vec<Vec<T>> = vec![Vec::new(); self.get(0).unwrap().get(0).unwrap().len()];    // Vector of all results for all fields
         for current_quarter in &self.quarters_vector {
             for ref row in &current_quarter.quarter_vector {
                 for (&field, field_store) in row.iter().zip(field_accumulator.iter_mut()) {
@@ -191,8 +192,8 @@ impl Quarters {
     /// * `denomination` - The distance between adjacent percentiles. This number must evenly
     /// divide 100 with no remainder.
     ///
-    pub fn create_percentile_quarters(&self, denomination: usize, training_data: Vec<Vec<f64>>) -> Quarters {
-        let percentile_boundary_vectors = Quarters::create_percentile_vectors(denomination, training_data);
+    pub fn create_percentile_quarters(&self, denomination: usize, training_data: Vec<Vec<f64>>) -> Quarters<usize> {
+        let percentile_boundary_vectors = Quarters::<f64>::create_percentile_vectors(denomination, training_data);
         //println!("{:?}", percentile_boundary_vectors);
         // Create new Quarters set
         let mut new_quarters_vector = Vec::new();
@@ -203,10 +204,10 @@ impl Quarters {
                 'a: for (i, entry) in data_record.record.iter().enumerate() {
                     let percentile_vector = &percentile_boundary_vectors[i];
                     'b: for (j, element) in percentile_vector.iter().enumerate() {
-                        if entry > element {
+                        if entry.to_f64().unwrap() > *element {
                             continue 'b;
                         } else {
-                            new_record_vector.push(((j + 1) * denomination) as f64);
+                            new_record_vector.push((j + 1) * denomination);
                             continue 'a;
                         }
                     }
@@ -231,7 +232,7 @@ impl Quarters {
     ///
     /// # Arguments
     /// * `index` - The index requested.
-    pub fn get(&self, index: usize) -> Option<&Quarter> {
+    pub fn get(&self, index: usize) -> Option<&Quarter<T>> {
         self.quarters_vector.get(index)
     }
     /// Returns the length of the quarters_vector field.
@@ -240,7 +241,7 @@ impl Quarters {
     }
     /// Returns an iterator over references to the elements in the quarters_vector variable of
     /// the Quarters object.
-    pub fn iter(&self) -> Iter<Quarter> {
+    pub fn iter(&self) -> Iter<Quarter<T>> {
         self.quarters_vector.iter()
     }
 }

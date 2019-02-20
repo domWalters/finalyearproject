@@ -1,24 +1,25 @@
 use std::fmt;
 
+use crate::data_trait::DataTrait;
 use crate::data_record::DataRecord;
 use crate::screener::Screener;
 use crate::screener::Rule;
 
 #[derive(Debug)]
-pub struct Player {
-    pub strategy: Screener,
+pub struct Player<T: DataTrait> {
+    pub strategy: Screener<T>,
     pub payoff: f64,
-    pub stocks_sold: Vec<DataRecord>,
-    pub stocks_purchased: Vec<DataRecord>
+    pub stocks_sold: Vec<DataRecord<T>>,
+    pub stocks_purchased: Vec<(f64, DataRecord<T>)>
 }
 
-impl fmt::Display for Player {
+impl<T: DataTrait> fmt::Display for Player<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Player[strategy: {}, payoff: {}, stocks_sold: {:?}, stocks_purchased: {:?}]", self.strategy, self.payoff, self.stocks_sold, self.stocks_purchased)
     }
 }
 
-impl Player {
+impl<T: DataTrait> Player<T> {
     /// Creates a Player with a uniform random strategy within a set list of boundaries.
     ///
     /// # Arguments
@@ -27,7 +28,7 @@ impl Player {
     ///
     /// # Remarks
     /// See Screener::new_uniform_random() documentation.
-    pub fn new_uniform_random((l_limits, r_limits): (&Vec<f64>, &Vec<f64>), banned_indicies: &Vec<usize>) -> Player {
+    pub fn new_uniform_random((l_limits, r_limits): (&Vec<T>, &Vec<T>), banned_indicies: &Vec<usize>) -> Player<T> {
         Player {
             strategy: Screener::new_uniform_random((l_limits, r_limits), banned_indicies),
             payoff: 0.0,                     // dangerous
@@ -36,7 +37,7 @@ impl Player {
         }
     }
     /// Resets the player to have payoff 0, empty stocks vectors, and soft resets the strategies.
-    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<f64>, &Vec<f64>)) {
+    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
         self.strategy.soft_reset((l_limits, u_limits));
         self.payoff = 0.0;
         self.stocks_sold = Vec::new();
@@ -52,7 +53,7 @@ impl Player {
     /// the two that constructed it. This allows the reuse of the Players that construct this
     /// crossover. The payoff and stocks_purchased entries are reset. The fields_used entry has
     /// it's elements picked randomly from either player.
-    pub fn dumb_crossover(&self, player: &Player) -> Player {
+    pub fn dumb_crossover(&self, player: &Player<T>) -> Player<T> {
         Player {
             strategy: self.strategy.dumb_crossover(&player.strategy),
             payoff: 0.0,
@@ -69,7 +70,7 @@ impl Player {
     /// This resultant Player is new, and therefore isn't in the memory location of the Player
     /// used to create it. This allows the reuse of the Player that constructs this mutation.
     /// The payoff and stocks_purchased entries are reset.
-    pub fn lazy_mutate(&self, c: f64) -> Player {
+    pub fn lazy_mutate(&self, c: f64) -> Player<T> {
         Player {
             strategy: self.strategy.lazy_mutate(c),
             payoff: 0.0,
@@ -94,10 +95,10 @@ impl Player {
     }
     /// Recalculate the used variable of the strategy. A field is thrown away if it filters out
     /// less than 0.1% of the training data, or no stock that was successfully bought matched
-    /// the rule for that field. 
-    pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<f64>>) {
+    /// the rule for that field.
+    pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<T>>) {
         let mut player_field_counter = vec![0; self.strategy.len()];
-        for stock in &self.stocks_purchased {
+        for (_, stock) in &self.stocks_purchased {
             for (k, (strat_element, used, rule)) in self.strategy.iter().enumerate() {
                 let rule_met = match rule {
                     Rule::Lt => stock.get(k) <= *strat_element,

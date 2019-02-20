@@ -1,6 +1,8 @@
 use std::{fmt, slice::Iter};
 use rand::Rng;
 
+use crate::data_trait::DataTrait;
+
 #[derive(Debug)]
 #[derive(Clone)]
 pub enum Rule {
@@ -10,20 +12,20 @@ pub enum Rule {
 
 #[derive(Debug)]
 #[derive(Clone)]
-pub struct Screener {
-    pub screen: Vec<(f64, bool, Rule)>
+pub struct Screener<T: DataTrait> {
+    pub screen: Vec<(T, bool, Rule)>
 }
 
-impl fmt::Display for Screener {
+impl<T: DataTrait> fmt::Display for Screener<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Screener[screen: {:?}]", self.screen)
     }
 }
 
-impl Screener {
+impl<T: DataTrait> Screener<T> {
     /// Performs a soft reset of the screener. This regenerates the floating point value whilst
     /// retaining the same boolean and Rule values.
-    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<f64>, &Vec<f64>)) {
+    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
         let mut rng = rand::thread_rng();
         self.screen = self.screen.iter().zip(l_limits.iter().zip(u_limits)).map(|((_, used, rule), (l, u))| (if l == u {*l} else {rng.gen_range(*l, *u)}, *used, rule.clone())).collect();
     }
@@ -37,7 +39,7 @@ impl Screener {
     /// Each argument is a vector that is as long as the Screener that needs to be generated.
     /// The ith element of the Screener is greater than the ith element of l_limits, and less than
     /// the ith element of r_limits.
-    pub fn new_uniform_random((l_limits, u_limits): (&Vec<f64>, &Vec<f64>), banned_fields: &Vec<usize>) -> Screener {
+    pub fn new_uniform_random((l_limits, u_limits): (&Vec<T>, &Vec<T>), banned_fields: &Vec<usize>) -> Screener<T> {
         let mut output = Vec::new();
         let mut rng = rand::thread_rng();
         for (i, (l, u)) in l_limits.iter().zip(u_limits).enumerate() {
@@ -61,12 +63,12 @@ impl Screener {
     /// The resultant Screener is new, and therefore isn't in the memory location of either of
     /// the two that constructed it. This allows the reuse of the Screeners that construct this
     /// crossover.
-    pub fn dumb_crossover(&self, slice: &Screener) -> Screener {
+    pub fn dumb_crossover(&self, slice: &Screener<T>) -> Screener<T> {
         let mut rng = rand::thread_rng();
         Screener {
             screen: self.iter()
                         .zip(slice.iter())
-                        .map(|((l, l_used, l_rule), (r, r_used, r_rule))| ((l + r) / 2.0, if rng.gen_bool(0.5) {*l_used} else {*r_used}, if rng.gen_bool(0.5) {l_rule.clone()} else {r_rule.clone()}))
+                        .map(|((l, l_used, l_rule), (r, r_used, r_rule))| ((*l + *r) / T::from(2.0).unwrap(), if rng.gen_bool(0.5) {*l_used} else {*r_used}, if rng.gen_bool(0.5) {l_rule.clone()} else {r_rule.clone()}))
                         .collect()
         }
     }
@@ -80,14 +82,15 @@ impl Screener {
     /// # Remarks
     /// This resultant Screener is new, and therefore isn't in the memory location of the Screener
     /// used to create it. This allows the reuse of the Screener that constructs this mutation.
-    pub fn lazy_mutate(&self, c: f64) -> Screener {
+    pub fn lazy_mutate(&self, c: f64) -> Screener<T> {
         let mut rng = rand::thread_rng();
         let percent_mag = 10.0;                         // perform an up to +/-percent_mag% mutation
         Screener {
             screen: self.iter()
                         .map(|(e, used, rule)| {
                             if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
-                                (*e * rng.gen_range(1.0 - (percent_mag / 100.0), 1.0 + (percent_mag / 100.0)), *used, rule.clone())
+                                let (interval_l, interval_r) = e.interval(percent_mag);
+                                (if interval_l == interval_r {interval_l} else {rng.gen_range(interval_l, interval_r)}, *used, rule.clone())
                             } else {
                                 (*e, *used, rule.clone())
                             }
@@ -100,7 +103,7 @@ impl Screener {
         self.screen.len()
     }
     /// Returns an iterator over references to the elements in the screen variable of the Screener.
-    pub fn iter(&self) -> Iter<(f64, bool, Rule)> {
+    pub fn iter(&self) -> Iter<(T, bool, Rule)> {
         self.screen.iter()
     }
 }
