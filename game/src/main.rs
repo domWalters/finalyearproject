@@ -14,6 +14,8 @@ fn main() {
     let iterations = 5;
 
     let quarters = Quarters::new_quarters_from_default_file(iterations);
-    let mut game = Game::new_game(quarters, population_size);
+    let quarters2 = quarters.create_percentile_quarters(1, quarters.expensive_training_data_analysis());
+    let mut game = Game::new_game(quarters2, population_size);
+    //println!("{:?}", quarters2);
     game.run(generation_max, iterations);
 }

@@ -164,6 +164,69 @@ impl Quarters {
         }
         field_accumulator
     }
+    ///
+    ///
+    /// # Arguments
+    /// * `denomination` - The distance between adjacent percentiles. This number must evenly
+    /// divide 100 with no remainder.
+    ///
+    /// # Remarks
+    /// The 0th element is the lower limit of the 1st percentile. The ith element is the lower
+    /// limit of the (i+1)th percentile.
+    fn create_percentile_vectors(denomination: usize, training_data: Vec<Vec<f64>>) -> Vec<Vec<f64>> {
+        // Compute percentile start values
+        let mut percentile_boundary_vectors = vec![Vec::new(); training_data.len()];
+        for (i, percentile_vector) in percentile_boundary_vectors.iter_mut().enumerate() {
+            let ith_training_data = &training_data[i];
+            let gap = (ith_training_data.len() as f64) / ((100 / denomination) as f64);
+            for j in 0..(100 / denomination) {
+                percentile_vector.push(ith_training_data[(gap as usize) + ((gap * (j as f64)) as usize)]);
+            }
+        }
+        percentile_boundary_vectors
+    }
+    ///
+    ///
+    /// # Arguments
+    /// * `denomination` - The distance between adjacent percentiles. This number must evenly
+    /// divide 100 with no remainder.
+    ///
+    pub fn create_percentile_quarters(&self, denomination: usize, training_data: Vec<Vec<f64>>) -> Quarters {
+        let percentile_boundary_vectors = Quarters::create_percentile_vectors(denomination, training_data);
+        //println!("{:?}", percentile_boundary_vectors);
+        // Create new Quarters set
+        let mut new_quarters_vector = Vec::new();
+        for quarter in &self.quarters_vector {
+            let mut new_quarter_vector = Vec::new();
+            for data_record in &quarter.quarter_vector {
+                let mut new_record_vector = Vec::new();
+                'a: for (i, entry) in data_record.record.iter().enumerate() {
+                    let percentile_vector = &percentile_boundary_vectors[i];
+                    'b: for (j, element) in percentile_vector.iter().enumerate() {
+                        if entry > element {
+                            continue 'b;
+                        } else {
+                            new_record_vector.push(((j + 1) * denomination) as f64);
+                            continue 'a;
+                        }
+                    }
+                }
+                new_quarter_vector.push(DataRecord {
+                    record: new_record_vector,
+                    stock_id: data_record.stock_id.clone()
+                });
+            }
+            new_quarters_vector.push(Quarter {
+                quarter_vector: new_quarter_vector,
+                time_id: quarter.time_id.clone()
+            });
+        }
+        Quarters {
+            field_names: self.field_names.clone(),
+            quarters_vector: new_quarters_vector,
+            starting_time: self.starting_time.clone()
+        }
+    }
     /// Gets the requested index from the quarters_vector field, as an Option.
     ///
     /// # Arguments
