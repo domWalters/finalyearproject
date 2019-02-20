@@ -79,7 +79,7 @@ impl<T: DataTrait> Quarter<T> {
         }
         // Sell discontinuous stocks, create a list of what to sell
         let mut indicies_to_bin: Vec<(usize, StockID)> = Vec::new();
-        for (i, (value, stock)) in player.stocks_purchased.iter().enumerate() {  // THIS ITER IS ORDERED BY DEFINITION
+        for (i, (_, stock)) in player.stocks_purchased.iter().enumerate() {  // THIS ITER IS ORDERED BY DEFINITION
             if stock.stock_id.time_id.is_date(&self.time_id) {
                 let mut indicies_to_save: Vec<usize> = Vec::new();
                 for (j, (_, bin_stock_id)) in indicies_to_bin.iter().enumerate() {

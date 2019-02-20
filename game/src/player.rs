@@ -96,6 +96,9 @@ impl<T: DataTrait> Player<T> {
     /// Recalculate the used variable of the strategy. A field is thrown away if it filters out
     /// less than 0.1% of the training data, or no stock that was successfully bought matched
     /// the rule for that field.
+    ///
+    /// # Remarks
+    /// The 0.1% stuff in here is now useless (I think).
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<T>>) {
         let mut player_field_counter = vec![0; self.strategy.len()];
         for (_, stock) in &self.stocks_purchased {
