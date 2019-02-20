@@ -6,6 +6,7 @@ use crate::quarter::Quarter;
 use crate::data_record::{TimeID, StockID, DataRecord};
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct Quarters {
     pub field_names: Vec<String>,
     pub quarters_vector: Vec<Quarter>,

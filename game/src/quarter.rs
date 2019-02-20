@@ -4,6 +4,7 @@ use crate::data_record::{DataRecord, StockID, TimeID};
 use crate::player::Player;
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct Quarter {
     pub quarter_vector: Vec<DataRecord>,
     pub time_id: TimeID
