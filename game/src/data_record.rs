@@ -141,12 +141,12 @@ impl<T: DataTrait> DataRecord<T> {
                 };
                 if rule_met {
                     true_track += 1;
-                    if true_track as f64 > ratio_true_limit {
+                    if true_track as f64 >= ratio_true_limit {
                         return true;
                     }
                 } else {
                     false_track += 1;
-                    if false_track as f64 > ratio_false_limit {
+                    if false_track as f64 >= ratio_false_limit {
                         return false;
                     }
                 }
