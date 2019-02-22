@@ -60,7 +60,7 @@ impl<T: DataTrait> Game<T> {
             quarters_actual: quarters_actual,
             current_quarter_index: 0,
             index_of_value: 0,
-            ratio: 0.4
+            ratio: 0.6
         }
     }
     fn calculate_cheap_limits(quarters: &Quarters<T>) -> (Vec<T>, Vec<T>) {
@@ -86,7 +86,7 @@ impl<T: DataTrait> Game<T> {
     /// # Arguments
     /// * `generation_max` - The max number of generations to execute each time.
     /// * `iteration`- The number of iterations over the whole algorithm that should be performed.
-    pub fn run(&mut self, mut generation_max: i64, iteration: usize) {
+    pub fn run(&mut self, generation_max: i64, iteration: usize) {
         let (l_limits, u_limits) = Game::calculate_cheap_limits(&self.quarters_actual);
         let compounded_training_vectors = self.quarters_actual.expensive_training_data_analysis();
         let quarters_len = self.quarters_actual.len();
@@ -98,20 +98,13 @@ impl<T: DataTrait> Game<T> {
             self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset((&l_limits, &u_limits));
             if i == 0 {
-                self.ratio = 0.4;
-                generation_max = 10;
-            } else if i == 1 {
-                self.ratio = 0.5;
-            } else if i == 2 {
-                self.ratio = 0.6;
-            } else if i == 3 {
                 self.ratio = 0.7;
-            } else if i == 4 {
+            } else if i == 1 {
                 self.ratio = 0.8;
-            } else if i == 5 {
+            } else if i == 2 {
                 self.ratio = 0.9;
-            } else if i == 6 {
-                self.ratio = 0.99;
+            } else if i == 3 {
+                self.ratio = 1.0;
             }
             println!("Run {:?} complete!", i);
             println!("{:?}", self.players[0].strategy.iter().zip(&self.quarters_actual.field_names).filter_map(|((field, used, rule), name)| {
@@ -164,7 +157,7 @@ impl<T: DataTrait> Game<T> {
         thread::scope(|s| {
             for mut player in player_iter {
                 s.spawn(move |_| {
-                    quarter.select_for_player(float_quarter, &mut player, ratio, index_of_value, iteration);
+                    quarter.select_for_player(&float_quarter, &mut player, ratio, index_of_value, iteration);
                 });
             }
         }).unwrap();

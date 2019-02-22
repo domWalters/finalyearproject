@@ -12,8 +12,8 @@ use crate::game::Game;
 
 fn main() {
     let population_size = 100;
-    let generation_max = 5;
-    let iterations = 8;
+    let generation_max = 20;
+    let iterations = 5;
 
     let quarters = Quarters::<f64>::new_quarters_from_default_file(iterations);
     let mut game = Game::<usize>::new_game(quarters, population_size);
