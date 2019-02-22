@@ -78,27 +78,45 @@ impl<T: DataTrait> Player<T> {
             stocks_purchased: Vec::new()
         }
     }
-    /// Transforms the payoff to punish long strats and small sold vectors.
-    pub fn payoff_normalise(&mut self) {    // change the punishment for long field lists to be constant below a certain length
+    pub fn payoff_average(&mut self) {
         if self.stocks_sold.len() != 0 {
-            let field_used_symbolic_length = self.strategy.iter().fold(0.0, |acc, (_, used, _)| {
-                if *used {
-                    acc + 1.0
-                } else {
-                    acc
-                }
-            });
-            self.payoff = (self.payoff * (4.0 / if field_used_symbolic_length > 10.0 {field_used_symbolic_length} else if field_used_symbolic_length < 5.0 {10.0 + 5.0 - field_used_symbolic_length} else {10.0})) * (self.stocks_sold.len() as f64);
+            self.payoff = self.payoff / (self.stocks_sold.len() as f64);
         } else {
             self.payoff = 0.0;
         }
+    }
+    /// Transforms the payoff to punish long strats and small sold vectors.
+    pub fn payoff_normalise(&mut self) {
+        let field_used_count = self.strategy.iter().fold(0.0, |acc, (_, used, _)| {
+            if *used {
+                acc + 1.0
+            } else {
+                acc
+            }
+        });
+        let fields_used_punish = if field_used_count > 10.0 {field_used_count} else if field_used_count < 5.0 {10.0 + 5.0 - field_used_count} else {10.0};
+        let stocks_sold_reward = self.stocks_sold.len() as f64;
+        self.payoff = self.payoff * (stocks_sold_reward / fields_used_punish);
+    }
+    /// Reverts payoff_normalise.
+    pub fn payoff_denormalise(&mut self) {
+        let field_used_count = self.strategy.iter().fold(0.0, |acc, (_, used, _)| {
+            if *used {
+                acc + 1.0
+            } else {
+                acc
+            }
+        });
+        let fields_used_punish = if field_used_count > 10.0 {field_used_count} else if field_used_count < 5.0 {10.0 + 5.0 - field_used_count} else {10.0};
+        let stocks_sold_reward = if self.stocks_sold.len() != 0 {self.stocks_sold.len() as f64} else {1.0};
+        self.payoff = self.payoff * (fields_used_punish / stocks_sold_reward);
     }
     /// Recalculate the used variable of the strategy. A field is thrown away if it filters out
     /// less than 0.1% of the training data, or no stock that was successfully bought matched
     /// the rule for that field.
     ///
     /// # Remarks
-    /// The 0.1% stuff in here is now useless (I think).
+    /// The 1% stuff in here is now useless (I think).
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<T>>) {
         let mut player_field_counter = vec![0; self.strategy.len()];
         for (_, stock) in &self.stocks_purchased {

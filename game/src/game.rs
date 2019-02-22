@@ -135,11 +135,13 @@ impl<T: DataTrait> Game<T> {
         while self.current_quarter_index < quarter_max - 1 {
             self.next_quarter(iteration);
         }
-        self.final_quarter();
-        let _normalise = self.players.iter_mut().map(|player| player.payoff_normalise()).collect::<Vec<_>>();
+        self.final_quarter(iteration);
+        let _average = self.players.iter_mut().map(|player| player.payoff_average()).collect::<Vec<_>>();
         let players_with_payoff = self.players.iter().fold(0, |acc, player| if player.payoff != 0.0 {acc + 1} else {acc});
         self.analyse_field_purchases();
         println!("Player count: {:?}, Average % Profit: {:?}", players_with_payoff, self.average_payoff());
+        // Now morph the payoff for reproduction
+        let _normalise = self.players.iter_mut().map(|player| player.payoff_normalise()).collect::<Vec<_>>();
         let mut new_population = Vec::new();
         for _player in &self.players {
             let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const);
@@ -241,16 +243,7 @@ impl<T: DataTrait> Game<T> {
     }
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
-        self.players.iter().fold(0.0, |acc, player| {
-            let field_used_symbolic_length = player.strategy.iter().fold(0.0, |acc, (_, used, _)| {
-                if *used {
-                    acc + 1.0
-                } else {
-                    acc
-                }
-            });
-            acc + ((player.payoff * (if field_used_symbolic_length > 10.0 {field_used_symbolic_length} else if field_used_symbolic_length < 5.0 {10.0 + 5.0 - field_used_symbolic_length} else {10.0} / 4.0)) / (if player.stocks_sold.len() != 0 {(player.stocks_sold.len() as f64) * (player.stocks_sold.len() as f64)} else {1.0}))
-        }) / (self.players.len() as f64)
+        self.players.iter().fold(0.0, |acc, player| acc + player.payoff) / (self.players.len() as f64)
     }
     /// Calls each players soft reset function.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
