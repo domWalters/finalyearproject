@@ -164,16 +164,17 @@ impl<T: DataTrait> Game<T> {
         self.current_quarter_index += 1;
     }
     /// Runs through the last quarter of test data.
-    fn final_quarter(&mut self) {
+    fn final_quarter(&mut self, iteration: usize) {
         println!("Starting final quarter...");
         let quarter = self.quarters_actual.get(self.current_quarter_index).unwrap();
         let float_quarter = self.quarters_initial.get(self.current_quarter_index).unwrap();
-        let index_of_value = self.index_of_value;
+        let (ratio, index_of_value) = (self.ratio, self.index_of_value);
         let player_iter = self.players.iter_mut();
         thread::scope(|s| {
             for mut player in player_iter {
                 s.spawn(move |_| {
-                    quarter.calc_payoffs(&float_quarter, &mut player, index_of_value);
+                    //quarter.calc_payoffs(&float_quarter, &mut player, index_of_value);
+                    quarter.select_for_player(&float_quarter, &mut player, ratio, index_of_value, iteration);
                 });
             }
         }).unwrap();
@@ -188,7 +189,7 @@ impl<T: DataTrait> Game<T> {
         while self.current_quarter_index < self.quarters_actual.len() - 1 {
             self.next_quarter(iteration);
         }
-        self.final_quarter();
+        self.final_quarter(iteration);
         self.analyse_field_purchases();
         println!("{:?}", self.players[0].stocks_sold.iter().map(|stock| stock.stock_id.to_string()).collect::<Vec<_>>());
         // this print isn't ordered...? concerning
