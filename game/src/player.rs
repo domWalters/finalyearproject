@@ -83,15 +83,13 @@ impl<T: DataTrait> Player<T> {
             stocks_purchased: Vec::new()
         }
     }
-    /// Returns the payoff of the Player.
+    /// Returns the percent gain of the Player over the whole timespan.
     pub fn payoff(&self) -> f64 {
         if self.spend != 0.0 {100.0 * ((self.spend_return / self.spend) - 1.0)} else {0.0}
     }
-    ///
+    /// Returns the percent gain of the Player per year.
     pub fn payoff_per_year(&self, years: f64) -> f64 {
-        println!("{:?}", (self.spend_return, self.spend));
-        //println!("{:?}", self.payoff().powf(1.0 / years) - 1.0);
-        self.payoff().powf(1.0 / years) - 1.0
+        self.payoff().powf(1.0 / years)
     }
     /// Returns the transformed payoff of the Player. The transform punishes long strats and small sold vectors.
     pub fn payoff_transform(&self) -> f64 {

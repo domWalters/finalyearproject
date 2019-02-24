@@ -233,7 +233,8 @@ impl<T: DataTrait> Game<T> {
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
         let years = self.quarters_actual.starting_time.years_until(&self.quarters_actual.ending_time);
-        self.players.iter().fold(0.0, |acc, player| acc + player.payoff_per_year(years)) / (self.players.len() as f64)
+        let filtered_players = self.players.iter().filter(|player| player.spend_return > player.spend).collect::<Vec<_>>();
+        filtered_players.iter().fold(0.0, |acc, player| acc + player.payoff_per_year(years)) / (filtered_players.len() as f64)
     }
     /// Calls each players soft reset function.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
