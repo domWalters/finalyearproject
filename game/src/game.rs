@@ -173,7 +173,6 @@ impl<T: DataTrait> Game<T> {
         thread::scope(|s| {
             for mut player in player_iter {
                 s.spawn(move |_| {
-                    //quarter.calc_payoffs(&float_quarter, &mut player, index_of_value);
                     quarter.select_for_player(&float_quarter, &mut player, ratio, index_of_value, iteration);
                 });
             }
@@ -192,7 +191,6 @@ impl<T: DataTrait> Game<T> {
         self.final_quarter(iteration);
         self.analyse_field_purchases();
         println!("{:?}", self.players[0].stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>());
-        // this print isn't ordered...? concerning
     }
     /// Produces some useful print data.
     fn analyse_field_purchases(&self) {

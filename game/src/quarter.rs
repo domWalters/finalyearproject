@@ -119,32 +119,6 @@ impl<T: DataTrait> Quarter<T> {
             player.stocks_sold.push((buy_price, sell_price, stock_removed));
         }
     }
-    /// Calculates a payoff given to a player based on the value of the stocks that were purchased.
-    ///
-    /// # Arguments
-    /// * `player` - A Player struct that provides a list of purchased stocks and is used to store
-    /// the payoff value that is calculated.
-    /// * `index` - The index in the stock DataRecord to use for the payoff calculation.
-    ///
-    /// # Remarks
-    /// This payoff is relative, so as not to benefit stocks with large values more than lower value stocks.
-    /// This isn't used now.
-    pub fn calc_payoffs(&self, float_quarter: &Quarter<f64>, player: &mut Player<T>, index: usize) {
-        let mut sell_price;
-        for (buy_price, stock) in &player.stocks_purchased {
-            match float_quarter.find_by_stock_name(&stock) {
-                Some(current_value) => {
-                    sell_price = current_value.get(index);
-                    player.payoff += 100.0 * ((current_value.get(index) / buy_price) - 1.0);
-                },
-                None => {
-                    sell_price = *buy_price;
-                    player.payoff += 0.0;
-                }
-            }
-            player.stocks_sold.push((*buy_price, sell_price, stock.clone()));
-        }
-    }
     /// Finds a DataRecord (if it exists) that has the same ".stock_id.name" as the input DataRecord.
     ///
     /// # Arguments
