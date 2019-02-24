@@ -129,12 +129,9 @@ impl<T: DataTrait> Game<T> {
             self.next_quarter(iteration);
         }
         self.final_quarter(iteration);
-        let _average = self.players.iter_mut().map(|player| player.payoff_average()).collect::<Vec<_>>();
-        let players_with_payoff = self.players.iter().fold(0, |acc, player| if player.payoff != 0.0 {acc + 1} else {acc});
+        let players_with_payoff = self.players.iter().fold(0, |acc, player| if player.payoff() != 0.0 {acc + 1} else {acc});
         self.analyse_field_purchases();
         println!("Player count: {:?}, Average % Profit: {:?}", players_with_payoff, self.average_payoff());
-        // Now morph the payoff for reproduction
-        let _normalise = self.players.iter_mut().map(|player| player.payoff_normalise()).collect::<Vec<_>>();
         let mut new_population = Vec::new();
         for _player in &self.players {
             let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const);
@@ -235,7 +232,8 @@ impl<T: DataTrait> Game<T> {
     }
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
-        self.players.iter().fold(0.0, |acc, player| acc + player.payoff) / (self.players.len() as f64)
+        let years = self.quarters_actual.starting_time.years_until(&self.quarters_actual.ending_time);
+        self.players.iter().fold(0.0, |acc, player| acc + player.payoff_per_year(years)) / (self.players.len() as f64)
     }
     /// Calls each players soft reset function.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
@@ -259,7 +257,7 @@ impl<T: DataTrait> Game<T> {
         } else {
             for _i in 1..k {
                 let next_candidate = &self.players[rng.gen_range(0, self.players.len())];
-                if next_candidate.payoff > candidate.payoff {
+                if next_candidate.payoff_transform() > candidate.payoff_transform() {
                     candidate = next_candidate;
                 }
             }

@@ -8,14 +8,15 @@ use crate::screener::Rule;
 #[derive(Debug)]
 pub struct Player<T: DataTrait> {
     pub strategy: Screener<T>,
-    pub payoff: f64,
+    pub spend: f64,
+    pub spend_return: f64,
     pub stocks_sold: Vec<(f64, f64, DataRecord<T>)>,
     pub stocks_purchased: Vec<(f64, DataRecord<T>)>
 }
 
 impl<T: DataTrait> fmt::Display for Player<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Player[strategy: {}, payoff: {}, stocks_sold: {:?}, stocks_purchased: {:?}]", self.strategy, self.payoff, self.stocks_sold, self.stocks_purchased)
+        write!(f, "Player[strategy: {}, spend: {}, spend_return: {}, stocks_sold: {:?}, stocks_purchased: {:?}]", self.strategy, self.spend, self.spend_return, self.stocks_sold, self.stocks_purchased)
     }
 }
 
@@ -31,7 +32,8 @@ impl<T: DataTrait> Player<T> {
     pub fn new_uniform_random((l_limits, r_limits): (&Vec<T>, &Vec<T>), banned_indicies: &Vec<usize>) -> Player<T> {
         Player {
             strategy: Screener::new_uniform_random((l_limits, r_limits), banned_indicies),
-            payoff: 0.0,                     // dangerous
+            spend: 0.0,
+            spend_return: 0.0,
             stocks_sold: Vec::new(),
             stocks_purchased: Vec::new(),
         }
@@ -39,7 +41,8 @@ impl<T: DataTrait> Player<T> {
     /// Resets the player to have payoff 0, empty stocks vectors, and soft resets the strategies.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
         self.strategy.soft_reset((l_limits, u_limits));
-        self.payoff = 0.0;
+        self.spend = 0.0;
+        self.spend_return = 0.0;
         self.stocks_sold = Vec::new();
         self.stocks_purchased = Vec::new();
     }
@@ -56,7 +59,8 @@ impl<T: DataTrait> Player<T> {
     pub fn dumb_crossover(&self, player: &Player<T>) -> Player<T> {
         Player {
             strategy: self.strategy.dumb_crossover(&player.strategy),
-            payoff: 0.0,
+            spend: 0.0,
+            spend_return: 0.0,
             stocks_sold: Vec::new(),
             stocks_purchased: Vec::new()
         }
@@ -73,20 +77,24 @@ impl<T: DataTrait> Player<T> {
     pub fn lazy_mutate(&self, c: f64) -> Player<T> {
         Player {
             strategy: self.strategy.lazy_mutate(c),
-            payoff: 0.0,
+            spend: 0.0,
+            spend_return: 0.0,
             stocks_sold: Vec::new(),
             stocks_purchased: Vec::new()
         }
     }
-    pub fn payoff_average(&mut self) {
-        if self.stocks_sold.len() != 0 {
-            self.payoff = self.payoff / (self.stocks_sold.len() as f64);
-        } else {
-            self.payoff = 0.0;
-        }
+    /// Returns the payoff of the Player.
+    pub fn payoff(&self) -> f64 {
+        if self.spend != 0.0 {100.0 * ((self.spend_return / self.spend) - 1.0)} else {0.0}
     }
-    /// Transforms the payoff to punish long strats and small sold vectors.
-    pub fn payoff_normalise(&mut self) {
+    ///
+    pub fn payoff_per_year(&self, years: f64) -> f64 {
+        println!("{:?}", (self.spend_return, self.spend));
+        //println!("{:?}", self.payoff().powf(1.0 / years) - 1.0);
+        self.payoff().powf(1.0 / years) - 1.0
+    }
+    /// Returns the transformed payoff of the Player. The transform punishes long strats and small sold vectors.
+    pub fn payoff_transform(&self) -> f64 {
         let field_used_count = self.strategy.iter().fold(0.0, |acc, (_, used, _)| {
             if *used {
                 acc + 1.0
@@ -96,20 +104,7 @@ impl<T: DataTrait> Player<T> {
         });
         let fields_used_punish = if field_used_count > 10.0 {field_used_count} else if field_used_count < 5.0 {10.0 + 5.0 - field_used_count} else {10.0};
         let stocks_sold_reward = self.stocks_sold.len() as f64;
-        self.payoff = self.payoff * (stocks_sold_reward / fields_used_punish);
-    }
-    /// Reverts payoff_normalise.
-    pub fn payoff_denormalise(&mut self) {
-        let field_used_count = self.strategy.iter().fold(0.0, |acc, (_, used, _)| {
-            if *used {
-                acc + 1.0
-            } else {
-                acc
-            }
-        });
-        let fields_used_punish = if field_used_count > 10.0 {field_used_count} else if field_used_count < 5.0 {10.0 + 5.0 - field_used_count} else {10.0};
-        let stocks_sold_reward = if self.stocks_sold.len() != 0 {self.stocks_sold.len() as f64} else {1.0};
-        self.payoff = self.payoff * (fields_used_punish / stocks_sold_reward);
+        self.payoff() * (stocks_sold_reward / fields_used_punish)
     }
     /// Recalculate the used variable of the strategy. A field is thrown away if it filters out
     /// less than 0.1% of the training data, or no stock that was successfully bought matched

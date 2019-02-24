@@ -108,11 +108,12 @@ impl<T: DataTrait> Quarter<T> {
             match float_quarter.find_by_stock_name(stock) {
                 Some(current_value) => {
                     sell_price = current_value.get(index);
-                    player.payoff += 100.0 * ((sell_price / buy_price) - 1.0);
+                    player.spend += buy_price;
+                    player.spend_return += sell_price;
                 },
-                None => {
+                None => {   // stock no longer exists, you bought and couldn't sell
                     sell_price = *buy_price;
-                    player.payoff += 0.0;
+                    player.spend += buy_price;
                 }
             }
             let (buy_price, stock_removed) = player.stocks_purchased.remove(*i);
