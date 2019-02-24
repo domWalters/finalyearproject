@@ -11,12 +11,13 @@ use crate::data_record::{TimeID, StockID, DataRecord};
 pub struct Quarters<T: DataTrait> {
     pub field_names: Vec<String>,
     pub quarters_vector: Vec<Quarter<T>>,
-    pub starting_time: TimeID
+    pub starting_time: TimeID,
+    pub ending_time: TimeID
 }
 
 impl<T: DataTrait> fmt::Display for Quarters<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Quarters[field_names: {:?}, quarters_vector: {:?}, starting_time: {}]", self.field_names, self.quarters_vector, self.starting_time)
+        write!(f, "Quarters[field_names: {:?}, quarters_vector: {:?}, starting_time: {}, ending_time: {}]", self.field_names, self.quarters_vector, self.starting_time, self.ending_time)
     }
 }
 
@@ -147,7 +148,8 @@ impl<T: DataTrait> Quarters<T> {
         Quarters {
             field_names: field_names,
             quarters_vector: output,
-            starting_time: starting_time
+            starting_time: starting_time,
+            ending_time: largest_time_id
         }
     }
     /// Creates an ordered vector of vectors of each field of the training data.
@@ -225,7 +227,8 @@ impl<T: DataTrait> Quarters<T> {
         Quarters {
             field_names: self.field_names.clone(),
             quarters_vector: new_quarters_vector,
-            starting_time: self.starting_time.clone()
+            starting_time: self.starting_time.clone(),
+            ending_time: self.ending_time.clone()
         }
     }
     /// Gets the requested index from the quarters_vector field, as an Option.

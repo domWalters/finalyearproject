@@ -64,6 +64,10 @@ impl TimeID {
             self.year >= time_id.year
         }
     }
+    /// Assumes that time_id.after(self) | time_id.is_date(self) is true.
+    pub fn years_until(&self, time_id: &TimeID) -> f64 {
+        ((4 * (time_id.year - self.year) + (time_id.quarter - self.quarter)) as f64) / 4.0
+    }
 
     pub fn to_string(&self) -> String {
         format!("{}-{}", self.year, self.quarter)
