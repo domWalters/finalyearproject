@@ -9,7 +9,7 @@ use crate::screener::Rule;
 pub struct Player<T: DataTrait> {
     pub strategy: Screener<T>,
     pub payoff: f64,
-    pub stocks_sold: Vec<DataRecord<T>>,
+    pub stocks_sold: Vec<(f64, f64, DataRecord<T>)>,
     pub stocks_purchased: Vec<(f64, DataRecord<T>)>
 }
 

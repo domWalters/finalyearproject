@@ -103,17 +103,20 @@ impl<T: DataTrait> Quarter<T> {
         }
         // Fully constructed bin list, construct payoff and chuck
         for i in indicies_to_bin.iter().rev().map(|(i, _stock)| i) {
-            let (value, stock) = &player.stocks_purchased[*i];
+            let (buy_price, stock) = &player.stocks_purchased[*i];
+            let sell_price;
             match float_quarter.find_by_stock_name(stock) {
                 Some(current_value) => {
-                    player.payoff += 100.0 * ((current_value.get(index) / value) - 1.0);
+                    sell_price = current_value.get(index);
+                    player.payoff += 100.0 * ((sell_price / buy_price) - 1.0);
                 },
                 None => {
+                    sell_price = *buy_price;
                     player.payoff += 0.0;
                 }
             }
-            let (_, stock_removed) = player.stocks_purchased.remove(*i);
-            player.stocks_sold.push(stock_removed);
+            let (buy_price, stock_removed) = player.stocks_purchased.remove(*i);
+            player.stocks_sold.push((buy_price, sell_price, stock_removed));
         }
     }
     /// Calculates a payoff given to a player based on the value of the stocks that were purchased.
@@ -125,17 +128,21 @@ impl<T: DataTrait> Quarter<T> {
     ///
     /// # Remarks
     /// This payoff is relative, so as not to benefit stocks with large values more than lower value stocks.
+    /// This isn't used now.
     pub fn calc_payoffs(&self, float_quarter: &Quarter<f64>, player: &mut Player<T>, index: usize) {
-        for (value, stock) in &player.stocks_purchased {
+        let mut sell_price;
+        for (buy_price, stock) in &player.stocks_purchased {
             match float_quarter.find_by_stock_name(&stock) {
                 Some(current_value) => {
-                    player.payoff += 100.0 * ((current_value.get(index) / value) - 1.0);
+                    sell_price = current_value.get(index);
+                    player.payoff += 100.0 * ((current_value.get(index) / buy_price) - 1.0);
                 },
                 None => {
+                    sell_price = *buy_price;
                     player.payoff += 0.0;
                 }
             }
-            player.stocks_sold.push(stock.clone());
+            player.stocks_sold.push((*buy_price, sell_price, stock.clone()));
         }
     }
     /// Finds a DataRecord (if it exists) that has the same ".stock_id.name" as the input DataRecord.

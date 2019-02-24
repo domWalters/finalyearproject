@@ -191,7 +191,7 @@ impl<T: DataTrait> Game<T> {
         }
         self.final_quarter(iteration);
         self.analyse_field_purchases();
-        println!("{:?}", self.players[0].stocks_sold.iter().map(|stock| stock.stock_id.to_string()).collect::<Vec<_>>());
+        println!("{:?}", self.players[0].stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>());
         // this print isn't ordered...? concerning
     }
     /// Produces some useful print data.
