@@ -4,6 +4,7 @@ use crate::data_trait::DataTrait;
 use crate::data_record::DataRecord;
 use crate::screener::Screener;
 use crate::screener::Rule;
+use crate::quarters::Quarters;
 
 #[derive(Debug)]
 pub struct Player<T: DataTrait> {
@@ -88,6 +89,9 @@ impl<T: DataTrait> Player<T> {
         if self.spend != 0.0 {100.0 * ((self.spend_return / self.spend) - 1.0)} else {0.0}
     }
     /// Returns the percent gain of the Player per year.
+    ///
+    /// # Arguments
+    /// * `years` - The number of years that the algorithm has run over.
     pub fn payoff_per_year(&self, years: f64) -> f64 {
         self.payoff().powf(1.0 / years)
     }
@@ -103,6 +107,10 @@ impl<T: DataTrait> Player<T> {
         let fields_used_punish = if field_used_count > 10.0 {field_used_count} else if field_used_count < 5.0 {10.0 + 5.0 - field_used_count} else {10.0};
         let stocks_sold_reward = self.stocks_sold.len() as f64;
         self.payoff() * (stocks_sold_reward / fields_used_punish)
+    }
+    ///
+    pub fn format_screen<'a>(&'a self, quarters: &'a Quarters<T>) -> Vec<(&String, &Rule, &'a T)> {
+        self.strategy.format_screen(quarters)
     }
     /// Recalculate the used variable of the strategy. A field is thrown away if it filters out
     /// less than 0.1% of the training data, or no stock that was successfully bought matched

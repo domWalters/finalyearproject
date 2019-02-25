@@ -242,14 +242,8 @@ impl<T: DataTrait> Game<T> {
     }
     ///
     pub fn print_best(&self) {
-        let (beat_payoff, best_screener) = self.best_payoff();
-        println!("Best Payoff: {:?}%, with Screener: {:?}", beat_payoff, best_screener.iter().zip(&self.quarters_actual.field_names).filter_map(|((field, used, rule), name)| {
-            if *used {
-                Some((name, rule, field))
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>());
+        let (best_payoff, best_screener) = self.best_payoff();
+        println!("Best Payoff: {:?}%, with Screener: {:?}", best_payoff, best_screener.format_screen(&self.quarters_actual));
     }
     /// Calls each players soft reset function.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
@@ -289,13 +283,7 @@ impl<T: DataTrait> Game<T> {
             Ok(file) => file,
         };
         for player in &self.players {
-            let output_string = format!["{:?}", player.strategy.iter().zip(&self.quarters_actual.field_names).filter_map(|((field, used, rule), name)| {
-                if *used {
-                    Some((name, rule, field))
-                } else {
-                    None
-                }
-            }).collect::<Vec<_>>()];
+            let output_string = format!["Payoff: {:?}%, Screen: {:?}", player.payoff_per_year(years), player.format_screen(&self.quarters_actual)];
             match file.write_all(output_string.as_bytes()) {
                 Err(why) => panic!("couldn't write to file {:?}: {}", path, why.description()),
                 Ok(_) => println!("successfully wrote to {:?}", path)

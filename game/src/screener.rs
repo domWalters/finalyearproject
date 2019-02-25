@@ -2,6 +2,7 @@ use std::{fmt, slice::Iter};
 use rand::Rng;
 
 use crate::data_trait::DataTrait;
+use crate::quarters::Quarters;
 
 #[derive(Debug)]
 #[derive(Clone)]
@@ -105,5 +106,15 @@ impl<T: DataTrait> Screener<T> {
     /// Returns an iterator over references to the elements in the screen variable of the Screener.
     pub fn iter(&self) -> Iter<(T, bool, Rule)> {
         self.screen.iter()
+    }
+    ///
+    pub fn format_screen<'a>(&'a self, quarters: &'a Quarters<T>) -> Vec<(&String, &Rule, &'a T)> {
+        self.iter().zip(&quarters.field_names).filter_map(|((field, used, rule), name)| {
+            if *used {
+                Some((name, rule, field))
+            } else {
+                None
+            }
+        }).collect::<Vec<_>>()
     }
 }
