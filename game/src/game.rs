@@ -5,7 +5,7 @@ use crossbeam::thread;
 use crate::data_trait::DataTrait;
 use crate::player::Player;
 use crate::quarters::Quarters;
-use crate::screener::Rule;
+use crate::screener::{Screener, Rule};
 
 pub static DEFAULT_TOURNEY_CONST: usize = 3;
 pub static DEFAULT_MUTATION_CONST: f64 = 0.7;
@@ -107,13 +107,7 @@ impl<T: DataTrait> Game<T> {
                 self.ratio = 1.0;
             }
             println!("Run {:?} complete!", i);
-            println!("{:?}", self.players[0].strategy.iter().zip(&self.quarters_actual.field_names).filter_map(|((field, used, rule), name)| {
-                if *used {
-                    Some((name, rule, field))
-                } else {
-                    None
-                }
-            }).collect::<Vec<_>>());
+            self.print_best();
         }
         self.save();
     }
@@ -131,7 +125,8 @@ impl<T: DataTrait> Game<T> {
         self.final_quarter(iteration);
         let players_with_payoff = self.players.iter().fold(0, |acc, player| if player.payoff() != 0.0 {acc + 1} else {acc});
         self.analyse_field_purchases();
-        println!("Player count: {:?}, Average % Profit: {:?}", players_with_payoff, self.average_payoff());
+        println!("Player Count: {:?}, Average Profit: {:?}%", players_with_payoff, self.average_payoff());
+        self.print_best();
         let mut new_population = Vec::new();
         for _player in &self.players {
             let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const);
@@ -235,6 +230,33 @@ impl<T: DataTrait> Game<T> {
         let years = self.quarters_actual.starting_time.years_until(&self.quarters_actual.ending_time);
         let filtered_players = self.players.iter().filter(|player| player.spend_return > player.spend).collect::<Vec<_>>();
         filtered_players.iter().fold(0.0, |acc, player| acc + player.payoff_per_year(years)) / (filtered_players.len() as f64)
+    }
+    ///
+    pub fn best_payoff(&self) -> (f64, &Screener<T>) {
+        let years = self.quarters_actual.starting_time.years_until(&self.quarters_actual.ending_time);
+        let mut filtered_players = self.players.iter().filter(|player| player.spend_return > player.spend);//.collect::<Vec<_>>().iter();
+        let init_player = filtered_players.next().unwrap();
+        let init_screen = &init_player.strategy;
+        let init_acc = init_player.payoff_per_year(years);
+        filtered_players.fold((init_acc, init_screen), |(acc, acc_screen), player| {
+            let new_acc = player.payoff_per_year(years);
+            if new_acc > acc {
+                (new_acc, &player.strategy)
+            } else {
+                (acc, acc_screen)
+            }
+        })
+    }
+    ///
+    pub fn print_best(&self) {
+        let (beat_payoff, best_screener) = self.best_payoff();
+        println!("Best Payoff: {:?}%, with Screener: {:?}", beat_payoff, best_screener.iter().zip(&self.quarters_actual.field_names).filter_map(|((field, used, rule), name)| {
+            if *used {
+                Some((name, rule, field))
+            } else {
+                None
+            }
+        }).collect::<Vec<_>>());
     }
     /// Calls each players soft reset function.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
