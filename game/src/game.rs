@@ -220,13 +220,13 @@ impl<T: DataTrait> Game<T> {
     }
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
-        let years = self.quarters_actual.starting_time.years_until(&self.quarters_actual.ending_time);
+        let years = self.quarters_actual.years();
         let filtered_players = self.players.iter().filter(|player| player.spend_return > player.spend).collect::<Vec<_>>();
         filtered_players.iter().fold(0.0, |acc, player| acc + player.payoff_per_year(years)) / (filtered_players.len() as f64)
     }
     ///
     pub fn best_payoff(&self) -> (f64, &Screener<T>) {
-        let years = self.quarters_actual.starting_time.years_until(&self.quarters_actual.ending_time);
+        let years = self.quarters_actual.years();
         let filtered_players = self.players.iter().filter(|player| player.spend_return > player.spend).collect::<Vec<_>>();
         let mut filtered_players_iter = filtered_players.iter();
         let init_player = filtered_players_iter.next().unwrap();
@@ -283,6 +283,7 @@ impl<T: DataTrait> Game<T> {
             Err(why) => panic!("couldn't create file {:?}: {}", path, why.description()),
             Ok(file) => file,
         };
+        let years = self.quarters_actual.years();
         for player in &self.players {
             let output_string = format!["Payoff: {:?}%, Screen: {:?}", player.payoff_per_year(years), player.format_screen(&self.quarters_actual)];
             match file.write_all(output_string.as_bytes()) {

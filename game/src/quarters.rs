@@ -68,7 +68,7 @@ impl<T: DataTrait> Quarters<T> {
                         Some(field.to_string())
                     } else {
                         None
-                    }                    
+                    }
                 }).collect();
                 columns_found = true;
             }
@@ -236,6 +236,10 @@ impl<T: DataTrait> Quarters<T> {
             starting_time: self.starting_time.clone(),
             ending_time: self.ending_time.clone()
         }
+    }
+    ///
+    pub fn years(&self) -> f64 {
+        self.starting_time.years_until(&self.ending_time)
     }
     /// Gets the requested index from the quarters_vector field, as an Option.
     ///
