@@ -227,11 +227,12 @@ impl<T: DataTrait> Game<T> {
     ///
     pub fn best_payoff(&self) -> (f64, &Screener<T>) {
         let years = self.quarters_actual.starting_time.years_until(&self.quarters_actual.ending_time);
-        let mut filtered_players = self.players.iter().filter(|player| player.spend_return > player.spend);//.collect::<Vec<_>>().iter();
-        let init_player = filtered_players.next().unwrap();
+        let filtered_players = self.players.iter().filter(|player| player.spend_return > player.spend).collect::<Vec<_>>();
+        let mut filtered_players_iter = filtered_players.iter();
+        let init_player = filtered_players_iter.next().unwrap();
         let init_screen = &init_player.strategy;
         let init_acc = init_player.payoff_per_year(years);
-        filtered_players.fold((init_acc, init_screen), |(acc, acc_screen), player| {
+        filtered_players_iter.fold((init_acc, init_screen), |(acc, acc_screen), player| {
             let new_acc = player.payoff_per_year(years);
             if new_acc > acc {
                 (new_acc, &player.strategy)
