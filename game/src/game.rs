@@ -155,20 +155,13 @@ impl<T: DataTrait> Game<T> {
         }).unwrap();
         self.current_quarter_index += 1;
     }
-    /// Runs through the last quarter of test data.
+    /// Runs through the final quarter of test data.
+    ///
+    /// # Arguments
+    /// * `iteration` - The number of the current iteration.
     fn final_quarter(&mut self, iteration: usize) {
         println!("Starting final quarter...");
-        let quarter = self.quarters_actual.get(self.current_quarter_index).unwrap();
-        let float_quarter = self.quarters_initial.get(self.current_quarter_index).unwrap();
-        let (ratio, index_of_value) = (self.ratio, self.index_of_value);
-        let player_iter = self.players.iter_mut();
-        thread::scope(|s| {
-            for mut player in player_iter {
-                s.spawn(move |_| {
-                    quarter.select_for_player(&float_quarter, &mut player, ratio, index_of_value, iteration);
-                });
-            }
-        }).unwrap();
+        self.next_quarter(iteration);
         self.current_quarter_index = 0;
         println!("End of final quarter!");
     }
@@ -184,7 +177,7 @@ impl<T: DataTrait> Game<T> {
         self.analyse_field_purchases();
         println!("{:?}", self.players[0].stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>());
     }
-    /// Produces some useful print data.
+    /// Produces print data on which fields are being bought.
     fn analyse_field_purchases(&self) {
         let mut aggregate_field_counter = vec![0; self.players[0].strategy.len()];
         for player in &self.players {
@@ -205,14 +198,14 @@ impl<T: DataTrait> Game<T> {
                                                               .map(|(a, p)| a + p)
                                                               .collect();
         }
-        println!("{:?}", aggregate_field_counter);
-        println!("{:?}", aggregate_field_counter.iter().zip(self.players[0].strategy.iter()).filter_map(|(&counter, (_, used, _))| {
-            if *used {
-                Some(counter)
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>());
+        println!("All purchases: {:?}", aggregate_field_counter);
+        // println!("Relevant purchases: {:?}", aggregate_field_counter.iter().zip(self.players[0].strategy.iter()).filter_map(|(&counter, (_, used, _))| {
+        //     if *used {
+        //         Some(counter)
+        //     } else {
+        //         None
+        //     }
+        // }).collect::<Vec<_>>());
     }
     /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<T>>) {
