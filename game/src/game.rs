@@ -95,7 +95,7 @@ impl<T: DataTrait> Game<T> {
                 self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i);
             }
             self.perform_analytical_final_run(i);
-            println!("Run {:?} complete!", i);
+            println!("Run {} complete!", i);
             self.print_best();
             self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset((&l_limits, &u_limits));
@@ -125,7 +125,7 @@ impl<T: DataTrait> Game<T> {
         self.final_quarter(iteration);
         let players_with_payoff = self.players.iter().fold(0, |acc, player| if player.payoff() != 0.0 {acc + 1} else {acc});
         self.analyse_field_purchases();
-        println!("Player Count: {:?}, Average Profit: {:?}%", players_with_payoff, self.average_payoff());
+        println!("Player Count: {}, Average Profit: {:.3}%", players_with_payoff, self.average_payoff());
         self.print_best();
         let mut new_population = Vec::new();
         for _player in &self.players {
@@ -244,7 +244,7 @@ impl<T: DataTrait> Game<T> {
     ///
     pub fn print_best(&self) {
         let (best_payoff, best_screener) = self.best_payoff();
-        println!("Best Payoff: {:?}%, with Screener: {:?}", best_payoff, best_screener.format_screen(&self.quarters_actual));
+        println!("Best Payoff: {:.3}%, with Screener: {:?}", best_payoff, best_screener.format_screen(&self.quarters_actual));
     }
     /// Calls each players soft reset function.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
@@ -285,7 +285,7 @@ impl<T: DataTrait> Game<T> {
         };
         let years = self.quarters_actual.years();
         for player in &self.players {
-            let output_string = format!["Payoff: {:?}%, Screen: {:?}", player.payoff_per_year(years), player.format_screen(&self.quarters_actual)];
+            let output_string = format!["Payoff: {:.3}%, Screen: {:?}", player.payoff_per_year(years), player.format_screen(&self.quarters_actual)];
             match file.write_all(output_string.as_bytes()) {
                 Err(why) => panic!("couldn't write to file {:?}: {}", path, why.description()),
                 Ok(_) => println!("successfully wrote to {:?}", path)
