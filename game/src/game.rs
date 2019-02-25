@@ -95,6 +95,8 @@ impl<T: DataTrait> Game<T> {
                 self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i);
             }
             self.perform_analytical_final_run(i);
+            println!("Run {:?} complete!", i);
+            self.print_best();
             self.recalc_fields_used(&compounded_training_vectors);
             self.soft_reset((&l_limits, &u_limits));
             if i == 0 {
@@ -106,8 +108,6 @@ impl<T: DataTrait> Game<T> {
             } else if i == 3 {
                 self.ratio = 1.0;
             }
-            println!("Run {:?} complete!", i);
-            self.print_best();
         }
         self.save();
     }
