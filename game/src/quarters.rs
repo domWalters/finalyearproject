@@ -63,7 +63,13 @@ impl<T: DataTrait> Quarters<T> {
                         quarter_index = i;
                     }
                 }
-                field_names = reader.headers().unwrap().iter().map(|field| field.to_string()).collect();
+                field_names = reader.headers().unwrap().iter().filter_map(|field| {
+                    if (field != "year") && (field != "period") {
+                        Some(field.to_string())
+                    } else {
+                        None
+                    }                    
+                }).collect();
                 columns_found = true;
             }
             // Generate which iteration this should be used on
