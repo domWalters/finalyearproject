@@ -193,13 +193,6 @@ impl<T: DataTrait> Game<T> {
                                                               .collect();
         }
         println!("All purchases: {:?}", aggregate_field_counter);
-        // println!("Relevant purchases: {:?}", aggregate_field_counter.iter().zip(self.players[0].strategy.iter()).filter_map(|(&counter, (_, used, _))| {
-        //     if *used {
-        //         Some(counter)
-        //     } else {
-        //         None
-        //     }
-        // }).collect::<Vec<_>>());
     }
     /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
     pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<T>>) {
