@@ -37,7 +37,7 @@ impl<T: DataTrait> Game<T> {
     /// # Remarks
     /// Not currently implemented properly, just generates a standard random Game with players
     /// initialised between the test data element limits. Will likely need to be more sophisticated.
-    pub fn new_game(quarters_initial: Quarters<f64>, num_of_players: usize) -> Game<usize> {
+    pub fn new_game(quarters_initial: Quarters<f64>, num_of_players: usize, percentile_gap: usize) -> Game<usize> {
         // Get the banned indicies list
         let banned_names = vec!["adj_close", "adj_factor", "adj_high", "adj_low", "adj_open", "adj_volume", "close", "high", "low", "open", "volume"];
         let mut banned_indicies = Vec::new();
@@ -47,12 +47,12 @@ impl<T: DataTrait> Game<T> {
             }
         }
         // Create the actual quarters, and it's limits.
-        let quarters_actual = quarters_initial.create_percentile_quarters(1, quarters_initial.expensive_training_data_analysis());
+        let quarters_actual = quarters_initial.create_percentile_quarters(percentile_gap, quarters_initial.expensive_training_data_analysis());
         let (l_limits, u_limits) = Game::calculate_cheap_limits(&quarters_actual);
         // Make players
         let mut players = Vec::new();
         for _i in 0..num_of_players {
-            players.push(Player::new_uniform_random((&l_limits, &u_limits), &banned_indicies));
+            players.push(Player::new_uniform_random((&l_limits, &u_limits), &banned_indicies, percentile_gap));
         }
         Game {
             players: players,
@@ -86,28 +86,22 @@ impl<T: DataTrait> Game<T> {
     /// # Arguments
     /// * `generation_max` - The max number of generations to execute each time.
     /// * `iteration`- The number of iterations over the whole algorithm that should be performed.
-    pub fn run(&mut self, generation_max: i64, iteration: usize) {
+    pub fn run(&mut self, generation_max: i64, iteration: usize, percentile_gap: usize) {
         let (l_limits, u_limits) = Game::calculate_cheap_limits(&self.quarters_actual);
         let compounded_training_vectors = self.quarters_actual.expensive_training_data_analysis();
         let quarters_len = self.quarters_actual.len();
         for i in 0..iteration {
             for _j in 0..generation_max {
-                self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i);
+                self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i, percentile_gap);
             }
             self.perform_analytical_final_run(i);
             println!("Run {} complete!", i);
             self.print_best();
-            self.recalc_fields_used(&compounded_training_vectors);
-            self.soft_reset((&l_limits, &u_limits));
-            if i == 0 {
-                self.ratio = 0.7;
-            } else if i == 1 {
-                self.ratio = 0.8;
-            } else if i == 2 {
-                self.ratio = 0.9;
-            } else if i == 3 {
-                self.ratio = 1.0;
+            if i != iteration - 1 {
+                self.recalc_fields_used(&compounded_training_vectors);
+                self.soft_reset((&l_limits, &u_limits));
             }
+            self.ratio += 0.1;
         }
         self.save();
     }
@@ -118,7 +112,7 @@ impl<T: DataTrait> Game<T> {
     /// * `k` - Constant used for tournament selection.
     /// * `mut_const` - Constant used for mutation.
     /// * `iteration` - The number of the current iteration.
-    pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64, iteration: usize) {
+    pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64, iteration: usize, percentile_gap: usize) {
         while self.current_quarter_index < quarter_max - 1 {
             self.next_quarter(iteration);
         }
@@ -129,9 +123,9 @@ impl<T: DataTrait> Game<T> {
         self.print_best();
         let mut new_population = Vec::new();
         for _player in &self.players {
-            let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const);
+            let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
             while new_player.strategy.iter().fold(0, |acc, (_, used, _)| if *used {acc + 1} else {acc}) < 1 {   // this stalls the algorithm out permenanently
-                new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k)).lazy_mutate(mut_const);
+                new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
             }
             new_population.push(new_player);
         }
@@ -285,7 +279,7 @@ impl<T: DataTrait> Game<T> {
         };
         let years = self.quarters_actual.years();
         for player in &self.players {
-            let output_string = format!["Payoff: {:.3}%, Screen: {:?}", player.payoff_per_year(years), player.format_screen(&self.quarters_actual)];
+            let output_string = format!["Payoff: {:.3}%, Screen: {:?}\n", player.payoff_per_year(years), player.format_screen(&self.quarters_actual)];
             match file.write_all(output_string.as_bytes()) {
                 Err(why) => panic!("couldn't write to file {:?}: {}", path, why.description()),
                 Ok(_) => println!("successfully wrote to {:?}", path)

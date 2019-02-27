@@ -40,7 +40,7 @@ impl<T: DataTrait> Screener<T> {
     /// Each argument is a vector that is as long as the Screener that needs to be generated.
     /// The ith element of the Screener is greater than the ith element of l_limits, and less than
     /// the ith element of r_limits.
-    pub fn new_uniform_random((l_limits, u_limits): (&Vec<T>, &Vec<T>), banned_fields: &Vec<usize>) -> Screener<T> {
+    pub fn new_uniform_random((l_limits, u_limits): (&Vec<T>, &Vec<T>), banned_fields: &Vec<usize>, percentile_gap: usize) -> Screener<T> {
         let mut output = Vec::new();
         let mut rng = rand::thread_rng();
         for (i, (l, u)) in l_limits.iter().zip(u_limits).enumerate() {
@@ -48,7 +48,7 @@ impl<T: DataTrait> Screener<T> {
             if l == u {
                 output.push((*l, rng.gen_bool(0.5) & field_used, if rng.gen_bool(0.5) {Rule::Lt} else {Rule::Gt}));
             } else {
-                output.push((rng.gen_range(*l, *u), rng.gen_bool(0.5) & field_used, if rng.gen_bool(0.5) {Rule::Lt} else {Rule::Gt}));
+                output.push((rng.gen_range(*l, *u).round(percentile_gap), rng.gen_bool(0.5) & field_used, if rng.gen_bool(0.5) {Rule::Lt} else {Rule::Gt}));
             }
         }
         Screener {
@@ -64,12 +64,12 @@ impl<T: DataTrait> Screener<T> {
     /// The resultant Screener is new, and therefore isn't in the memory location of either of
     /// the two that constructed it. This allows the reuse of the Screeners that construct this
     /// crossover.
-    pub fn dumb_crossover(&self, slice: &Screener<T>) -> Screener<T> {
+    pub fn dumb_crossover(&self, slice: &Screener<T>, percentile_gap: usize) -> Screener<T> {
         let mut rng = rand::thread_rng();
         Screener {
             screen: self.iter()
                         .zip(slice.iter())
-                        .map(|((l, l_used, l_rule), (r, r_used, r_rule))| ((*l + *r) / T::from(2.0).unwrap(), if rng.gen_bool(0.5) {*l_used} else {*r_used}, if rng.gen_bool(0.5) {l_rule.clone()} else {r_rule.clone()}))
+                        .map(|((l, l_used, l_rule), (r, r_used, r_rule))| (((*l + *r) / T::from(2.0).unwrap()).round(percentile_gap), if rng.gen_bool(0.5) {*l_used} else {*r_used}, if rng.gen_bool(0.5) {l_rule.clone()} else {r_rule.clone()}))
                         .collect()
         }
     }
@@ -83,7 +83,7 @@ impl<T: DataTrait> Screener<T> {
     /// # Remarks
     /// This resultant Screener is new, and therefore isn't in the memory location of the Screener
     /// used to create it. This allows the reuse of the Screener that constructs this mutation.
-    pub fn lazy_mutate(&self, c: f64) -> Screener<T> {
+    pub fn lazy_mutate(&self, c: f64, percentile_gap: usize) -> Screener<T> {
         let mut rng = rand::thread_rng();
         let percent_mag = 10.0;                         // perform an up to +/-percent_mag% mutation
         Screener {
@@ -91,7 +91,7 @@ impl<T: DataTrait> Screener<T> {
                         .map(|(e, used, rule)| {
                             if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
                                 let (interval_l, interval_r) = e.interval(percent_mag);
-                                (if interval_l == interval_r {interval_l} else {rng.gen_range(interval_l, interval_r)}, *used, rule.clone())
+                                (if interval_l == interval_r {interval_l} else {rng.gen_range(interval_l, interval_r).round(percentile_gap)}, *used, rule.clone())
                             } else {
                                 (*e, *used, rule.clone())
                             }

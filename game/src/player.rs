@@ -30,9 +30,9 @@ impl<T: DataTrait> Player<T> {
     ///
     /// # Remarks
     /// See Screener::new_uniform_random() documentation.
-    pub fn new_uniform_random((l_limits, r_limits): (&Vec<T>, &Vec<T>), banned_indicies: &Vec<usize>) -> Player<T> {
+    pub fn new_uniform_random((l_limits, r_limits): (&Vec<T>, &Vec<T>), banned_indicies: &Vec<usize>, percentile_gap: usize) -> Player<T> {
         Player {
-            strategy: Screener::new_uniform_random((l_limits, r_limits), banned_indicies),
+            strategy: Screener::new_uniform_random((l_limits, r_limits), banned_indicies, percentile_gap),
             spend: 0.0,
             spend_return: 0.0,
             stocks_sold: Vec::new(),
@@ -57,9 +57,9 @@ impl<T: DataTrait> Player<T> {
     /// the two that constructed it. This allows the reuse of the Players that construct this
     /// crossover. The payoff and stocks_purchased entries are reset. The fields_used entry has
     /// it's elements picked randomly from either player.
-    pub fn dumb_crossover(&self, player: &Player<T>) -> Player<T> {
+    pub fn dumb_crossover(&self, player: &Player<T>, percentile_gap: usize) -> Player<T> {
         Player {
-            strategy: self.strategy.dumb_crossover(&player.strategy),
+            strategy: self.strategy.dumb_crossover(&player.strategy, percentile_gap),
             spend: 0.0,
             spend_return: 0.0,
             stocks_sold: Vec::new(),
@@ -75,9 +75,9 @@ impl<T: DataTrait> Player<T> {
     /// This resultant Player is new, and therefore isn't in the memory location of the Player
     /// used to create it. This allows the reuse of the Player that constructs this mutation.
     /// The payoff and stocks_purchased entries are reset.
-    pub fn lazy_mutate(&self, c: f64) -> Player<T> {
+    pub fn lazy_mutate(&self, c: f64, percentile_gap: usize) -> Player<T> {
         Player {
-            strategy: self.strategy.lazy_mutate(c),
+            strategy: self.strategy.lazy_mutate(c, percentile_gap),
             spend: 0.0,
             spend_return: 0.0,
             stocks_sold: Vec::new(),
