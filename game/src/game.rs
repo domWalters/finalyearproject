@@ -180,13 +180,14 @@ impl<T: DataTrait> Game<T> {
         self.final_quarter(iteration);
         self.analyse_field_purchases();
         println!("{:?}", self.players[0].stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>());
+        println!("{:?} - {:?}", self.players[0].spend_return, self.players[0].spend);
     }
     /// Produces print data on which fields are being bought.
     fn analyse_field_purchases(&self) {
         let mut aggregate_field_counter = vec![0; self.players[0].strategy.len()];
         for player in &self.players {
             let mut player_field_counter = vec![0; player.strategy.len()];
-            for (_, stock) in &player.stocks_purchased {
+            for (_, _, stock) in &player.stocks_sold {
                 for (k, (strat, used, rule)) in player.strategy.iter().enumerate() {
                     let rule_met = match rule {
                         Rule::Lt => stock.get(k) <= *strat,
@@ -242,7 +243,6 @@ impl<T: DataTrait> Game<T> {
             },
             None => {
                 println!("Best Payoff: Didn't exist.");
-
             }
         }
     }
@@ -275,7 +275,7 @@ impl<T: DataTrait> Game<T> {
             candidate
         }
     }
-    /// Save the current set of strategies in a human readable format to the test-data/output.txt
+    /// Save the current set of strategies in a human readable format
     pub fn save(&self, file_name: String) {
         let mut path = current_dir().unwrap();
         path.pop(); path.push(file_name);
