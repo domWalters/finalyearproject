@@ -112,6 +112,10 @@ impl<T: DataTrait> Player<T> {
     pub fn format_screen<'a>(&'a self, quarters: &'a Quarters<T>) -> Vec<(&String, &Rule, &'a T)> {
         self.strategy.format_screen(quarters)
     }
+    ///
+    pub fn is_same_species_as(&self, player: &Player<T>) -> bool {
+        self.strategy.is_same_species_as(&player.strategy)
+    }
     /// Recalculate the used variable of the strategy. A field is thrown away if it filters out
     /// less than 0.1% of the training data, or no stock that was successfully bought matched
     /// the rule for that field.

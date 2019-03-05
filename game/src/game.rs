@@ -131,6 +131,16 @@ impl<T: DataTrait> Game<T> {
         }
         self.players = new_population;
     }
+
+    fn contains_species(&self, new_population: &Vec<Player<T>>, new_player: &Player<T>) -> bool {
+        for player in new_population {
+            if player.is_same_species_as(new_player) {
+                return true;
+            }
+        }
+        false
+    }
+
     /// Runs through the next quarter of test data.
     ///
     /// # Arguments
