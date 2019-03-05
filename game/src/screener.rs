@@ -89,12 +89,20 @@ impl<T: DataTrait> Screener<T> {
         Screener {
             screen: self.iter()
                         .map(|(e, used, rule)| {
+                            let mut new_field = *e;
+                            let mut new_used = *used;
+                            let mut new_rule = rule.clone();
                             if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
                                 let (interval_l, interval_r) = e.interval(percent_mag);
-                                (if interval_l == interval_r {interval_l} else {rng.gen_range(interval_l, interval_r).round(percentile_gap)}, *used, rule.clone())
-                            } else {
-                                (*e, *used, rule.clone())
-                            }
+                                new_field = if interval_l == interval_r {interval_l} else {rng.gen_range(interval_l, interval_r).round(percentile_gap)};
+                            }/*
+                            if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
+                                new_rule = match rule {
+                                    Rule::Lt => Rule::Gt,
+                                    Rule::Gt => Rule::Lt
+                                }
+                            }*/
+                            (new_field, new_used, new_rule)
                         })
                         .collect()
         }
