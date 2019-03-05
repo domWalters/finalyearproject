@@ -14,9 +14,15 @@ fn main() {
     let population_size = 100;
     let generation_max = 20;
     let iterations = 5;
-    let percentile_gap = 1;
 
     let quarters = Quarters::<f64>::new_quarters_from_default_file(iterations);
-    let mut game = Game::<usize>::new_game(quarters, population_size, percentile_gap);
-    game.run(generation_max, iterations, percentile_gap);
+    let percentiles = vec![1, 2, 4, 5, 10];
+    for i in 0..5 {
+        for percentile in &percentiles {
+            let mut game = Game::<usize>::new_game(quarters.clone(), population_size, *percentile);
+            game.run(generation_max, iterations, *percentile, format!("test-data/output-{}-{}.txt", i, *percentile));
+        }
+    }
+
+
 }
