@@ -86,7 +86,7 @@ impl<T: DataTrait> Game<T> {
     /// # Arguments
     /// * `generation_max` - The max number of generations to execute each time.
     /// * `iteration`- The number of iterations over the whole algorithm that should be performed.
-    pub fn run(&mut self, generation_max: i64, iteration: usize, percentile_gap: usize) {
+    pub fn run(&mut self, generation_max: i64, iteration: usize, percentile_gap: usize, file_name: String) {
         let (l_limits, u_limits) = Game::calculate_cheap_limits(&self.quarters_actual);
         let compounded_training_vectors = self.quarters_actual.expensive_training_data_analysis();
         let quarters_len = self.quarters_actual.len();
@@ -103,7 +103,7 @@ impl<T: DataTrait> Game<T> {
             }
             self.ratio += 0.1;
         }
-        self.save();
+        self.save(file_name);
     }
     /// Run through the training data, and generate a new population.
     ///
@@ -263,9 +263,9 @@ impl<T: DataTrait> Game<T> {
         }
     }
     /// Save the current set of strategies in a human readable format to the test-data/output.txt
-    pub fn save(&self) {
+    pub fn save(&self, file_name: String) {
         let mut path = current_dir().unwrap();
-        path.pop(); path.push("test-data/output.txt");
+        path.pop(); path.push(file_name);
         let mut file = match File::create(&path) {
             Err(why) => panic!("couldn't create file {:?}: {}", path, why.description()),
             Ok(file) => file,
