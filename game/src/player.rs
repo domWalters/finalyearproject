@@ -86,14 +86,14 @@ impl<T: DataTrait> Player<T> {
     }
     /// Returns the percent gain of the Player over the whole timespan.
     pub fn payoff(&self) -> f64 {
-        if self.spend != 0.0 {100.0 * ((self.spend_return / self.spend) - 1.0)} else {0.0}
+        if self.spend != 0.0 {self.spend_return / self.spend} else {0.0}
     }
     /// Returns the percent gain of the Player per year.
     ///
     /// # Arguments
     /// * `years` - The number of years that the algorithm has run over.
     pub fn payoff_per_year(&self, years: f64) -> f64 {
-        self.payoff().powf(1.0 / years)
+        100.0 * (self.payoff().powf(1.0 / years) - 1.0)
     }
     /// Returns the transformed payoff of the Player. The transform punishes long strats and small sold vectors.
     pub fn payoff_transform(&self) -> f64 {
@@ -135,8 +135,7 @@ impl<T: DataTrait> Player<T> {
             if field_count == 0 {
                 return (*strat_field, false, rule.clone());
             } else {
-                return (*strat_field, *used, rule.clone());
-                /*
+                //return (*strat_field, *used, rule.clone());
                 let length = analysis.len();
                 match rule {
                     Rule::Lt => {
@@ -158,9 +157,8 @@ impl<T: DataTrait> Player<T> {
                         }
                     }
                 }
-                */
             }
-            //return (*strat_field, false, rule.clone());   // this line is never hit but needed to compile
+            return (*strat_field, false, rule.clone());   // this line is never hit but needed to compile
         }).collect();
     }
 }
