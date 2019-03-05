@@ -16,7 +16,7 @@ fn main() {
     let iterations = 5;
 
     let quarters = Quarters::<f64>::new_quarters_from_default_file(iterations);
-    let percentiles = vec![1, 2, 4, 5, 10];
+    let percentiles = vec![1];
     for i in 0..5 {
         for percentile in &percentiles {
             let mut game = Game::<usize>::new_game(quarters.clone(), population_size, *percentile);
