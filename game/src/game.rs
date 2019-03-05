@@ -17,7 +17,7 @@ pub struct Game<T: DataTrait> {
     quarters_actual: Quarters<T>,
     current_quarter_index: usize,
     index_of_value: usize,
-    ratio: f64
+    pub ratio: f64
 }
 
 impl<T: DataTrait> fmt::Display for Game<T> {
@@ -124,7 +124,7 @@ impl<T: DataTrait> Game<T> {
         let mut new_population = Vec::new();
         for _player in &self.players {
             let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-            while new_player.strategy.iter().fold(0, |acc, (_, used, _)| if *used {acc + 1} else {acc}) < 1 {   // this stalls the algorithm out permenanently
+            while self.contains_species(&new_population, &new_player) {//new_player.strategy.iter().fold(0, |acc, (_, used, _)| if *used {acc + 1} else {acc}) < 1 {
                 new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
             }
             new_population.push(new_player);
