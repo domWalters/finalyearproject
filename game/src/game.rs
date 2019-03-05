@@ -212,26 +212,29 @@ impl<T: DataTrait> Game<T> {
         filtered_players.iter().fold(0.0, |acc, player| acc + player.payoff_per_year(years)) / (filtered_players.len() as f64)
     }
     ///
-    pub fn best_payoff(&self) -> (f64, &Screener<T>) {
+    pub fn print_best(&self) {
         let years = self.quarters_actual.years();
         let filtered_players = self.players.iter().filter(|player| player.spend_return > player.spend).collect::<Vec<_>>();
         let mut filtered_players_iter = filtered_players.iter();
-        let init_player = filtered_players_iter.next().unwrap();
-        let init_screen = &init_player.strategy;
-        let init_acc = init_player.payoff_per_year(years);
-        filtered_players_iter.fold((init_acc, init_screen), |(acc, acc_screen), player| {
-            let new_acc = player.payoff_per_year(years);
-            if new_acc > acc {
-                (new_acc, &player.strategy)
-            } else {
-                (acc, acc_screen)
+        match filtered_players_iter.next() {
+            Some(player) => {
+                let init_screen = &player.strategy;
+                let init_acc = player.payoff_per_year(years);
+                let (best_payoff, best_screener) = filtered_players_iter.fold((init_acc, init_screen), |(acc, acc_screen), player| {
+                    let new_acc = player.payoff_per_year(years);
+                    if new_acc > acc {
+                        (new_acc, &player.strategy)
+                    } else {
+                        (acc, acc_screen)
+                    }
+                });
+                println!("Best Payoff: {:.3}%, with Screener: {:?}", best_payoff, best_screener.format_screen(&self.quarters_actual));
+            },
+            None => {
+                println!("Best Payoff: Didn't exist.");
+
             }
-        })
-    }
-    ///
-    pub fn print_best(&self) {
-        let (best_payoff, best_screener) = self.best_payoff();
-        println!("Best Payoff: {:.3}%, with Screener: {:?}", best_payoff, best_screener.format_screen(&self.quarters_actual));
+        }
     }
     /// Calls each players soft reset function.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
