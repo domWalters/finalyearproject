@@ -1,5 +1,5 @@
 use rand::Rng;
-use std::{env::current_dir, error::Error, fmt, fs::File, io::Write};
+use std::{env::current_dir, error::Error, fmt, fs::File, io::{Write, Read}};
 use crossbeam::thread;
 
 use crate::data_trait::DataTrait;
@@ -292,4 +292,86 @@ impl<T: DataTrait> Game<T> {
             }
         }
     }
+
+    pub fn read(&mut self, file_name: String) {
+        // Create a path to the desired file
+        let mut path = current_dir().unwrap();
+        path.pop(); path.push(file_name);
+        let display = path.display();
+
+        // Open the path in read-only mode, returns `io::Result<File>`
+        let mut file = match File::open(&path) {
+            Err(why) => panic!("couldn't open {}: {}", display, why.description()),
+            Ok(file) => file,
+        };
+
+        // Read the file contents into a string, returns `io::Result<usize>`
+        let mut s = String::new();
+        match file.read_to_string(&mut s) {
+            Err(why) => panic!("couldn't read {}: {}", display, why.description()),
+            Ok(_) => {
+                let mut screener_vector = Vec::new();
+                // looks like [(name, rule, value), (name, rule, value), (name, rule, value), .., (name, rule, value)]
+                let s = s[2..(s.len() - 3)].to_string();    // remove the starting [( and ending )]
+                let split: Vec<&str> = s.split("), (").collect();
+                let mut last_name_checked = None;
+                for screen_rule in split {
+                    let string_elements: Vec<&str> = screen_rule.split(", ").collect();  // this is a vector [name, rule, value]
+                    'a: for (i, name) in self.quarters_actual.field_names.iter().enumerate() {
+                        match last_name_checked {
+                            None => {
+                                let string_name = &string_elements[0][1..(string_elements[0].len()-1)];
+                                let string_rule = string_elements[1];
+                                let string_value = string_elements[2];
+                                last_name_checked = Some(i);
+                                if name == string_name {
+                                    screener_vector.push((T::from(string_value.parse::<f64>().unwrap()).unwrap(), true, if string_rule.contains("Lt") {Rule::Lt} else {Rule::Gt}));
+                                    break 'a;
+                                } else {
+                                    screener_vector.push((T::zero(), false, Rule::Gt));
+                                }
+                            }
+                            Some(j) => {
+                                if i > j {
+                                    let string_name = &string_elements[0][1..(string_elements[0].len()-1)];
+                                    let string_rule = string_elements[1];
+                                    let string_value = string_elements[2];
+                                    last_name_checked = Some(i);
+                                    if name == string_name {
+                                        screener_vector.push((T::from(string_value.parse::<f64>().unwrap()).unwrap(), true, if string_rule.contains("Lt") {Rule::Lt} else {Rule::Gt}));
+                                        break 'a;
+                                    } else {
+                                        screener_vector.push((T::zero(), false, Rule::Gt));
+                                    }
+                                } else {
+                                    continue 'a;
+                                }
+                            }
+                        }
+                    }
+                    // find out which position it should go in
+                    // fill the screener with garbage until that point
+                }
+                // Fill after the last rule until full
+                for (i, name) in self.quarters_actual.field_names.iter().enumerate() {
+                    match last_name_checked {
+                        None => {
+                            screener_vector.push((T::zero(), false, Rule::Gt));
+                        }
+                        Some(j) => {
+                            if i > j {
+                                screener_vector.push((T::zero(), false, Rule::Gt));
+                            } else {
+                                continue;
+                            }
+                        }
+                    }
+                }
+                self.players = vec![Player::new_player(Screener {
+                    screen: screener_vector
+                })];
+            },
+        }
+    }
+
 }

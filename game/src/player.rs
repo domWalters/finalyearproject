@@ -39,6 +39,16 @@ impl<T: DataTrait> Player<T> {
             stocks_purchased: Vec::new(),
         }
     }
+    ///
+    pub fn new_player(screener: Screener<T>) -> Player<T> {
+        Player {
+            strategy: screener,
+            spend: 0.0,
+            spend_return: 0.0,
+            stocks_sold: Vec::new(),
+            stocks_purchased: Vec::new(),
+        }
+    }
     /// Resets the player to have payoff 0, empty stocks vectors, and soft resets the strategies.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
         self.strategy.soft_reset((l_limits, u_limits));
