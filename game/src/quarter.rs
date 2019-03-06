@@ -73,7 +73,7 @@ impl<T: DataTrait> Quarter<T> {
     pub fn select_for_player(&self, float_quarter: &Quarter<f64>, player: &mut Player<T>, index: usize, iteration: usize) {
         // Buy from quarter
         for (stock, stock_float) in self.iter().zip(float_quarter.iter()) {
-            if stock.greater_by_ratio(&player) & (stock.stock_id.iteration == iteration) {
+            if stock.is_satisfied_by(&player) & (stock.stock_id.iteration == iteration) {
                 player.stocks_purchased.push((stock_float.get(index), stock.clone()));
             }
         }

@@ -129,7 +129,7 @@ impl<T: DataTrait> DataRecord<T> {
     /// # Arguments
     /// * `player` - The player who's strategy needs to be checked.
     /// need to be checked successfully.
-    pub fn greater_by_ratio(&self, player: &Player<T>) -> bool {
+    pub fn is_satisfied_by(&self, player: &Player<T>) -> bool {
         for (stock_element, (screen_element, field_used, rule)) in self.record.iter().zip(player.strategy.iter()) {
             if *field_used {
                 let rule_met = match rule {
