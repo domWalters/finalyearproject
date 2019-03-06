@@ -16,8 +16,7 @@ pub struct Game<T: DataTrait> {
     quarters_initial: Quarters<f64>,
     quarters_actual: Quarters<T>,
     current_quarter_index: usize,
-    index_of_value: usize,
-    pub ratio: f64
+    index_of_value: usize
 }
 
 impl<T: DataTrait> fmt::Display for Game<T> {
@@ -59,8 +58,7 @@ impl<T: DataTrait> Game<T> {
             quarters_initial: quarters_initial,
             quarters_actual: quarters_actual,
             current_quarter_index: 0,
-            index_of_value: 0,
-            ratio: 1.0
+            index_of_value: 0
         }
     }
     fn calculate_cheap_limits(quarters: &Quarters<T>) -> (Vec<T>, Vec<T>) {
@@ -89,10 +87,9 @@ impl<T: DataTrait> Game<T> {
     /// * `percentile_gap` - The percentile gap to use.
     /// * `file_name` - The file name to save the run as.
     pub fn run(&mut self, generation_max: i64, iteration: usize, percentile_gap: usize, file_name: String) {
-        let quarters_len = self.quarters_actual.len();
         for i in 0..iteration {
             for _j in 0..generation_max {
-                self.perform_generation(quarters_len, DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i, percentile_gap);
+                self.perform_generation(DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i, percentile_gap);
             }
             self.perform_analytical_final_run(i);
             println!("Run {} complete!", i);
@@ -106,17 +103,13 @@ impl<T: DataTrait> Game<T> {
     /// Run through the training data, and generate a new population.
     ///
     /// # Arguments
-    /// * `quarter_max` - The maximum number of quarters to run through.
     /// * `k` - Constant used for tournament selection.
     /// * `mut_const` - Constant used for mutation.
     /// * `iteration` - The number of the current iteration.
-    pub fn perform_generation(&mut self, quarter_max: usize, k: usize, mut_const: f64, iteration: usize, percentile_gap: usize) {
-        while self.current_quarter_index < quarter_max - 1 {
-            self.next_quarter(iteration);
-        }
-        self.final_quarter(iteration);
+    /// * `percentile_gap` - The percentile gap to use.
+    pub fn perform_generation(&mut self, k: usize, mut_const: f64, iteration: usize, percentile_gap: usize) {
+        self.run_one_game_generation(iteration);
         let players_with_payoff = self.players.iter().fold(0, |acc, player| if player.payoff() != 0.0 {acc + 1} else {acc});
-        self.analyse_field_purchases();
         println!("Player Count: {}, Average Profit: {:.3}%", players_with_payoff, self.average_payoff());
         self.print_best();
         let mut new_population = Vec::new();
@@ -138,7 +131,15 @@ impl<T: DataTrait> Game<T> {
         }
         false
     }
-
+    ///
+    fn run_one_game_generation(&mut self, iteration: usize) {
+        while self.current_quarter_index < self.quarters_actual.len() - 1 {
+            self.next_quarter(iteration);
+        }
+        self.next_quarter(iteration);
+        self.current_quarter_index = 0;
+        self.analyse_field_purchases();
+    }
     /// Runs through the next quarter of test data.
     ///
     /// # Arguments
@@ -157,26 +158,12 @@ impl<T: DataTrait> Game<T> {
         }).unwrap();
         self.current_quarter_index += 1;
     }
-    /// Runs through the final quarter of test data.
-    ///
-    /// # Arguments
-    /// * `iteration` - The number of the current iteration.
-    fn final_quarter(&mut self, iteration: usize) {
-        println!("Starting final quarter...");
-        self.next_quarter(iteration);
-        self.current_quarter_index = 0;
-        println!("End of final quarter!");
-    }
     /// Perform a final generation of the algorithm, purely to analyse the potential screeners
     ///
     /// # Arguments
     /// * `iteration` - The number of the current iteration.
     pub fn perform_analytical_final_run(&mut self, iteration: usize) {
-        while self.current_quarter_index < self.quarters_actual.len() - 1 {
-            self.next_quarter(iteration);
-        }
-        self.final_quarter(iteration);
-        self.analyse_field_purchases();
+        self.run_one_game_generation(iteration);
         println!("{:?}", self.players[0].stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>());
         println!("{:?} - {:?}", self.players[0].spend_return, self.players[0].spend);
     }
