@@ -12,17 +12,24 @@ use crate::game::Game;
 
 fn main() {
     let population_size = 100;
-    let generation_max = 20;
-    let iterations = 5;
+    let generation_max = 10;
+    let iterations = 3;
 
-    let quarters = Quarters::<f64>::new_quarters_from_default_file(iterations);
+    //let quarters = Quarters::<f64>::new_quarters_from_default_file(iterations);
+    let quarters = Quarters::<f64>::new_quarters_from_default_file(1);
     let percentiles = vec![1];
-    for i in 0..5 {
-        for percentile in &percentiles {
-            let mut game = Game::<usize>::new_game(quarters.clone(), population_size, *percentile);
-            game.run(generation_max, iterations, *percentile, format!("test-data/output-{}-{}.txt", i, *percentile));
-        }
-    }
 
+    let mut game = Game::<usize>::new_game(quarters.clone(), population_size, 1);
+    game.read("test-data/input.txt".to_string());
+    game.ratio = 1.0;
+    println!("{:?}", game.ratio);
+    game.perform_analytical_final_run(0);
+    game.print_best();
 
+    // for i in 0..5 {
+    //     for percentile in &percentiles {
+    //         let mut game = Game::<usize>::new_game(quarters.clone(), population_size, *percentile);
+    //         game.run(generation_max, iterations, *percentile, format!("test-data/output-{}-{}.txt", i, *percentile));
+    //     }
+    // }
 }
