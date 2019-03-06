@@ -86,9 +86,9 @@ impl<T: DataTrait> Game<T> {
     /// # Arguments
     /// * `generation_max` - The max number of generations to execute each time.
     /// * `iteration`- The number of iterations over the whole algorithm that should be performed.
+    /// * `percentile_gap` - The percentile gap to use.
+    /// * `file_name` - The file name to save the run as.
     pub fn run(&mut self, generation_max: i64, iteration: usize, percentile_gap: usize, file_name: String) {
-        let (l_limits, u_limits) = Game::calculate_cheap_limits(&self.quarters_actual);
-        let compounded_training_vectors = self.quarters_actual.expensive_training_data_analysis();
         let quarters_len = self.quarters_actual.len();
         for i in 0..iteration {
             for _j in 0..generation_max {
@@ -97,7 +97,6 @@ impl<T: DataTrait> Game<T> {
             self.perform_analytical_final_run(i);
             println!("Run {} complete!", i);
             self.print_best();
-            //self.recalc_fields_used(&compounded_training_vectors);
             if i != iteration - 1 {
                 self.soft_reset();
             }
@@ -147,12 +146,12 @@ impl<T: DataTrait> Game<T> {
     fn next_quarter(&mut self, iteration: usize) {
         let quarter = self.quarters_actual.get(self.current_quarter_index).unwrap();
         let float_quarter = self.quarters_initial.get(self.current_quarter_index).unwrap();
-        let (ratio, index_of_value) = (self.ratio, self.index_of_value);
+        let index_of_value = self.index_of_value;
         let player_iter = self.players.iter_mut();
         thread::scope(|s| {
             for mut player in player_iter {
                 s.spawn(move |_| {
-                    quarter.select_for_player(&float_quarter, &mut player, ratio, index_of_value, iteration);
+                    quarter.select_for_player(&float_quarter, &mut player, 1.0, index_of_value, iteration);
                 });
             }
         }).unwrap();
@@ -203,17 +202,6 @@ impl<T: DataTrait> Game<T> {
                                                               .collect();
         }
         println!("All purchases: {:?}", aggregate_field_counter);
-    }
-    /// Recalculate each Player's "fields_used" by using the output of analyse_field_purchases().
-    pub fn recalc_fields_used(&mut self, compounded_training_vectors: &Vec<Vec<T>>) {
-        let players = &mut self.players;
-        thread::scope(|s| {
-            for player in players.iter_mut() {
-                s.spawn(move |_| {
-                    player.recalc_fields_used(&compounded_training_vectors);
-                });
-            }
-        }).unwrap();
     }
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
@@ -352,7 +340,7 @@ impl<T: DataTrait> Game<T> {
                     // fill the screener with garbage until that point
                 }
                 // Fill after the last rule until full
-                for (i, name) in self.quarters_actual.field_names.iter().enumerate() {
+                for (i, _) in self.quarters_actual.field_names.iter().enumerate() {
                     match last_name_checked {
                         None => {
                             screener_vector.push((T::zero(), false, Rule::Gt));
