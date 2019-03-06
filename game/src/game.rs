@@ -197,24 +197,39 @@ impl<T: DataTrait> Game<T> {
         filtered_players.iter().fold(0.0, |acc, player| acc + player.payoff_per_year(years)) / (filtered_players.len() as f64)
     }
     ///
-    pub fn print_best(&self) {
+    pub fn find_best(&self) -> Option<(f64, &Player<T>)> {
         let years = self.quarters_actual.years();
         let filtered_players = self.players.iter().filter(|player| player.spend_return > player.spend).collect::<Vec<_>>();
         let mut filtered_players_iter = filtered_players.iter();
         match filtered_players_iter.next() {
             Some(player) => {
-                let init_screen = &player.strategy;
+                let init_player = *player;
                 let init_acc = player.payoff_per_year(years);
-                let (best_payoff, best_screener) = filtered_players_iter.fold((init_acc, init_screen), |(acc, acc_screen), player| {
-                    let new_acc = player.payoff_per_year(years);
-                    if new_acc > acc {
-                        (new_acc, &player.strategy)
-                    } else {
-                        (acc, acc_screen)
+                filtered_players_iter.fold(Some((init_acc, init_player)), |acc_tuple, player| {
+                    match acc_tuple {
+                        Some((acc_payoff, acc_player)) => {
+                            let new_payoff = player.payoff_per_year(years);
+                            if new_payoff > acc_payoff {
+                                Some((new_payoff, player))
+                            } else {
+                                Some((acc_payoff, acc_player))
+                            }
+                        }
+                        None => None
                     }
-                });
-                println!("Best Payoff: {:.3}%, with Screener: {:?}", best_payoff, best_screener.format_screen(&self.quarters_actual));
+                })
             },
+            None => {
+                None
+            }
+        }
+    }
+    ///
+    pub fn print_best(&self) {
+        match self.find_best() {
+            Some((payoff, player)) => {
+                println!("Best Payoff: {:.3}%, with Screener: {:?}", payoff, player.strategy.format_screen(&self.quarters_actual));
+            }
             None => {
                 println!("Best Payoff: Didn't exist.");
             }
