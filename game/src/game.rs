@@ -60,7 +60,7 @@ impl<T: DataTrait> Game<T> {
             quarters_actual: quarters_actual,
             current_quarter_index: 0,
             index_of_value: 0,
-            ratio: 0.6
+            ratio: 1.0
         }
     }
     fn calculate_cheap_limits(quarters: &Quarters<T>) -> (Vec<T>, Vec<T>) {
@@ -97,11 +97,10 @@ impl<T: DataTrait> Game<T> {
             self.perform_analytical_final_run(i);
             println!("Run {} complete!", i);
             self.print_best();
+            //self.recalc_fields_used(&compounded_training_vectors);
             if i != iteration - 1 {
-                self.recalc_fields_used(&compounded_training_vectors);
                 self.soft_reset((&l_limits, &u_limits));
             }
-            self.ratio += 0.1;
         }
         self.save(file_name);
     }

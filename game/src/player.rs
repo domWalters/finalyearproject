@@ -51,7 +51,7 @@ impl<T: DataTrait> Player<T> {
     }
     /// Resets the player to have payoff 0, empty stocks vectors, and soft resets the strategies.
     pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
-        self.strategy.soft_reset((l_limits, u_limits));
+        //self.strategy.soft_reset((l_limits, u_limits));
         self.spend = 0.0;
         self.spend_return = 0.0;
         self.stocks_sold = Vec::new();
