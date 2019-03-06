@@ -24,12 +24,6 @@ impl<T: DataTrait> fmt::Display for Screener<T> {
 }
 
 impl<T: DataTrait> Screener<T> {
-    /// Performs a soft reset of the screener. This regenerates the floating point value whilst
-    /// retaining the same boolean and Rule values.
-    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
-        let mut rng = rand::thread_rng();
-        self.screen = self.screen.iter().zip(l_limits.iter().zip(u_limits)).map(|((_, used, rule), (l, u))| (if l == u {*l} else {rng.gen_range(*l, *u)}, *used, rule.clone())).collect();
-    }
     /// Creates a uniform random Screener within a set list of boundaries.
     ///
     /// # Arguments
@@ -90,19 +84,11 @@ impl<T: DataTrait> Screener<T> {
             screen: self.iter()
                         .map(|(e, used, rule)| {
                             let mut new_field = *e;
-                            let mut new_used = *used;
-                            let mut new_rule = rule.clone();
                             if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
                                 let (interval_l, interval_r) = e.interval(percent_mag);
                                 new_field = if interval_l == interval_r {interval_l} else {rng.gen_range(interval_l, interval_r).round(percentile_gap)};
-                            }/*
-                            if rng.gen_range(0.0, 1.0) < c / (self.len() as f64) {
-                                new_rule = match rule {
-                                    Rule::Lt => Rule::Gt,
-                                    Rule::Gt => Rule::Lt
-                                }
-                            }*/
-                            (new_field, new_used, new_rule)
+                            }
+                            (new_field, *used, rule.clone())
                         })
                         .collect()
         }

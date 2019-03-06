@@ -99,7 +99,7 @@ impl<T: DataTrait> Game<T> {
             self.print_best();
             //self.recalc_fields_used(&compounded_training_vectors);
             if i != iteration - 1 {
-                self.soft_reset((&l_limits, &u_limits));
+                self.soft_reset();
             }
         }
         self.save(file_name);
@@ -246,9 +246,9 @@ impl<T: DataTrait> Game<T> {
         }
     }
     /// Calls each players soft reset function.
-    pub fn soft_reset(&mut self, (l_limits, u_limits): (&Vec<T>, &Vec<T>)) {
+    pub fn soft_reset(&mut self) {
         for player in &mut self.players {
-            player.soft_reset((l_limits, u_limits));
+            player.soft_reset();
         }
     }
     /// Perform a tournament selection of size k within the current list of Players. The fitness
@@ -291,7 +291,7 @@ impl<T: DataTrait> Game<T> {
             }
         }
     }
-
+    ///
     pub fn read(&mut self, file_name: String) {
         // Create a path to the desired file
         let mut path = current_dir().unwrap();
