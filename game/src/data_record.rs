@@ -128,34 +128,19 @@ impl<T: DataTrait> DataRecord<T> {
     ///
     /// # Arguments
     /// * `player` - The player who's strategy needs to be checked.
-    /// * `ratio` - A number from the interval [0, 1], representing the percentage of elements that
     /// need to be checked successfully.
-    pub fn greater_by_ratio(&self, player: &Player<T>, ratio: f64) -> bool {
-        let mut true_track = 0;
-        let mut false_track = 0;
-        let fields_used_count = player.strategy.iter().fold(0, |acc, (_, used, _)| if *used {acc + 1} else {acc});
-        let ratio_true_limit = ratio * (fields_used_count as f64);
-        let ratio_false_limit = (1.0 - ratio) * (fields_used_count as f64);
-        let zip = self.record.iter().zip(player.strategy.iter());
-        for (stock_element, (screen_element, field_used, rule)) in zip {
+    pub fn greater_by_ratio(&self, player: &Player<T>) -> bool {
+        for (stock_element, (screen_element, field_used, rule)) in self.record.iter().zip(player.strategy.iter()) {
             if *field_used {
                 let rule_met = match rule {
                     Rule::Lt => stock_element <= screen_element,
                     Rule::Gt => stock_element >= screen_element
                 };
-                if rule_met {
-                    true_track += 1;
-                    if true_track as f64 >= ratio_true_limit {
-                        return true;
-                    }
-                } else {
-                    false_track += 1;
-                    if false_track as f64 >= ratio_false_limit {
-                        return false;
-                    }
+                if !rule_met {
+                    return false;
                 }
             }
         }
-        true_track as f64 > ratio_true_limit
+        true
     }
 }

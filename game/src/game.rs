@@ -115,7 +115,7 @@ impl<T: DataTrait> Game<T> {
         let mut new_population = Vec::new();
         for _player in &self.players {
             let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-            while self.contains_species(&new_population, &new_player) {//new_player.strategy.iter().fold(0, |acc, (_, used, _)| if *used {acc + 1} else {acc}) < 1 {
+            while self.contains_species(&new_population, &new_player) {
                 new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
             }
             new_population.push(new_player);
@@ -152,7 +152,7 @@ impl<T: DataTrait> Game<T> {
         thread::scope(|s| {
             for mut player in player_iter {
                 s.spawn(move |_| {
-                    quarter.select_for_player(&float_quarter, &mut player, 1.0, index_of_value, iteration);
+                    quarter.select_for_player(&float_quarter, &mut player, index_of_value, iteration);
                 });
             }
         }).unwrap();
