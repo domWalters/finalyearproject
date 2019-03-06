@@ -46,9 +46,9 @@ impl<T: DataTrait> Screener<T> {
         for (i, (l, u)) in l_limits.iter().zip(u_limits).enumerate() {
             let field_used = !banned_fields.contains(&i);
             if l == u {
-                output.push((*l, rng.gen_bool(0.5) & field_used, if rng.gen_bool(0.5) {Rule::Lt} else {Rule::Gt}));
+                output.push((*l, rng.gen_bool(10.0 / 130.0) & field_used, if rng.gen_bool(0.5) {Rule::Lt} else {Rule::Gt}));
             } else {
-                output.push((rng.gen_range(*l, *u).round(percentile_gap), rng.gen_bool(0.5) & field_used, if rng.gen_bool(0.5) {Rule::Lt} else {Rule::Gt}));
+                output.push((rng.gen_range(*l, *u).round(percentile_gap), rng.gen_bool(10.0 / 130.0) & field_used, if rng.gen_bool(0.5) {Rule::Lt} else {Rule::Gt}));
             }
         }
         Screener {
