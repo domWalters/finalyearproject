@@ -7,6 +7,7 @@ use crate::screener::Rule;
 use crate::quarters::Quarters;
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct Player<T: DataTrait> {
     pub strategy: Screener<T>,
     pub spend: f64,

@@ -259,7 +259,7 @@ impl<T: DataTrait> Game<T> {
         };
         let years = self.quarters_actual.years();
         for player in &self.players {
-            let output_string = format!["Payoff: {:.3}%, Screen: {:?}\n", player.payoff_per_year(years), player.format_screen(&self.quarters_actual)];
+            let output_string = format!["Payoff: {:.3}%, Screen: {:?}, Sold List: {:?}\n", player.payoff_per_year(years), player.format_screen(&self.quarters_actual), player.stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>()];
             match file.write_all(output_string.as_bytes()) {
                 Err(why) => panic!("couldn't write to file {:?}: {}", path, why.description()),
                 Ok(_) => println!("successfully wrote to {:?}", path)
