@@ -8,4 +8,3 @@ echo "Uniting data..."
 ./run_data_unite.sh
 echo "Deleting extra data..."
 ./delete_extra_data.sh
-

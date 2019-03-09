@@ -346,22 +346,18 @@ pub fn trim_and_sort() {
     unite_folder.pop(); unite_folder.push("test-data/UnitedData");
     // Files list
     let files: Vec<_> = read_dir(unite_folder).unwrap().map(|r| r.unwrap()).collect();
-    let files_iter = files.iter();
+    let mut files_iter = files.iter();
     // Populate vector of readers
-    let mut file_readers = Vec::new();
-    for file in files_iter {
-        file_readers.push(Reader::from_path(file.path()).unwrap());
-    }
     // Iterate over the comparitive header and make a vector of boolean acceptance of the headers
     let mut headers_to_keep = Vec::new();
     // Remove the first reader, it will be the comparitive source
-    let mut file_readers_iter = file_readers.iter_mut();
-    let header_reader = file_readers_iter.next();
-    let mut file_readers = Vec::from_iter(file_readers_iter);
-
-    let headers = header_reader.unwrap().headers().unwrap();
-    'a : for field_to_find in headers {                                     // loop over prospective header
-        'b : for reader in &mut file_readers {                              // loop over readers
+    let header_file = files_iter.next().unwrap();
+    let mut header_reader = Reader::from_path(header_file.path()).unwrap();
+    let headers = header_reader.headers().unwrap();
+    'a : for (i, field_to_find) in headers.iter().enumerate() {             // loop over prospective header
+        println!("Checking field ({:?}, {:?})", i, field_to_find);
+        'b : for file in files_iter.clone() {                               // loop over files
+            let mut reader = Reader::from_path(file.path()).unwrap();
             'c : for potential_field in reader.headers().unwrap().iter() {  // loop over elements of reader
                 if potential_field == field_to_find {
                     continue 'b;
