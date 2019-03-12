@@ -113,7 +113,7 @@ impl<T: DataTrait> Game<T> {
         println!("Player Count: {}, Average Profit: {:.3}%", players_with_payoff, self.average_payoff());
         self.print_best();
         let mut new_population: Vec<Player<T>> = Vec::new();
-        // elitism
+        // 1 player conditional elitism
         let best = self.find_best();
         match best {
             Some((_, best_player)) => {
@@ -122,7 +122,7 @@ impl<T: DataTrait> Game<T> {
                     new_player.soft_reset();
                     new_population.push(new_player);
                 } else {
-                    let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
+                    let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
                     new_population.push(new_player);
                 }
             }
@@ -132,9 +132,9 @@ impl<T: DataTrait> Game<T> {
         }
         for _i in 0..(self.players.len() - 1) {
             let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-            // while self.contains_species(&new_population, &new_player) {
-            //     new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-            // }
+            while self.contains_species(&new_population, &new_player) {
+                new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
+            }
             new_population.push(new_player);
         }
         self.players = new_population;
