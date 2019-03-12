@@ -28,7 +28,7 @@ impl<T: DataTrait> Quarters<T> {
         let mut pre_output: Vec<Quarter<f64>> = Vec::new();
         // Populate with every blank quarter since epoch
         let (mut year_count, mut quarter_count) = (1970, 1);
-        while year_count < 2019 {
+        while year_count < 2020 {
             pre_output.push(Quarter::load_blank(year_count, quarter_count));
             if quarter_count == 4 {
                 year_count += 1;
@@ -43,17 +43,18 @@ impl<T: DataTrait> Quarters<T> {
         // Files list
         let files_iter = trim_unite_folder.read_dir().unwrap().map(|r| r.unwrap()); // NOT SORTED
         // Populate vector of readers
-        let mut file_readers = Vec::new();
-        for file in files_iter {
-            file_readers.push((Reader::from_path(file.path()).unwrap(), file.file_name().into_string().unwrap().split('_').next().unwrap().to_string()));
-        }
+        let files_and_names = files_iter.map(|file| {
+            let name = file.file_name().into_string().unwrap().split('_').next().unwrap().to_string();
+            (file, name)
+        });
         // Go through every file and assemble quarters
         let mut year_index = 0;
         let mut quarter_index = 0;
         let mut columns_found = false;
         let mut field_names = Vec::new();
         let mut rng = rand::thread_rng();
-        for (mut reader, name) in file_readers {
+        for (file, name) in files_and_names {
+            let mut reader = Reader::from_path(file.path()).unwrap();
             // Find the year and quarter columns (only done once, all files share this column index)
             if !columns_found {
                 for (i, field) in reader.headers().unwrap().iter().enumerate() {
