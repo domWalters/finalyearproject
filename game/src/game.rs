@@ -12,7 +12,7 @@ pub static DEFAULT_MUTATION_CONST: f64 = 0.7;
 
 #[derive(Debug)]
 pub struct Game<T: DataTrait> {
-    pub players: Population<T>,
+    pub populations: Vec<Population<T>>,
     quarters_initial: Quarters<f64>,
     pub quarters_actual: Quarters<T>,
     current_quarter_index: usize,
@@ -21,7 +21,7 @@ pub struct Game<T: DataTrait> {
 
 impl<T: DataTrait> fmt::Display for Game<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {  // Overly verbose
-        write!(f, "Game[players: {:?}, quarters_initial: {:?}, quarters_actual: {:?}, current_quarter_index: {}, index_of_value: {}]", self.players, self.quarters_initial, self.quarters_actual, self.current_quarter_index, self.index_of_value)
+        write!(f, "Game[populations: {:?}, quarters_initial: {:?}, quarters_actual: {:?}, current_quarter_index: {}, index_of_value: {}]", self.populations, self.quarters_initial, self.quarters_actual, self.current_quarter_index, self.index_of_value)
     }
 }
 
@@ -54,9 +54,9 @@ impl<T: DataTrait> Game<T> {
             players.push(Player::new_uniform_random((&l_limits, &u_limits), &banned_indicies, percentile_gap));
         }
         Game {
-            players: Population {
+            populations: vec![Population {
                 players: players
-            },
+            }],
             quarters_initial: quarters_initial,
             quarters_actual: quarters_actual,
             current_quarter_index: 0,
@@ -97,12 +97,46 @@ impl<T: DataTrait> Game<T> {
             }
             self.perform_analytical_final_run(i);
             println!("Run {} complete!", i);
-            self.players.print_best(self.quarters_actual.years(), &self.quarters_actual);
+
             if i != iteration - 1 {
-                self.players.soft_reset();
+                for population in &mut self.populations {
+                    population.soft_reset();
+                }
             }
         }
         self.save(file_name);
+    }
+    /// done to compile, this doesn't actually make any sense
+    pub fn find_best(&self) -> Option<(f64, &Player<T>)> {
+        self.populations.iter().fold(None, |acc, new| {
+            match (acc, new) {
+                (None, new) => new.find_best(self.quarters_actual.years()),
+                (Some((acc_pay, acc_obj)), new) => {
+                    match new.find_best(self.quarters_actual.years()) {
+                        None => Some((acc_pay, acc_obj)),
+                        Some((new_pay, new_obj)) => {
+                            if new_pay > acc_pay {
+                                Some((new_pay, new_obj))
+                            } else {
+                                Some((acc_pay, acc_obj))
+                            }
+                        }
+                    }
+
+                }
+            }
+        })
+    }
+    ///
+    pub fn print_best(&self) {
+        match self.find_best() {
+            Some((payoff, player)) => {
+                println!("Best Payoff: {:.3}%, with Screener: {:?}", payoff, player.strategy.format_screen(&self.quarters_actual));
+            }
+            None => {
+                println!("Best Payoff: Didn't exist.");
+            }
+        }
     }
     /// Run through the training data, and generate a new population.
     ///
@@ -114,8 +148,10 @@ impl<T: DataTrait> Game<T> {
     pub fn perform_generation(&mut self, k: usize, mut_const: f64, iteration: usize, percentile_gap: usize) {
         self.run_one_game_generation(iteration);
         println!("Average Profit: {:.3}%", self.average_payoff());
-        self.players.print_best(self.quarters_actual.years(), &self.quarters_actual);
-        self.players.next_population(k, mut_const, percentile_gap);
+        self.print_best();
+        for population in &mut self.populations {
+            population.next_population(k, mut_const, percentile_gap);
+        }
     }
     ///
     fn run_one_game_generation(&mut self, iteration: usize) {
@@ -133,7 +169,9 @@ impl<T: DataTrait> Game<T> {
         let quarter = self.quarters_actual.get(self.current_quarter_index).unwrap();
         let float_quarter = self.quarters_initial.get(self.current_quarter_index).unwrap();
         let index_of_value = self.index_of_value;
-        self.players.next_quarter(quarter, float_quarter, index_of_value, iteration, &mut self.current_quarter_index);
+        for population in &mut self.populations {
+            population.next_quarter(quarter, float_quarter, index_of_value, iteration, &mut self.current_quarter_index);
+        }
     }
     /// Perform a final generation of the algorithm, purely to analyse the potential screeners
     ///
@@ -141,7 +179,7 @@ impl<T: DataTrait> Game<T> {
     /// * `iteration` - The number of the current iteration.
     pub fn perform_analytical_final_run(&mut self, iteration: usize) {
         self.run_one_game_generation(iteration);
-        let best = self.players.find_best(self.quarters_actual.years());
+        let best = self.find_best();
         match best {
             Some((_, bestie)) => {
                 println!("Best");
@@ -156,7 +194,11 @@ impl<T: DataTrait> Game<T> {
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
         let years = self.quarters_actual.years();
-        self.players.average_payoff(years)
+        let mut payoffs = Vec::new();
+        for population in &self.populations {
+            payoffs.push(population.average_payoff(years));
+        }
+        payoffs.iter().fold(0.0, |acc, next| acc + next) / (payoffs.len() as f64)
     }
     /// Save the current set of strategies in a human readable format
     pub fn save(&mut self, file_name: String) {
@@ -167,16 +209,18 @@ impl<T: DataTrait> Game<T> {
             Ok(file) => file,
         };
         let years = self.quarters_actual.years();
-        self.players.players.sort_by(|a_p, b_p| {
-            let a_p_return = if a_p.spend != 0.0 {a_p.spend_return / a_p.spend} else {0.0};
-            let b_p_return = if b_p.spend != 0.0 {b_p.spend_return / b_p.spend} else {0.0};
-            a_p_return.partial_cmp(&b_p_return).unwrap()
-        });
-        for player in self.players.iter() {
-            let output_string = format!["Payoff: {:.3}%, Screen: {:?}, Sold List: {:?}\n", player.payoff_per_year(years), player.format_screen(&self.quarters_actual), player.stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>()];
-            match file.write_all(output_string.as_bytes()) {
-                Err(why) => panic!("couldn't write to file {:?}: {}", path, why.description()),
-                Ok(_) => println!("successfully wrote to {:?}", path)
+        for population in &mut self.populations {
+            population.players.sort_by(|a_p, b_p| {
+                let a_p_return = if a_p.spend != 0.0 {a_p.spend_return / a_p.spend} else {0.0};
+                let b_p_return = if b_p.spend != 0.0 {b_p.spend_return / b_p.spend} else {0.0};
+                a_p_return.partial_cmp(&b_p_return).unwrap()
+            });
+            for player in population.iter() {
+                let output_string = format!["Payoff: {:.3}%, Screen: {:?}, Sold List: {:?}\n", player.payoff_per_year(years), player.format_screen(&self.quarters_actual), player.stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>()];
+                match file.write_all(output_string.as_bytes()) {
+                    Err(why) => panic!("couldn't write to file {:?}: {}", path, why.description()),
+                    Ok(_) => println!("successfully wrote to {:?}", path)
+                }
             }
         }
     }
@@ -255,11 +299,11 @@ impl<T: DataTrait> Game<T> {
                         }
                     }
                 }
-                self.players = Population {
+                self.populations = vec![Population {
                     players: vec![Player::new_player(Screener {
                         screen: screener_vector
                     })]
-                };
+                }];
             },
         }
     }
