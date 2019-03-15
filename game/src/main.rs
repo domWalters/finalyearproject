@@ -47,7 +47,9 @@ fn main() {
             ("-percentiles", x) => {
                 let split: Vec<_> = x.split(",").collect();
                 percentiles = split.iter().map(|string_percent| {
-                    if string_percent.contains("[") {
+                    if string_percent.contains("[") & string_percent.contains("]") {
+                        string_percent[1..(string_percent.len() - 1)].parse::<usize>().unwrap()
+                    } else if string_percent.contains("[") {
                         string_percent[1..string_percent.len()].parse::<usize>().unwrap()
                     } else if string_percent.contains("]") {
                         string_percent[0..(string_percent.len() - 1)].parse::<usize>().unwrap()
