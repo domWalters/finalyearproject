@@ -115,7 +115,7 @@ impl<T: DataTrait> Player<T> {
             }
         });
         let fields_used_punish = if field_used_count > 10.0 {field_used_count} else if field_used_count < 5.0 {10.0 + 5.0 - field_used_count} else {10.0};
-        let stocks_sold_reward = if self.stocks_sold.len() > 20 {20.0} else {self.stocks_sold.len() as f64};
+        let stocks_sold_reward = if self.stocks_sold.len() > 40 {40.0} else {0.0};//self.stocks_sold.len() as f64};
         self.payoff() * (stocks_sold_reward / fields_used_punish)
     }
     ///
