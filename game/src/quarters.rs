@@ -194,8 +194,8 @@ impl<T: DataTrait> Quarters<T> {
             for (j, percentile_vector) in quarter_vector.iter_mut().enumerate() {
                 let ijth_training_data = &training_data[i][j];
                 let gap = (ijth_training_data.len() as f64) / ((100 / denomination) as f64);
-                for k in 0..(100 / denomination) {
-                    percentile_vector.push(ijth_training_data[(gap as usize) + ((gap * (k as f64)) as usize)]);
+                for k in 1..(100 / denomination) {
+                    percentile_vector.push(ijth_training_data[(gap * (k as f64)) as usize]);
                 }
             }
         }
@@ -233,6 +233,9 @@ impl<T: DataTrait> Quarters<T> {
                             continue 'a;
                         }
                     }
+                    // If you got here, field was always > element. => field is in the 100th
+                    // percentile. This was omitted from percentile_boundary_vectors.
+                    new_record_vector.push(100);
                 }
                 new_quarter_vector.push(DataRecord {
                     record: new_record_vector,
