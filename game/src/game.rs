@@ -116,28 +116,28 @@ impl<T: DataTrait> Game<T> {
         self.print_best();
         let mut new_population: Vec<Player<T>> = Vec::new();
         // 1 player conditional elitism
-        let best = self.find_best();
-        match best {
-            Some((_, best_player)) => {
-                if best_player.stocks_sold.len() > 20 {
-                    let mut new_player = best_player.clone();
-                    new_player.soft_reset();
-                    new_population.push(new_player);
-                } else {
-                    let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-                    new_population.push(new_player);
-                }
-            }
-            None => {
-                let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-                new_population.push(new_player);
-            }
-        }
-        for _i in 0..(self.players.len() - 1) {
+        // let best = self.find_best();
+        // match best {
+        //     Some((_, best_player)) => {
+        //         if best_player.stocks_sold.len() > 20 {
+        //             let mut new_player = best_player.clone();
+        //             new_player.soft_reset();
+        //             new_population.push(new_player);
+        //         } else {
+        //             let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
+        //             new_population.push(new_player);
+        //         }
+        //     }
+        //     None => {
+        //         let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
+        //         new_population.push(new_player);
+        //     }
+        // }
+        for _i in 0..self.players.len() {
             let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-            while self.contains_species(&new_population, &new_player) {
-                new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-            }
+            // while self.contains_species(&new_population, &new_player) {
+            //     new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
+            // }
             new_population.push(new_player);
         }
         self.players = new_population;
