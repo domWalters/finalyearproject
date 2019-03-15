@@ -88,8 +88,10 @@ impl<T: DataTrait> Game<T> {
     /// * `file_name` - The file name to save the run as.
     pub fn run(&mut self, generation_max: i64, iteration: usize, percentile_gap: usize, file_name: String) {
         for i in 0..iteration {
-            for _j in 0..generation_max {
-                self.perform_generation(DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i, percentile_gap);
+            if i != iteration - 1 {
+                for _j in 0..generation_max {
+                    self.perform_generation(DEFAULT_TOURNEY_CONST, DEFAULT_MUTATION_CONST, i, percentile_gap);
+                }
             }
             self.perform_analytical_final_run(i);
             println!("Run {} complete!", i);
@@ -156,7 +158,6 @@ impl<T: DataTrait> Game<T> {
         }
         self.next_quarter(iteration);
         self.current_quarter_index = 0;
-        self.analyse_field_purchases();
     }
     /// Runs through the next quarter of test data.
     ///
@@ -182,31 +183,19 @@ impl<T: DataTrait> Game<T> {
     /// * `iteration` - The number of the current iteration.
     pub fn perform_analytical_final_run(&mut self, iteration: usize) {
         self.run_one_game_generation(iteration);
-        println!("{:?}", self.players[0].stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>());
-        println!("{:?} - {:?}", self.players[0].spend_return, self.players[0].spend);
-    }
-    /// Produces print data on which fields are being bought.
-    fn analyse_field_purchases(&self) {
-        let mut aggregate_field_counter = vec![0; self.players[0].strategy.len()];
-        for player in &self.players {
-            let mut player_field_counter = vec![0; player.strategy.len()];
-            for (_, _, stock) in &player.stocks_sold {
-                for (k, (strat, used, rule)) in player.strategy.iter().enumerate() {
-                    let rule_met = match rule {
-                        Rule::Lt => stock.get(k) <= *strat,
-                        Rule::Gt => stock.get(k) >= *strat
-                    };
-                    if rule_met & *used {
-                        player_field_counter[k] += 1;
-                    }
-                }
+        let best = self.find_best();
+        match best {
+            Some((_, bestie)) => {
+                println!("Best");
+                println!("{:?}", bestie.stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>());
+                println!("{:?} - {:?}", bestie.spend_return, bestie.spend);
             }
-            aggregate_field_counter =  aggregate_field_counter.iter()
-                                                              .zip(player_field_counter.iter())
-                                                              .map(|(a, p)| a + p)
-                                                              .collect();
+            None => {
+                println!("Default");
+                println!("{:?}", self.players[0].stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>());
+                println!("{:?} - {:?}", self.players[0].spend_return, self.players[0].spend);
+            }
         }
-        println!("All purchases: {:?}", aggregate_field_counter);
     }
     /// Compute the average percentage gain across the entire population.
     pub fn average_payoff(&self) -> f64 {
