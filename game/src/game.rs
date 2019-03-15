@@ -46,7 +46,7 @@ impl<T: DataTrait> Game<T> {
             }
         }
         // Create the actual quarters, and it's limits.
-        let quarters_actual = quarters_initial.create_percentile_quarters(percentile_gap, quarters_initial.expensive_training_data_analysis());
+        let quarters_actual = quarters_initial.create_percentile_quarters(percentile_gap);
         let (l_limits, u_limits) = Game::calculate_cheap_limits(&quarters_actual);
         // Make players
         let mut players = Vec::new();

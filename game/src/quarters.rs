@@ -159,20 +159,23 @@ impl<T: DataTrait> Quarters<T> {
             ending_time: largest_time_id
         }
     }
-    /// Creates an ordered vector of vectors of each field of the training data.
-    pub fn expensive_training_data_analysis(&self) -> Vec<Vec<T>> {
-        let mut field_accumulator: Vec<Vec<T>> = vec![Vec::new(); self.get(0).unwrap().get(0).unwrap().len()];    // Vector of all results for all fields
-        for current_quarter in &self.quarters_vector {
+    /// Creates an ordered vector (over the quarters) of vectors (over the fields) of every result
+    ///  of the training data.
+    pub fn expensive_training_data_analysis(&self) -> Vec<Vec<Vec<T>>> {
+        let mut quarter_accumulator: Vec<Vec<Vec<T>>> = vec![vec![Vec::new(); self.field_names.len()]; self.quarters_vector.len()];    // Vector (quarters) of vector (fields) of vector (results)
+        for (current_quarter, quarter_store) in self.iter().zip(quarter_accumulator.iter_mut()) {
             for ref row in &current_quarter.quarter_vector {
-                for (&field, field_store) in row.iter().zip(field_accumulator.iter_mut()) {
-                    field_store.push(field);
+                for (i, field) in row.iter().enumerate() {
+                    quarter_store.get_mut(i).unwrap().push(*field);
                 }
             }
         }
-        for field_store in &mut field_accumulator {
-            field_store.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        for quarter_store in quarter_accumulator.iter_mut() {
+            for field_store in quarter_store.iter_mut() {
+                field_store.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            }
         }
-        field_accumulator
+        quarter_accumulator
     }
     ///
     ///
@@ -183,14 +186,17 @@ impl<T: DataTrait> Quarters<T> {
     /// # Remarks
     /// The 0th element is the lower limit of the 1st percentile. The ith element is the lower
     /// limit of the (i+1)th percentile.
-    fn create_percentile_vectors(denomination: usize, training_data: Vec<Vec<f64>>) -> Vec<Vec<f64>> {
+    fn create_percentile_vectors(&self, denomination: usize) -> Vec<Vec<Vec<T>>> {
         // Compute percentile start values
-        let mut percentile_boundary_vectors = vec![Vec::new(); training_data.len()];
-        for (i, percentile_vector) in percentile_boundary_vectors.iter_mut().enumerate() {
-            let ith_training_data = &training_data[i];
-            let gap = (ith_training_data.len() as f64) / ((100 / denomination) as f64);
-            for j in 0..(100 / denomination) {
-                percentile_vector.push(ith_training_data[(gap as usize) + ((gap * (j as f64)) as usize)]);
+        let training_data = self.expensive_training_data_analysis();
+        let mut percentile_boundary_vectors = vec![vec![Vec::new(); self.field_names.len()]; training_data.len()];
+        for (i, quarter_vector) in percentile_boundary_vectors.iter_mut().enumerate() {
+            for (j, percentile_vector) in quarter_vector.iter_mut().enumerate() {
+                let ijth_training_data = &training_data[i][j];
+                let gap = (ijth_training_data.len() as f64) / ((100 / denomination) as f64);
+                for k in 0..(100 / denomination) {
+                    percentile_vector.push(ijth_training_data[(gap as usize) + ((gap * (k as f64)) as usize)]);
+                }
             }
         }
         percentile_boundary_vectors
@@ -201,22 +207,29 @@ impl<T: DataTrait> Quarters<T> {
     /// * `denomination` - The distance between adjacent percentiles. This number must evenly
     /// divide 100 with no remainder.
     ///
-    pub fn create_percentile_quarters(&self, denomination: usize, training_data: Vec<Vec<f64>>) -> Quarters<usize> {
-        let percentile_boundary_vectors = Quarters::<f64>::create_percentile_vectors(denomination, training_data);
+    pub fn create_percentile_quarters(&self, denomination: usize) -> Quarters<usize> {
+        let percentile_boundary_vectors = self.create_percentile_vectors(denomination);
+        // let mut temp_vec = Vec::new();
+        // for i in 0..(100/denomination) {
+        //     temp_vec.push((i+1)*denomination);
+        // }
+        // for i in 0..self.len() {
+        //     println!("{:?}", percentile_boundary_vectors[i][0].iter().zip(temp_vec.iter()).collect::<Vec<_>>());
+        // }
         //println!("{:?}", percentile_boundary_vectors);
         // Create new Quarters set
         let mut new_quarters_vector = Vec::new();
-        for quarter in &self.quarters_vector {
+        for (i, quarter) in self.iter().enumerate() {
             let mut new_quarter_vector = Vec::new();
             for data_record in &quarter.quarter_vector {
                 let mut new_record_vector = Vec::new();
-                'a: for (i, entry) in data_record.record.iter().enumerate() {
-                    let percentile_vector = &percentile_boundary_vectors[i];
-                    'b: for (j, element) in percentile_vector.iter().enumerate() {
-                        if entry.to_f64().unwrap() > *element {
+                'a: for (j, field) in data_record.record.iter().enumerate() {
+                    let percentile_vector = &percentile_boundary_vectors[i][j];
+                    'b: for (k, element) in percentile_vector.iter().enumerate() {
+                        if field > element {
                             continue 'b;
                         } else {
-                            new_record_vector.push((j + 1) * denomination);
+                            new_record_vector.push((k + 1) * denomination);
                             continue 'a;
                         }
                     }
