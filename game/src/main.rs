@@ -7,6 +7,7 @@ pub mod screener;
 pub mod quarter;
 pub mod quarters;
 pub mod player;
+pub mod population;
 pub mod game;
 
 use crate::quarters::Quarters;
@@ -83,5 +84,5 @@ fn test() {
     let mut game = Game::<usize>::new_game(read_quarters, 1, 1);
     game.read("test-data/input.txt".to_string());
     game.perform_analytical_final_run(0);
-    game.print_best();
+    game.players.print_best(game.quarters_actual.years(), &game.quarters_actual);
 }
