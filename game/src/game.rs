@@ -117,8 +117,8 @@ impl<T: DataTrait> Game<T> {
         let best = self.find_best();
         match best {
             Some((_, best_player)) => {
-                let mut new_player = best_player.clone();
-                if new_player.stocks_sold.len() > 20 {
+                if best_player.stocks_sold.len() > 20 {
+                    let mut new_player = best_player.clone();
                     new_player.soft_reset();
                     new_population.push(new_player);
                 } else {
@@ -127,7 +127,8 @@ impl<T: DataTrait> Game<T> {
                 }
             }
             None => {
-
+                let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
+                new_population.push(new_player);
             }
         }
         for _i in 0..(self.players.len() - 1) {
