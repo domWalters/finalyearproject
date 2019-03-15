@@ -16,7 +16,7 @@ fn main() {
     // Defaults
     let mut population_size = 100;
     let mut generation_max = 10;
-    let mut iterations = 2;
+    let mut iterations = 3;
     let mut percentiles = vec![10];
 
     // Arguments
