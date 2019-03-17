@@ -285,6 +285,7 @@ impl<T: DataTrait> Game<T> {
             let b_p_return = if b_p.spend != 0.0 {b_p.spend_return / b_p.spend} else {0.0};
             a_p_return.partial_cmp(&b_p_return).unwrap()
         });
+        self.players = self.players.clone().into_iter().rev().collect();
         for player in &self.players {
             let output_string = format!["Payoff: {:.3}%, Screen: {:?}, Sold List: {:?}\n", player.payoff_per_year(years), player.format_screen(&self.quarters_actual), player.stocks_sold.iter().map(|(_, _, stock)| stock.stock_id.to_string()).collect::<Vec<_>>()];
             match file.write_all(output_string.as_bytes()) {

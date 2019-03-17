@@ -40,7 +40,7 @@ fn main() {
     for (arg_one, arg_two) in arg_pairs {
         match (&arg_one[0..arg_one.len()], &arg_two[0..arg_two.len()]) {
             ("-run", _) => run(population_size, generation_max, iterations, &percentiles),
-            ("-test", _) => test(),
+            ("-test", _) => test(&percentiles),
             ("-lambda", x) => population_size = x.parse::<usize>().unwrap(),
             ("-gen_max", x) => generation_max = x.parse::<i64>().unwrap(),
             ("-iterations", x) => iterations = x.parse::<usize>().unwrap(),
@@ -77,10 +77,11 @@ fn run(population_size: usize, generation_max: i64, iterations: usize, percentil
     }
 }
 
-fn test() {
+fn test(percentiles: &Vec<usize>) {
+    println!("Running test with lambda=1, gen_max=N/A, iter=1, percentiles=[{:?}]", percentiles[0]);
     let read_quarters = Quarters::<f64>::new_quarters_from_default_file(1);
 
-    let mut game = Game::<usize>::new_game(read_quarters, 1, 1);
+    let mut game = Game::<usize>::new_game(read_quarters, 1, percentiles[0]);
     game.read("test-data/input.txt".to_string());
     game.perform_analytical_final_run(0);
     game.print_best();
