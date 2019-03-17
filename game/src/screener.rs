@@ -111,13 +111,7 @@ impl<T: DataTrait> Screener<T> {
             }
         }).collect::<Vec<_>>()
     }
-    /// might be slow
-    pub fn is_same_species_as(&self, screener: &Screener<T>) -> bool {
-        self.iter().zip(screener.iter()).fold(true, |acc, ((_, l_used, _), (_, r_used, _))| {
-            acc & (l_used == r_used)
-        })
-    }
-
+    ///
     pub fn is_similar_to(&self, screener: &Screener<T>, ratio: f64) -> bool {
         (self.iter().zip(screener.iter()).fold(0.0, |acc, ((_, l_used, _), (_, r_used, _))| {
             acc + if l_used == r_used {1.0} else {0.0}
