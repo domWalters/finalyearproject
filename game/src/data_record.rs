@@ -7,7 +7,7 @@ use crate::screener::Rule;
 #[derive(Debug)]
 #[derive(Clone)]
 pub struct DataRecord<T: DataTrait> {
-    pub record: Vec<T>,
+    pub record: Vec<Option<T>>,
     pub stock_id: StockID
 }
 
@@ -109,18 +109,18 @@ impl<T: DataTrait> DataRecord<T> {
     ///
     /// # Arguments
     /// * `index` - The index requested.
-    pub fn get(&self, index: usize) -> T {
+    pub fn get(&self, index: usize) -> Option<T> {
         self.record[index]
     }
     ///
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<Option<T>> {
         self.record.iter()
     }
     /// Pushes a new element onto the end of the DataRecord.
     ///
     /// # Arguments
     /// * `element` - The element to be pushed.
-    pub fn push(&mut self, element: T) {
+    pub fn push(&mut self, element: Option<T>) {
         self.record.push(element);
     }
     /// Returns true or false based on whether this record has 100*ratio% elements greater than the
@@ -130,14 +130,19 @@ impl<T: DataTrait> DataRecord<T> {
     /// * `player` - The player who's strategy needs to be checked.
     /// need to be checked successfully.
     pub fn is_satisfied_by(&self, player: &Player<T>) -> bool {
-        for (stock_element, (screen_element, field_used, rule)) in self.record.iter().zip(player.strategy.iter()) {
+        for (stock_option, (screen_element, field_used, rule)) in self.iter().zip(player.strategy.iter()) {
             if *field_used {
-                let rule_met = match rule {
-                    Rule::Lt => stock_element <= screen_element,
-                    Rule::Gt => stock_element >= screen_element
-                };
-                if !rule_met {
-                    return false;
+                match stock_option {
+                    Some(stock_element) => {
+                        let rule_met = match rule {
+                            Rule::Lt => stock_element <= screen_element,
+                            Rule::Gt => stock_element >= screen_element
+                        };
+                        if !rule_met {
+                            return false;
+                        }
+                    },
+                    None => {}
                 }
             }
         }

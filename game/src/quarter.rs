@@ -74,7 +74,7 @@ impl<T: DataTrait> Quarter<T> {
         // Buy from quarter
         for (stock, stock_float) in self.iter().zip(float_quarter.iter()) {
             if stock.is_satisfied_by(&player) & (stock.stock_id.iteration == iteration) {
-                player.stocks_purchased.push((stock_float.get(index), stock.clone()));
+                player.stocks_purchased.push((stock_float.get(index).unwrap(), stock.clone()));
             }
         }
         // Sell discontinuous stocks, create a list of what to sell
@@ -107,7 +107,7 @@ impl<T: DataTrait> Quarter<T> {
             let sell_price;
             match float_quarter.find_by_stock_name(stock) {
                 Some(current_value) => {
-                    sell_price = current_value.get(index);
+                    sell_price = current_value.get(index).unwrap();
                     player.spend += buy_price;
                     player.spend_return += sell_price;
                 },

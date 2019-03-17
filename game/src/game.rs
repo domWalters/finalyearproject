@@ -67,12 +67,17 @@ impl<T: DataTrait> Game<T> {
         let mut upper_limits = vec![T::min_value(); first_quarter.get(0).unwrap().len()];
         for current_quarter in &quarters.quarters_vector {
             for ref entry in &current_quarter.quarter_vector {
-                for (&field, (lower_limit, upper_limit)) in entry.iter().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
-                    if field < *lower_limit {
-                        *lower_limit = field;
-                    }
-                    if field > *upper_limit {
-                        *upper_limit = field;
+                for (&option_field, (lower_limit, upper_limit)) in entry.iter().zip(lower_limits.iter_mut().zip(upper_limits.iter_mut())) {
+                    match option_field {
+                        Some(field) => {
+                            if field < *lower_limit {
+                                *lower_limit = field;
+                            }
+                            if field > *upper_limit {
+                                *upper_limit = field;
+                            }
+                        },
+                        None => {}
                     }
                 }
             }

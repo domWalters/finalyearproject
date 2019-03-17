@@ -96,8 +96,8 @@ impl<T: DataTrait> Quarters<T> {
                         if !((i == year_index) | (i == quarter_index)) {
                             let parsed_field = field.parse::<f64>();
                             match parsed_field {
-                                Ok(float_field) => data_record.push(float_field),
-                                Err(_err) => data_record.push(0.0), // if the field is empty, use 0
+                                Ok(float_field) => data_record.push(Some(float_field)),
+                                Err(_err) => data_record.push(None), // if the field is empty, use 0
                             }
                         }
                     }
@@ -165,8 +165,11 @@ impl<T: DataTrait> Quarters<T> {
         let mut quarter_accumulator: Vec<Vec<Vec<T>>> = vec![vec![Vec::new(); self.field_names.len()]; self.quarters_vector.len()];    // Vector (quarters) of vector (fields) of vector (results)
         for (current_quarter, quarter_store) in self.iter().zip(quarter_accumulator.iter_mut()) {
             for ref row in &current_quarter.quarter_vector {
-                for (i, field) in row.iter().enumerate() {
-                    quarter_store.get_mut(i).unwrap().push(*field);
+                for (i, option_field) in row.iter().enumerate() {
+                    match option_field {
+                        Some(field) => quarter_store.get_mut(i).unwrap().push(*field),
+                        None => {}
+                    }
                 }
             }
         }
@@ -195,7 +198,11 @@ impl<T: DataTrait> Quarters<T> {
                 let ijth_training_data = &training_data[i][j];
                 let gap = (ijth_training_data.len() as f64) / ((100 / denomination) as f64);
                 for k in 1..(100 / denomination) {
-                    percentile_vector.push(ijth_training_data[(gap * (k as f64)) as usize]);
+                    if ijth_training_data.len() == 0 {
+                        percentile_vector.push(T::zero());
+                    } else {
+                        percentile_vector.push(ijth_training_data[(gap * (k as f64)) as usize]);
+                    }
                 }
             }
         }
@@ -223,19 +230,28 @@ impl<T: DataTrait> Quarters<T> {
             let mut new_quarter_vector = Vec::new();
             for data_record in &quarter.quarter_vector {
                 let mut new_record_vector = Vec::new();
-                'a: for (j, field) in data_record.record.iter().enumerate() {
+                'a: for (j, option_field) in data_record.record.iter().enumerate() {
                     let percentile_vector = &percentile_boundary_vectors[i][j];
                     'b: for (k, element) in percentile_vector.iter().enumerate() {
-                        if field > element {
-                            continue 'b;
-                        } else {
-                            new_record_vector.push((k + 1) * denomination);
-                            continue 'a;
+                        match option_field {
+                            Some(field) => {
+                                if field > element {
+                                    continue 'b;
+                                } else {
+                                    new_record_vector.push(Some((k + 1) * denomination));
+                                    continue 'a;
+                                }
+                            },
+                            None => {
+                                new_record_vector.push(None);
+                                continue 'a;
+                            }
                         }
+
                     }
                     // If you got here, field was always > element. => field is in the 100th
                     // percentile. This was omitted from percentile_boundary_vectors.
-                    new_record_vector.push(100);
+                    new_record_vector.push(Some(100));
                 }
                 new_quarter_vector.push(DataRecord {
                     record: new_record_vector,
