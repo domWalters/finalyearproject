@@ -301,7 +301,7 @@ impl<T: DataTrait> Game<T> {
         }
     }
     ///
-    pub fn read(&mut self, file_name: String) {
+    pub fn read_file(&mut self, file_name: String) {
         // Create a path to the desired file
         let mut path = current_dir().unwrap();
         path.pop(); path.push(file_name);
@@ -317,69 +317,91 @@ impl<T: DataTrait> Game<T> {
         let mut s = String::new();
         match file.read_to_string(&mut s) {
             Err(why) => panic!("couldn't read {}: {}", display, why.description()),
-            Ok(_) => {
-                let mut screener_vector = Vec::new();
-                // looks like [(name, rule, value), (name, rule, value), (name, rule, value), .., (name, rule, value)]
-                let s = s[2..(s.len() - 3)].to_string();    // remove the starting [( and ending )]
-                let split: Vec<&str> = s.split("), (").collect();
-                let mut last_name_checked = None;
-                for screen_rule in split {
-                    let string_elements: Vec<&str> = screen_rule.split(", ").collect();  // this is a vector [name, rule, value]
-                    'a: for (i, name) in self.quarters_actual.field_names.iter().enumerate() {
-                        match last_name_checked {
-                            None => {
-                                let string_name = &string_elements[0][1..(string_elements[0].len()-1)];
-                                let string_rule = string_elements[1];
-                                let string_value = string_elements[2];
-                                last_name_checked = Some(i);
-                                if name == string_name {
-                                    screener_vector.push((T::from(string_value.parse::<f64>().unwrap()).unwrap(), true, if string_rule.contains("Lt") {Rule::Lt} else {Rule::Gt}));
-                                    break 'a;
-                                } else {
-                                    screener_vector.push((T::zero(), false, Rule::Gt));
-                                }
-                            }
-                            Some(j) => {
-                                if i > j {
-                                    let string_name = &string_elements[0][1..(string_elements[0].len()-1)];
-                                    let string_rule = string_elements[1];
-                                    let string_value = string_elements[2];
-                                    last_name_checked = Some(i);
-                                    if name == string_name {
-                                        screener_vector.push((T::from(string_value.parse::<f64>().unwrap()).unwrap(), true, if string_rule.contains("Lt") {Rule::Lt} else {Rule::Gt}));
-                                        break 'a;
-                                    } else {
-                                        screener_vector.push((T::zero(), false, Rule::Gt));
-                                    }
-                                } else {
-                                    continue 'a;
-                                }
-                            }
+            Ok(_) => self.read_string(s, true),
+        }
+    }
+    ///
+    pub fn read_string(&mut self, screener_string: String, from_file: bool) {
+        let mut screener_vector = Vec::new();
+        // looks like [(name, rule, value), (name, rule, value), (name, rule, value), .., (name, rule, value)]
+        println!("{:?}", screener_string);
+        let s;
+        if from_file {
+            s = screener_string[2..(screener_string.len() - 3)].to_string();    // remove the starting [( and ending )]\n
+        } else {
+            s = screener_string[2..(screener_string.len() - 2)].to_string();    // remove the starting [( and ending )]
+        }
+        println!("{:?}", s);
+        let split: Vec<&str> = s.split("), (").collect();
+        println!("{:?}", split);
+        let mut last_name_checked = None;
+        for screen_rule in split {
+            let string_elements: Vec<&str> = screen_rule.split(", ").collect();  // this is a vector [name, rule, value]
+            println!("{:?}", string_elements);
+            'a: for (i, name) in self.quarters_actual.field_names.iter().enumerate() {
+                match last_name_checked {
+                    None => {
+                        let string_name;
+                        if from_file {
+                            string_name = &string_elements[0][1..(string_elements[0].len()-1)];
+                        } else {
+                            string_name = &string_elements[0];
                         }
-                    }
-                    // find out which position it should go in
-                    // fill the screener with garbage until that point
-                }
-                // Fill after the last rule until full
-                for (i, _) in self.quarters_actual.field_names.iter().enumerate() {
-                    match last_name_checked {
-                        None => {
+                        let string_rule = string_elements[1];
+                        let string_value = string_elements[2];
+                        last_name_checked = Some(i);
+                        if name == string_name {
+                            screener_vector.push((T::from(string_value.parse::<f64>().unwrap()).unwrap(), true, if string_rule.contains("Lt") {Rule::Lt} else {Rule::Gt}));
+                            break 'a;
+                        } else {
                             screener_vector.push((T::zero(), false, Rule::Gt));
                         }
-                        Some(j) => {
-                            if i > j {
-                                screener_vector.push((T::zero(), false, Rule::Gt));
+                    }
+                    Some(j) => {
+                        if i > j {
+                            let string_name;
+                            if from_file {
+                                string_name = &string_elements[0][1..(string_elements[0].len()-1)];
                             } else {
-                                continue;
+                                string_name = &string_elements[0];
                             }
+                            let string_rule = string_elements[1];
+                            let string_value = string_elements[2];
+                            last_name_checked = Some(i);
+                            if name == string_name {
+                                screener_vector.push((T::from(string_value.parse::<f64>().unwrap()).unwrap(), true, if string_rule.contains("Lt") {Rule::Lt} else {Rule::Gt}));
+                                break 'a;
+                            } else {
+                                screener_vector.push((T::zero(), false, Rule::Gt));
+                            }
+                        } else {
+                            continue 'a;
                         }
                     }
                 }
-                self.players = vec![Player::new_player(Screener {
-                    screen: screener_vector
-                })];
-            },
+            }
+            // find out which position it should go in
+            // fill the screener with garbage until that point
         }
+        // Fill after the last rule until full
+        for (i, _) in self.quarters_actual.field_names.iter().enumerate() {
+            match last_name_checked {
+                None => {
+                    screener_vector.push((T::zero(), false, Rule::Gt));
+                }
+                Some(j) => {
+                    if i > j {
+                        screener_vector.push((T::zero(), false, Rule::Gt));
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
+        self.players = vec![Player::new_player(Screener {
+            screen: screener_vector
+        })];
+        println!("{:?}", self.players);
     }
 
 }
