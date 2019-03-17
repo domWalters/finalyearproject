@@ -126,4 +126,8 @@ impl<T: DataTrait> Player<T> {
     pub fn is_same_species_as(&self, player: &Player<T>) -> bool {
         self.strategy.is_same_species_as(&player.strategy)
     }
+    ///
+    pub fn is_similar_to(&self, player: &Player<T>, ratio: f64) -> bool {
+        self.strategy.is_similar_to(&player.strategy, ratio)
+    }
 }

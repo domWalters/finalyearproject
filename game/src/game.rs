@@ -116,30 +116,40 @@ impl<T: DataTrait> Game<T> {
         self.print_best();
         let mut new_population: Vec<Player<T>> = Vec::new();
         // 1 player conditional elitism
-        // let best = self.find_best();
-        // match best {
-        //     Some((_, best_player)) => {
-        //         if best_player.stocks_sold.len() > 20 {
-        //             let mut new_player = best_player.clone();
-        //             new_player.soft_reset();
-        //             new_population.push(new_player);
-        //         } else {
-        //             let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-        //             new_population.push(new_player);
-        //         }
-        //     }
-        //     None => {
-        //         let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-        //         new_population.push(new_player);
-        //     }
-        // }
-        for _i in 0..self.players.len() {
-            let mut new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-            // while self.contains_species(&new_population, &new_player) {
-            //     new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-            // }
-            new_population.push(new_player);
+        let best = self.find_best();
+        match best {
+            Some((_, best_player)) => {
+                if best_player.stocks_sold.len() > 20 {
+                    let mut new_player = best_player.clone();
+                    new_player.soft_reset();
+                    new_population.push(new_player);
+                } else {
+                    let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
+                    new_population.push(new_player);
+                }
+            }
+            None => {
+                let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
+                new_population.push(new_player);
+            }
         }
+        let mut tracker = 0;
+        for _i in 0..(self.players.len() - 1) {
+            let mut counter = 0;
+            let mut select_one = self.tourney_select(k);
+            let mut select_two = self.tourney_select(k);
+            while !select_one.is_similar_to(select_two, 0.5) {
+                select_one = self.tourney_select(k);
+                select_two = self.tourney_select(k);
+                counter += 1;
+                if counter == 100 {
+                    tracker += 1;
+                    break;
+                }
+            }
+            new_population.push(select_one.dumb_crossover(select_two, percentile_gap).lazy_mutate(mut_const, percentile_gap));
+        }
+        println!("Speciation terminated {:?} times.", tracker);
         self.players = new_population;
     }
 
