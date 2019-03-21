@@ -97,7 +97,7 @@ impl<T: DataTrait> Quarters<T> {
                             let parsed_field = field.parse::<f64>();
                             match parsed_field {
                                 Ok(float_field) => data_record.push(Some(float_field)),
-                                Err(_err) => data_record.push(None), // if the field is empty, use 0
+                                Err(_err) => data_record.push(None), // if the field is empty
                             }
                         }
                     }

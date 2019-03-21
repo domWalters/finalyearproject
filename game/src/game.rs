@@ -91,7 +91,7 @@ impl<T: DataTrait> Game<T> {
     /// * `iteration`- The number of iterations over the whole algorithm that should be performed.
     /// * `percentile_gap` - The percentile gap to use.
     /// * `file_name` - The file name to save the run as.
-    pub fn run(&mut self, generation_max: i64, iteration: usize, percentile_gap: usize, file_name: String) {
+    pub fn run(&mut self, generation_max: usize, iteration: usize, percentile_gap: usize, file_name: String) {
         for i in 0..iteration {
             if i != iteration - 1 {
                 for _j in 0..generation_max {

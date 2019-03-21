@@ -14,9 +14,9 @@ use crate::game::Game;
 
 fn main() {
     // Defaults
-    let mut population_size = 100;
-    let mut generation_max = 10;
-    let mut iterations = 3;
+    let mut population_sizes = vec![100];
+    let mut generation_maxs = vec![10];
+    let mut iterations = vec![3];
     let mut percentiles = vec![10];
 
     // Arguments
@@ -39,41 +39,47 @@ fn main() {
 
     for (arg_one, arg_two) in arg_pairs {
         match (&arg_one[0..arg_one.len()], &arg_two[0..arg_two.len()]) {
-            ("-run", _) => run(population_size, generation_max, iterations, &percentiles),
+            ("-run", _) => run(&population_sizes, &generation_maxs, &iterations, &percentiles),
             ("-test", "") => test_file(&percentiles),
             ("-test", screener_string) => test_string(&percentiles, screener_string.to_string()),
-            ("-lambda", x) => population_size = x.parse::<usize>().unwrap(),
-            ("-gen_max", x) => generation_max = x.parse::<i64>().unwrap(),
-            ("-iterations", x) => iterations = x.parse::<usize>().unwrap(),
-            ("-percentiles", x) => {
-                let split: Vec<_> = x.split(",").collect();
-                percentiles = split.iter().map(|string_percent| {
-                    if string_percent.contains("[") & string_percent.contains("]") {
-                        string_percent[1..(string_percent.len() - 1)].parse::<usize>().unwrap()
-                    } else if string_percent.contains("[") {
-                        string_percent[1..string_percent.len()].parse::<usize>().unwrap()
-                    } else if string_percent.contains("]") {
-                        string_percent[0..(string_percent.len() - 1)].parse::<usize>().unwrap()
-                    } else {
-                        string_percent.parse::<usize>().unwrap()
-                    }
-                }).collect();
-            },
-            _ => {
-
-            }
+            ("-lambda", x) => population_sizes = vector_from_string(x.to_string()),
+            ("-gen_max", x) => generation_maxs = vector_from_string(x.to_string()),
+            ("-iterations", x) => iterations = vector_from_string(x.to_string()),
+            ("-percentiles", x) => percentiles = vector_from_string(x.to_string()),
+            _ => {}
         }
     }
 }
 
-fn run(population_size: usize, generation_max: i64, iterations: usize, percentiles: &Vec<usize>) {
-    println!("Running algorithm with lambda={:?}, gen_max={:?}, iter={:?}, percentiles={:?}", population_size, generation_max, iterations, percentiles);
-    let quarters = Quarters::<f64>::new_quarters_from_default_file(iterations);
+fn vector_from_string(string: String) -> Vec<usize> {
+    let split: Vec<_> = string.split(",").collect();
+    split.iter().map(|string_percent| {
+        if string_percent.contains("[") & string_percent.contains("]") {
+            string_percent[1..(string_percent.len() - 1)].parse::<usize>().unwrap()
+        } else if string_percent.contains("[") {
+            string_percent[1..string_percent.len()].parse::<usize>().unwrap()
+        } else if string_percent.contains("]") {
+            string_percent[0..(string_percent.len() - 1)].parse::<usize>().unwrap()
+        } else {
+            string_percent.parse::<usize>().unwrap()
+        }
+    }).collect::<Vec<usize>>()
+}
 
+fn run(population_sizes: &Vec<usize>, generation_maxs: &Vec<usize>, iterations: &Vec<usize>, percentiles: &Vec<usize>) {
+    println!("Running algorithm with lambda={:?}, gen_max={:?}, iter={:?}, percentiles={:?}", population_sizes, generation_maxs, iterations, percentiles);
+    println!("This is going to execute the genetic algorithm {:?} times.", 10 * population_sizes.len() * generation_maxs.len() * iterations.len() * percentiles.len());
     for i in 0..10 {
-        for percentile in percentiles {
-            let mut game = Game::<usize>::new_game(quarters.clone(), population_size, *percentile);
-            game.run(generation_max, iterations, *percentile, format!("test-data/output-{}-{}.txt", i, *percentile));
+        for iteration in iterations {
+            let quarters = Quarters::<f64>::new_quarters_from_default_file(*iteration);
+            for population_size in population_sizes {
+                for generation_max in generation_maxs {
+                    for percentile in percentiles {
+                        let mut game = Game::<usize>::new_game(quarters.clone(), *population_size, *percentile);
+                        game.run(*generation_max, *iteration, *percentile, format!("test-data/output-r{}-perc{}-g{}-i{}-pop{}.txt", i, *percentile, *generation_max, *iteration, *population_size));
+                    }
+                }
+            }
         }
     }
 }

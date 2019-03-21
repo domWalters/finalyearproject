@@ -123,7 +123,7 @@ impl<T: DataTrait> DataRecord<T> {
     pub fn push(&mut self, element: Option<T>) {
         self.record.push(element);
     }
-    /// Returns true or false based on whether this record has 100*ratio% elements greater than the
+    /// Returns true or false based on whether this record has all elements greater than the
     /// corresponding element in the given Player's strategy.
     ///
     /// # Arguments
