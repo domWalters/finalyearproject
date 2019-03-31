@@ -18,6 +18,8 @@ fn main() {
     let mut generation_maxs = vec![10];
     let mut iterations = vec![3];
     let mut percentiles = vec![10];
+    let mut elitism = false;
+    let mut speciation = false;
 
     // Arguments
     let args: Vec<String> = env::args().collect();
@@ -39,13 +41,15 @@ fn main() {
 
     for (arg_one, arg_two) in arg_pairs {
         match (&arg_one[0..arg_one.len()], &arg_two[0..arg_two.len()]) {
-            ("-run", _) => run(&population_sizes, &generation_maxs, &iterations, &percentiles),
-            ("-test", "") => test_file(&percentiles),
-            ("-test", screener_string) => test_string(&percentiles, screener_string.to_string()),
+            ("-run", _) => run(&population_sizes, &generation_maxs, &iterations, &percentiles, &elitism, &speciation),
+            ("-test", "") => test_file(&percentiles, &elitism, &speciation),
+            ("-test", screener_string) => test_string(&percentiles, screener_string.to_string(), &elitism, &speciation),
             ("-lambda", x) => population_sizes = vector_from_string(x.to_string()),
             ("-gen_max", x) => generation_maxs = vector_from_string(x.to_string()),
             ("-iterations", x) => iterations = vector_from_string(x.to_string()),
             ("-percentiles", x) => percentiles = vector_from_string(x.to_string()),
+            ("-elitism", _) => elitism = true,
+            ("-speciation", _) => speciation = true,
             _ => {}
         }
     }
@@ -66,8 +70,8 @@ fn vector_from_string(string: String) -> Vec<usize> {
     }).collect::<Vec<usize>>()
 }
 
-fn run(population_sizes: &Vec<usize>, generation_maxs: &Vec<usize>, iterations: &Vec<usize>, percentiles: &Vec<usize>) {
-    println!("Running algorithm with lambda={:?}, gen_max={:?}, iter={:?}, percentiles={:?}", population_sizes, generation_maxs, iterations, percentiles);
+fn run(population_sizes: &Vec<usize>, generation_maxs: &Vec<usize>, iterations: &Vec<usize>, percentiles: &Vec<usize>, elitism: &bool, speciation: &bool) {
+    println!("Running algorithm with lambda={:?}, gen_max={:?}, iter={:?}, percentiles={:?}, elitism={}, speciation={}", population_sizes, generation_maxs, iterations, percentiles, elitism, speciation);
     println!("This is going to execute the genetic algorithm {:?} times.", 10 * population_sizes.len() * generation_maxs.len() * iterations.len() * percentiles.len());
     for i in 0..10 {
         for iteration in iterations {
@@ -75,7 +79,7 @@ fn run(population_sizes: &Vec<usize>, generation_maxs: &Vec<usize>, iterations: 
             for population_size in population_sizes {
                 for generation_max in generation_maxs {
                     for percentile in percentiles {
-                        let mut game = Game::<usize>::new_game(quarters.clone(), *population_size, *percentile);
+                        let mut game = Game::<usize>::new_game(quarters.clone(), *population_size, *percentile, *elitism, *speciation);
                         game.run(*generation_max, *iteration, *percentile, format!("test-data/output-r{}-perc{}-g{}-i{}-pop{}.txt", i, *percentile, *generation_max, *iteration, *population_size));
                     }
                 }
@@ -84,21 +88,21 @@ fn run(population_sizes: &Vec<usize>, generation_maxs: &Vec<usize>, iterations: 
     }
 }
 
-fn test_file(percentiles: &Vec<usize>) {
-    println!("Running test_file with lambda=1, gen_max=N/A, iter=1, percentiles=[{:?}]", percentiles[0]);
+fn test_file(percentiles: &Vec<usize>, elitism: &bool, speciation: &bool) {
+    println!("Running test_file with lambda=1, gen_max=N/A, iter=1, percentiles=[{:?}], elitism={}, speciation={}", percentiles[0], elitism, speciation);
     let read_quarters = Quarters::<f64>::new_quarters_from_default_file(1);
 
-    let mut game = Game::<usize>::new_game(read_quarters, 1, percentiles[0]);
+    let mut game = Game::<usize>::new_game(read_quarters, 1, percentiles[0], *elitism, *speciation);
     game.read_file("test-data/input.txt".to_string());
     game.perform_analytical_final_run(0);
     game.print_best();
 }
 
-fn test_string(percentiles: &Vec<usize>, screener_string: String) {
-    println!("Running test_string with lambda=1, gen_max=N/A, iter=1, percentiles=[{:?}], string={:?}", percentiles[0], screener_string);
+fn test_string(percentiles: &Vec<usize>, screener_string: String, elitism: &bool, speciation: &bool) {
+    println!("Running test_string with lambda=1, gen_max=N/A, iter=1, percentiles=[{:?}], string={:?}, elitism={}, speciation={}", percentiles[0], screener_string, elitism, speciation);
     let read_quarters = Quarters::<f64>::new_quarters_from_default_file(1);
 
-    let mut game = Game::<usize>::new_game(read_quarters, 1, percentiles[0]);
+    let mut game = Game::<usize>::new_game(read_quarters, 1, percentiles[0], *elitism, *speciation);
     game.read_string(screener_string, false);
     game.perform_analytical_final_run(0);
     game.print_best();

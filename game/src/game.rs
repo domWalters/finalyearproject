@@ -16,12 +16,14 @@ pub struct Game<T: DataTrait> {
     quarters_initial: Quarters<f64>,
     quarters_actual: Quarters<T>,
     current_quarter_index: usize,
-    index_of_value: usize
+    index_of_value: usize,
+    elitism: bool,
+    speciation: bool
 }
 
 impl<T: DataTrait> fmt::Display for Game<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {  // Overly verbose
-        write!(f, "Game[players: {:?}, quarters_initial: {:?}, quarters_actual: {:?}, current_quarter_index: {}, index_of_value: {}]", self.players, self.quarters_initial, self.quarters_actual, self.current_quarter_index, self.index_of_value)
+        write!(f, "Game[players: {:?}, quarters_initial: {:?}, quarters_actual: {:?}, current_quarter_index: {}, index_of_value: {}, elitism: {}, speciation: {}]", self.players, self.quarters_initial, self.quarters_actual, self.current_quarter_index, self.index_of_value, self.elitism, self.speciation)
     }
 }
 
@@ -36,7 +38,7 @@ impl<T: DataTrait> Game<T> {
     /// # Remarks
     /// Not currently implemented properly, just generates a standard random Game with players
     /// initialised between the test data element limits. Will likely need to be more sophisticated.
-    pub fn new_game(quarters_initial: Quarters<f64>, num_of_players: usize, percentile_gap: usize) -> Game<usize> {
+    pub fn new_game(quarters_initial: Quarters<f64>, num_of_players: usize, percentile_gap: usize, elitism: bool, speciation: bool) -> Game<usize> {
         // Get the banned indicies list
         let banned_names = vec!["adj_close", "adj_factor", "adj_high", "adj_low", "adj_open", "adj_volume", "close", "high", "low", "open", "volume"];
         let mut banned_indicies = Vec::new();
@@ -58,7 +60,9 @@ impl<T: DataTrait> Game<T> {
             quarters_initial: quarters_initial,
             quarters_actual: quarters_actual,
             current_quarter_index: 0,
-            index_of_value: 0
+            index_of_value: 0,
+            elitism: elitism,
+            speciation: speciation
         }
     }
     fn calculate_cheap_limits(quarters: &Quarters<T>) -> (Vec<T>, Vec<T>) {
@@ -121,29 +125,33 @@ impl<T: DataTrait> Game<T> {
         self.print_best();
         let mut new_population: Vec<Player<T>> = Vec::new();
         // 1 player conditional elitism
-        let best = self.find_best();
-        match best {
-            Some((_, best_player)) => {
-                if best_player.stocks_sold.len() > 20 {
-                    let mut new_player = best_player.clone();
-                    new_player.soft_reset();
-                    new_population.push(new_player);
-                } else {
+        let mut number_of_players_needed = self.players.len();
+        if self.elitism {
+            let best = self.find_best();
+            match best {
+                Some((_, best_player)) => {
+                    if best_player.stocks_sold.len() > 20 {
+                        let mut new_player = best_player.clone();
+                        new_player.soft_reset();
+                        new_population.push(new_player);
+                    } else {
+                        let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
+                        new_population.push(new_player);
+                    }
+                }
+                None => {
                     let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
                     new_population.push(new_player);
                 }
             }
-            None => {
-                let new_player = self.tourney_select(k).dumb_crossover(self.tourney_select(k), percentile_gap).lazy_mutate(mut_const, percentile_gap);
-                new_population.push(new_player);
-            }
+            number_of_players_needed -= 1;
         }
         let mut tracker = 0;
-        for _i in 0..(self.players.len() - 1) {
+        for _i in 0..number_of_players_needed {
             let mut counter = 0;
             let mut select_one = self.tourney_select(k);
             let mut select_two = self.tourney_select(k);
-            while !select_one.is_similar_to(select_two, 0.5) {
+            while self.speciation & !select_one.is_similar_to(select_two, 0.5) {
                 select_one = self.tourney_select(k);
                 select_two = self.tourney_select(k);
                 counter += 1;
