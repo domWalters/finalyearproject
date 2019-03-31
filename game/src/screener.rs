@@ -63,7 +63,10 @@ impl<T: DataTrait> Screener<T> {
         Screener {
             screen: self.iter()
                         .zip(slice.iter())
-                        .map(|((l, l_used, l_rule), (r, r_used, r_rule))| (((*l + *r) / T::from(2.0).unwrap()).round(percentile_gap), if rng.gen_bool(0.5) {*l_used} else {*r_used}, if rng.gen_bool(0.5) {l_rule.clone()} else {r_rule.clone()}))
+                        .map(|((l, l_used, l_rule), (r, r_used, r_rule))| {
+                            let use_left = rng.gen_bool(0.5);
+                            (((*l + *r) / T::from(2.0).unwrap()).round(percentile_gap), if use_left {*l_used} else {*r_used}, if use_left {l_rule.clone()} else {r_rule.clone()})
+                        })
                         .collect()
         }
     }
