@@ -2,8 +2,8 @@
 
 cd "$(dirname "$0")"
 cd ../
-git submodule update
-cd report
+git submodule update --remote
+cd CSProjectReport
 rm *.pdf
 rm *.log
 
