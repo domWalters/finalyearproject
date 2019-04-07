@@ -220,10 +220,17 @@ impl<T: DataTrait> Quarters<T> {
         // for i in 0..(100/denomination) {
         //     temp_vec.push((i+1)*denomination);
         // }
+        // let mut temp_vec2 = Vec::new();
         // for i in 0..self.len() {
-        //     println!("{:?}", percentile_boundary_vectors[i][0].iter().zip(temp_vec.iter()).collect::<Vec<_>>());
+        //     temp_vec2.push(percentile_boundary_vectors[i][44].iter().zip(temp_vec.iter()).filter_map(|(data, perc)| {
+        //         if *perc == 40 {
+        //             Some(data)
+        //         } else {
+        //             None
+        //         }
+        //     }).collect::<Vec<_>>()[0]);
         // }
-        //println!("{:?}", percentile_boundary_vectors);
+        // println!("{:?}", temp_vec2);
         // Create new Quarters set
         let mut new_quarters_vector = Vec::new();
         for (i, quarter) in self.iter().enumerate() {

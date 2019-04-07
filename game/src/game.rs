@@ -151,7 +151,7 @@ impl<T: DataTrait> Game<T> {
             let mut counter = 0;
             let mut select_one = self.tourney_select(k);
             let mut select_two = self.tourney_select(k);
-            while self.speciation & !select_one.is_similar_to(select_two, 0.5) {
+            while self.speciation & select_one.is_similar_to(select_two, 0.25) {
                 select_one = self.tourney_select(k);
                 select_two = self.tourney_select(k);
                 counter += 1;

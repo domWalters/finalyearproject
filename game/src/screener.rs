@@ -116,8 +116,11 @@ impl<T: DataTrait> Screener<T> {
     }
     ///
     pub fn is_similar_to(&self, screener: &Screener<T>, ratio: f64) -> bool {
-        (self.iter().zip(screener.iter()).fold(0.0, |acc, ((_, l_used, _), (_, r_used, _))| {
-            acc + if l_used == r_used {1.0} else {0.0}
-        }) / (self.len() as f64)) > ratio
+        let zip = self.iter().zip(screener.iter());
+        zip.clone().fold(0.0, |acc, ((_, l_used, _), (_, r_used, _))| {
+            acc + if l_used & r_used {1.0} else {0.0}
+        }) / zip.fold(0.0, |acc, ((_, l_used, _), (_, r_used, _))| {
+            acc + if l_used | r_used {1.0} else {0.0}
+        }) > ratio
     }
 }
