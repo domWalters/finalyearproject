@@ -6,6 +6,7 @@ If you don't mind reading this file in it's raw unformatted form, then simply op
 * In the Atom editor you can right click the file and select "Markdown Preview".
 * In Chrome there is an appropriate [plugin](https://chrome.google.com/webstore/detail/markdown-preview-plus/febilkbfcbhebfnokafefeacimjdckgl).
 * In Python, there is a program called [grip](https://pypi.org/project/grip/) available from the pip package manager.
+* On the [GitLab repository for this project](https://git-teaching.cs.bham.ac.uk/mod-ug-proj-2018/dxw407) this file is displayed in HTML.
 
 Program Dependencies
 ------------
