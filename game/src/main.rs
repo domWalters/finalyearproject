@@ -20,6 +20,7 @@ fn main() {
     let mut percentiles = vec![10];
     let mut elitism = false;
     let mut speciation = false;
+    let mut runs = 10;
 
     // Arguments
     let args: Vec<String> = env::args().collect();
@@ -41,7 +42,7 @@ fn main() {
 
     for (arg_one, arg_two) in arg_pairs {
         match (&arg_one[0..arg_one.len()], &arg_two[0..arg_two.len()]) {
-            ("-run", _) => run(&population_sizes, &generation_maxs, &iterations, &percentiles, &elitism, &speciation),
+            ("-run", _) => run(&population_sizes, &generation_maxs, &iterations, &percentiles, &elitism, &speciation, &runs),
             ("-test", "") => test_file(&percentiles, &elitism, &speciation),
             ("-test", screener_string) => test_string(&percentiles, screener_string.to_string(), &elitism, &speciation),
             ("-lambda", x) => population_sizes = vector_from_string(x.to_string()),
@@ -50,6 +51,7 @@ fn main() {
             ("-percentiles", x) => percentiles = vector_from_string(x.to_string()),
             ("-elitism", _) => elitism = true,
             ("-speciation", _) => speciation = true,
+            ("-runs", x) => runs = vector_from_string(x.to_string())[0],
             _ => {}
         }
     }
@@ -70,10 +72,10 @@ fn vector_from_string(string: String) -> Vec<usize> {
     }).collect::<Vec<usize>>()
 }
 
-fn run(population_sizes: &Vec<usize>, generation_maxs: &Vec<usize>, iterations: &Vec<usize>, percentiles: &Vec<usize>, elitism: &bool, speciation: &bool) {
-    println!("Running algorithm with lambda={:?}, gen_max={:?}, iter={:?}, percentiles={:?}, elitism={}, speciation={}", population_sizes, generation_maxs, iterations, percentiles, elitism, speciation);
-    println!("This is going to execute the genetic algorithm {:?} times.", 10 * population_sizes.len() * generation_maxs.len() * iterations.len() * percentiles.len());
-    for i in 0..10 {
+fn run(population_sizes: &Vec<usize>, generation_maxs: &Vec<usize>, iterations: &Vec<usize>, percentiles: &Vec<usize>, elitism: &bool, speciation: &bool, runs: &usize) {
+    println!("Running algorithm with runs={}, lambda={:?}, gen_max={:?}, iter={:?}, percentiles={:?}, elitism={}, speciation={}", runs, population_sizes, generation_maxs, iterations, percentiles, elitism, speciation);
+    println!("This is going to execute the genetic algorithm {:?} times.", runs * population_sizes.len() * generation_maxs.len() * iterations.len() * percentiles.len());
+    for i in 0..*runs {
         for iteration in iterations {
             let quarters = Quarters::<f64>::new_quarters_from_default_file(*iteration);
             for population_size in population_sizes {
